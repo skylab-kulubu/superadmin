@@ -6,7 +6,23 @@ import Link from 'next/link';
 import type { CompetitorDto } from '@/types/api';
 
 export default async function CompetitorsPage() {
-  const competitors = await getCompetitors();
+  let competitors: CompetitorDto[] = [];
+  let error: string | null = null;
+
+  try {
+    competitors = await getCompetitors({ includeUser: true, includeEvent: true });
+  } catch (err) {
+    error = err instanceof Error ? err.message : 'Yarışmacılar yüklenirken hata oluştu';
+    console.error('Competitors page error:', err);
+  }
+
+  // Format data for display (server-side)
+  const formattedCompetitors = competitors.map(competitor => ({
+    ...competitor,
+    userName: competitor.user ? `${competitor.user.firstName} ${competitor.user.lastName}` : '-',
+    eventName: competitor.event?.name || '-',
+    winnerText: competitor.winner ? 'Evet' : 'Hayır',
+  }));
 
   return (
     <AppShell>
@@ -18,33 +34,28 @@ export default async function CompetitorsPage() {
           </Link>
         </div>
 
-        <DataTable<CompetitorDto>
-          data={competitors}
-          columns={[
-            {
-              key: 'user',
-              header: 'Kullanıcı',
-              render: (user: any) => user ? `${user.firstName} ${user.lastName}` : '-',
-            },
-            {
-              key: 'event.name',
-              header: 'Etkinlik',
-            },
-            { key: 'points', header: 'Puan' },
-            {
-              key: 'winner',
-              header: 'Kazanan',
-              render: (winner: boolean) => (
-                <span className={winner ? 'text-green-600' : 'text-gray-600'}>
-                  {winner ? 'Evet' : 'Hayır'}
-                </span>
-              ),
-            },
-          ]}
-          getId={(competitor) => competitor.id}
-        />
+        {error ? (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-red-800 mb-2">Hata</h2>
+            <p className="text-red-700">{error}</p>
+          </div>
+        ) : competitors.length === 0 ? (
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
+            <p className="text-gray-600">Henüz yarışmacı bulunmamaktadır.</p>
+          </div>
+        ) : (
+          <DataTable
+            data={formattedCompetitors}
+            columns={[
+              { key: 'userName', header: 'Kullanıcı' },
+              { key: 'eventName', header: 'Etkinlik' },
+              { key: 'points', header: 'Puan' },
+              { key: 'winnerText', header: 'Kazanan' },
+            ]}
+            idKey="id"
+          />
+        )}
       </div>
     </AppShell>
   );
 }
-

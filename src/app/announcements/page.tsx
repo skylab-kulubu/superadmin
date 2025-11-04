@@ -6,7 +6,23 @@ import Link from 'next/link';
 import type { AnnouncementDto } from '@/types/api';
 
 export default async function AnnouncementsPage() {
-  const announcements = await getAnnouncements();
+  let announcements: AnnouncementDto[] = [];
+  let error: string | null = null;
+
+  try {
+    announcements = await getAnnouncements({ includeEventType: true });
+  } catch (err) {
+    error = err instanceof Error ? err.message : 'Duyurular yüklenirken hata oluştu';
+    console.error('Announcements page error:', err);
+  }
+
+  // Format data for display (server-side)
+  const formattedAnnouncements = announcements.map(announcement => ({
+    ...announcement,
+    bodyPreview: announcement.body ? announcement.body.substring(0, 50) + '...' : '',
+    statusText: announcement.active ? 'Aktif' : 'Pasif',
+    eventTypeName: announcement.eventType?.name || '-',
+  }));
 
   return (
     <AppShell>
@@ -18,33 +34,28 @@ export default async function AnnouncementsPage() {
           </Link>
         </div>
 
-        <DataTable<AnnouncementDto>
-          data={announcements}
-          columns={[
-            { key: 'title', header: 'Başlık' },
-            {
-              key: 'body',
-              header: 'İçerik',
-              render: (body: string) => body.substring(0, 50) + '...',
-            },
-            {
-              key: 'active',
-              header: 'Durum',
-              render: (active: boolean) => (
-                <span className={active ? 'text-green-600' : 'text-gray-600'}>
-                  {active ? 'Aktif' : 'Pasif'}
-                </span>
-              ),
-            },
-            {
-              key: 'eventType.name',
-              header: 'Etkinlik Tipi',
-            },
-          ]}
-          getId={(announcement) => announcement.id}
-        />
+        {error ? (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-red-800 mb-2">Hata</h2>
+            <p className="text-red-700">{error}</p>
+          </div>
+        ) : announcements.length === 0 ? (
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
+            <p className="text-gray-600">Henüz duyuru bulunmamaktadır.</p>
+          </div>
+        ) : (
+          <DataTable
+            data={formattedAnnouncements}
+            columns={[
+              { key: 'title', header: 'Başlık' },
+              { key: 'bodyPreview', header: 'İçerik' },
+              { key: 'statusText', header: 'Durum' },
+              { key: 'eventTypeName', header: 'Etkinlik Tipi' },
+            ]}
+            idKey="id"
+          />
+        )}
       </div>
     </AppShell>
   );
 }
-

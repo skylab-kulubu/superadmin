@@ -8,24 +8,29 @@ export async function GET(request: NextRequest) {
   const error = searchParams.get('error');
 
   if (error) {
-    return NextResponse.redirect(new URL('/login?error=' + error, request.url));
+    console.error('OAuth error:', error);
+    return NextResponse.redirect(new URL('/login?error=' + encodeURIComponent(error), request.url));
   }
 
   if (!code) {
+    console.error('No authorization code provided');
     return NextResponse.redirect(new URL('/login?error=no_code', request.url));
   }
 
   try {
     const { access_token, refresh_token } = await exchangeCodeForToken(code);
     
-    cookies().set('auth_token', access_token, {
+    // Next.js 15'te cookies() async olmalı
+    const cookieStore = await cookies();
+    
+    cookieStore.set('auth_token', access_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7,
     });
 
-    cookies().set('refresh_token', refresh_token, {
+    cookieStore.set('refresh_token', refresh_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -34,7 +39,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.redirect(new URL('/dashboard', request.url));
   } catch (error) {
-    return NextResponse.redirect(new URL('/login?error=token_exchange_failed', request.url));
+    console.error('Token exchange failed:', error);
+    const errorMessage = error instanceof Error ? error.message : 'unknown_error';
+    return NextResponse.redirect(new URL('/login?error=token_exchange_failed&details=' + encodeURIComponent(errorMessage), request.url));
   }
 }
 

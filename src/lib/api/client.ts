@@ -43,9 +43,28 @@ class ApiClient {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
+    // Client-side'da token'ı cookie'den almak için API endpoint'ini kullan
+    if (typeof window !== 'undefined' && !this.token && !localStorage.getItem('auth_token')) {
+      try {
+        const tokenResponse = await fetch('/api/auth/token', {
+          credentials: 'include',
+        });
+        if (tokenResponse.ok) {
+          const { token } = await tokenResponse.json();
+          if (token) {
+            this.token = token;
+            localStorage.setItem('auth_token', token);
+          }
+        }
+      } catch (error) {
+        // Token alınamazsa devam et, backend'den 401 dönecek
+      }
+    }
+
     const url = `${this._baseURL}${endpoint}`;
     const response = await fetch(url, {
       ...options,
+      credentials: 'include', // Cookie'lerin gönderilmesi için
       headers: {
         ...this.getHeaders(),
         ...options.headers,
@@ -53,6 +72,22 @@ class ApiClient {
     });
 
     if (!response.ok) {
+      // 401 Unauthorized durumunda token geçersiz demektir
+      if (response.status === 401) {
+        // Token geçersizse temizle ve logout yap
+        this.clearToken();
+        // Logout endpoint'ini çağır (cookie'leri temizlemek için)
+        if (typeof window !== 'undefined') {
+          fetch('/api/auth/logout', {
+            method: 'POST',
+            credentials: 'include',
+          }).catch(() => {
+            // Logout başarısız olsa bile devam et
+          });
+          // Login sayfasına yönlendir
+          window.location.href = '/login';
+        }
+      }
       const error = await response.json().catch(() => ({ message: 'Bir hata oluştu' }));
       throw new Error(error.message || `HTTP ${response.status}`);
     }
@@ -101,10 +136,20 @@ class ApiClient {
 
     return fetch(`${this._baseURL}${endpoint}`, {
       method: 'POST',
+      credentials: 'include', // Cookie'lerin gönderilmesi için
       headers,
       body: formData,
     }).then(res => {
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) {
+        // 401 Unauthorized durumunda token geçersiz demektir
+        if (res.status === 401) {
+          this.clearToken();
+          if (typeof window !== 'undefined') {
+            window.location.href = '/login';
+          }
+        }
+        throw new Error(`HTTP ${res.status}`);
+      }
       return res.json();
     });
   }

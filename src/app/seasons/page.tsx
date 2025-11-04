@@ -6,7 +6,23 @@ import Link from 'next/link';
 import type { SeasonDto } from '@/types/api';
 
 export default async function SeasonsPage() {
-  const seasons = await getSeasons();
+  let seasons: SeasonDto[] = [];
+  let error: string | null = null;
+
+  try {
+    seasons = await getSeasons();
+  } catch (err) {
+    error = err instanceof Error ? err.message : 'Sezonlar yüklenirken hata oluştu';
+    console.error('Seasons page error:', err);
+  }
+
+  // Format data for display (server-side)
+  const formattedSeasons = seasons.map(season => ({
+    ...season,
+    startDateFormatted: season.startDate ? new Date(season.startDate).toLocaleDateString('tr-TR') : '',
+    endDateFormatted: season.endDate ? new Date(season.endDate).toLocaleDateString('tr-TR') : '',
+    statusText: season.active ? 'Aktif' : 'Pasif',
+  }));
 
   return (
     <AppShell>
@@ -18,34 +34,28 @@ export default async function SeasonsPage() {
           </Link>
         </div>
 
-        <DataTable<SeasonDto>
-          data={seasons}
-          columns={[
-            { key: 'name', header: 'Ad' },
-            {
-              key: 'startDate',
-              header: 'Başlangıç',
-              render: (date: string) => new Date(date).toLocaleDateString('tr-TR'),
-            },
-            {
-              key: 'endDate',
-              header: 'Bitiş',
-              render: (date: string) => new Date(date).toLocaleDateString('tr-TR'),
-            },
-            {
-              key: 'active',
-              header: 'Durum',
-              render: (active: boolean) => (
-                <span className={active ? 'text-green-600' : 'text-gray-600'}>
-                  {active ? 'Aktif' : 'Pasif'}
-                </span>
-              ),
-            },
-          ]}
-          getId={(season) => season.id}
-        />
+        {error ? (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-red-800 mb-2">Hata</h2>
+            <p className="text-red-700">{error}</p>
+          </div>
+        ) : seasons.length === 0 ? (
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
+            <p className="text-gray-600">Henüz sezon bulunmamaktadır.</p>
+          </div>
+        ) : (
+          <DataTable
+            data={formattedSeasons}
+            columns={[
+              { key: 'name', header: 'Ad' },
+              { key: 'startDateFormatted', header: 'Başlangıç' },
+              { key: 'endDateFormatted', header: 'Bitiş' },
+              { key: 'statusText', header: 'Durum' },
+            ]}
+            idKey="id"
+          />
+        )}
       </div>
     </AppShell>
   );
 }
-

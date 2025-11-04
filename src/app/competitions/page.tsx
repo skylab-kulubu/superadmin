@@ -6,7 +6,23 @@ import Link from 'next/link';
 import type { CompetitionDto } from '@/types/api';
 
 export default async function CompetitionsPage() {
-  const competitions = await getCompetitions();
+  let competitions: CompetitionDto[] = [];
+  let error: string | null = null;
+
+  try {
+    competitions = await getCompetitions();
+  } catch (err) {
+    error = err instanceof Error ? err.message : 'Yarışmalar yüklenirken hata oluştu';
+    console.error('Competitions page error:', err);
+  }
+
+  // Format data for display (server-side)
+  const formattedCompetitions = competitions.map(comp => ({
+    ...comp,
+    startDateFormatted: comp.startDate ? new Date(comp.startDate).toLocaleDateString('tr-TR') : '',
+    endDateFormatted: comp.endDate ? new Date(comp.endDate).toLocaleDateString('tr-TR') : '',
+    statusText: comp.active ? 'Aktif' : 'Pasif',
+  }));
 
   return (
     <AppShell>
@@ -18,32 +34,27 @@ export default async function CompetitionsPage() {
           </Link>
         </div>
 
-        <DataTable<CompetitionDto>
-          data={competitions}
-          columns={[
-            { key: 'name', header: 'Ad' },
-            {
-              key: 'startDate',
-              header: 'Başlangıç',
-              render: (date: string) => new Date(date).toLocaleDateString('tr-TR'),
-            },
-            {
-              key: 'endDate',
-              header: 'Bitiş',
-              render: (date: string) => new Date(date).toLocaleDateString('tr-TR'),
-            },
-            {
-              key: 'active',
-              header: 'Durum',
-              render: (active: boolean) => (
-                <span className={active ? 'text-green-600' : 'text-gray-600'}>
-                  {active ? 'Aktif' : 'Pasif'}
-                </span>
-              ),
-            },
-          ]}
-          getId={(comp) => comp.id}
-        />
+        {error ? (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-red-800 mb-2">Hata</h2>
+            <p className="text-red-700">{error}</p>
+          </div>
+        ) : competitions.length === 0 ? (
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
+            <p className="text-gray-600">Henüz yarışma bulunmamaktadır.</p>
+          </div>
+        ) : (
+          <DataTable
+            data={formattedCompetitions}
+            columns={[
+              { key: 'name', header: 'Ad' },
+              { key: 'startDateFormatted', header: 'Başlangıç' },
+              { key: 'endDateFormatted', header: 'Bitiş' },
+              { key: 'statusText', header: 'Durum' },
+            ]}
+            idKey="id"
+          />
+        )}
       </div>
     </AppShell>
   );

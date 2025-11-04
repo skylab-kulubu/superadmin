@@ -6,7 +6,23 @@ import Link from 'next/link';
 import type { EventDto } from '@/types/api';
 
 export default async function EventsPage() {
-  const events = await getEvents();
+  let events: EventDto[] = [];
+  let error: string | null = null;
+
+  try {
+    events = await getEvents();
+  } catch (err) {
+    error = err instanceof Error ? err.message : 'Etkinlikler yüklenirken hata oluştu';
+    console.error('Events page error:', err);
+  }
+
+  // Format data for display (server-side)
+  const formattedEvents = events.map(event => ({
+    ...event,
+    startDateFormatted: event.startDate ? new Date(event.startDate).toLocaleDateString('tr-TR') : '',
+    eventTypeName: event.type?.name || '-',
+    statusText: event.active ? 'Aktif' : 'Pasif',
+  }));
 
   return (
     <AppShell>
@@ -18,34 +34,29 @@ export default async function EventsPage() {
           </Link>
         </div>
 
-        <DataTable<EventDto>
-          data={events}
-          columns={[
-            { key: 'name', header: 'Ad' },
-            { key: 'location', header: 'Konum' },
-            {
-              key: 'startDate',
-              header: 'Başlangıç',
-              render: (date: string) => new Date(date).toLocaleDateString('tr-TR'),
-            },
-            {
-              key: 'type.name',
-              header: 'Tip',
-            },
-            {
-              key: 'active',
-              header: 'Durum',
-              render: (active: boolean) => (
-                <span className={active ? 'text-green-600' : 'text-gray-600'}>
-                  {active ? 'Aktif' : 'Pasif'}
-                </span>
-              ),
-            },
-          ]}
-          getId={(event) => event.id}
-        />
+        {error ? (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-red-800 mb-2">Hata</h2>
+            <p className="text-red-700">{error}</p>
+          </div>
+        ) : events.length === 0 ? (
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
+            <p className="text-gray-600">Henüz etkinlik bulunmamaktadır.</p>
+          </div>
+        ) : (
+          <DataTable
+            data={formattedEvents}
+            columns={[
+              { key: 'name', header: 'Ad' },
+              { key: 'location', header: 'Konum' },
+              { key: 'startDateFormatted', header: 'Başlangıç' },
+              { key: 'eventTypeName', header: 'Tip' },
+              { key: 'statusText', header: 'Durum' },
+            ]}
+            idKey="id"
+          />
+        )}
       </div>
     </AppShell>
   );
 }
-

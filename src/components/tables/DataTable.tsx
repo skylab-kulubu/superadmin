@@ -9,7 +9,8 @@ interface DataTableProps<T> {
   }[];
   onEdit?: (row: T) => void;
   onDelete?: (row: T) => void;
-  getId: (row: T) => string;
+  getId?: (row: T) => string;
+  idKey?: keyof T | string; // ID için key (getId yerine kullanılabilir)
 }
 
 export function DataTable<T extends Record<string, any>>({
@@ -18,7 +19,18 @@ export function DataTable<T extends Record<string, any>>({
   onEdit,
   onDelete,
   getId,
+  idKey = 'id',
 }: DataTableProps<T>) {
+  const getRowId = (row: T): string => {
+    if (getId) {
+      return getId(row);
+    }
+    if (typeof idKey === 'string') {
+      return String(idKey.split('.').reduce((obj, key) => obj?.[key], row) ?? '');
+    }
+    return String(row[idKey] ?? '');
+  };
+
   return (
     <div className="overflow-x-auto bg-white rounded-lg shadow">
       <table className="min-w-full divide-y divide-gray-200">
@@ -48,7 +60,7 @@ export function DataTable<T extends Record<string, any>>({
             </tr>
           ) : (
             data.map((row) => (
-              <tr key={getId(row)} className="hover:bg-gray-50">
+              <tr key={getRowId(row)} className="hover:bg-gray-50">
                 {columns.map((column) => {
                   const value = typeof column.key === 'string' 
                     ? column.key.split('.').reduce((obj, key) => obj?.[key], row)

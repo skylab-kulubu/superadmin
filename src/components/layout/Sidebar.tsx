@@ -22,9 +22,29 @@ export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
 
-  const handleLogout = () => {
-    localStorage.removeItem('auth_token');
-    router.push('/login');
+  const handleLogout = async () => {
+    try {
+      // Logout endpoint'ini çağır
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        console.error('Logout response not ok:', response.status);
+      }
+      
+      // LocalStorage'ı da temizle
+      localStorage.removeItem('auth_token');
+      
+      // Login sayfasına yönlendir
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Hata olsa bile login'e yönlendir
+      localStorage.removeItem('auth_token');
+      window.location.href = '/login';
+    }
   };
 
   return (

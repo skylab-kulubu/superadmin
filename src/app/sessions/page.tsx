@@ -6,7 +6,22 @@ import Link from 'next/link';
 import type { SessionDto } from '@/types/api';
 
 export default async function SessionsPage() {
-  const sessions = await getSessions();
+  let sessions: SessionDto[] = [];
+  let error: string | null = null;
+
+  try {
+    sessions = await getSessions({ includeEvent: true });
+  } catch (err) {
+    error = err instanceof Error ? err.message : 'Oturumlar yüklenirken hata oluştu';
+    console.error('Sessions page error:', err);
+  }
+
+  // Format data for display (server-side)
+  const formattedSessions = sessions.map(session => ({
+    ...session,
+    startTimeFormatted: session.startTime ? new Date(session.startTime).toLocaleString('tr-TR') : '',
+    endTimeFormatted: session.endTime ? new Date(session.endTime).toLocaleString('tr-TR') : '-',
+  }));
 
   return (
     <AppShell>
@@ -18,27 +33,29 @@ export default async function SessionsPage() {
           </Link>
         </div>
 
-        <DataTable<SessionDto>
-          data={sessions}
-          columns={[
-            { key: 'title', header: 'Başlık' },
-            { key: 'speakerName', header: 'Konuşmacı' },
-            {
-              key: 'startTime',
-              header: 'Başlangıç',
-              render: (date: string) => new Date(date).toLocaleString('tr-TR'),
-            },
-            {
-              key: 'endTime',
-              header: 'Bitiş',
-              render: (date: string) => date ? new Date(date).toLocaleString('tr-TR') : '-',
-            },
-            { key: 'sessionType', header: 'Tip' },
-          ]}
-          getId={(session) => session.id}
-        />
+        {error ? (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-red-800 mb-2">Hata</h2>
+            <p className="text-red-700">{error}</p>
+          </div>
+        ) : sessions.length === 0 ? (
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
+            <p className="text-gray-600">Henüz oturum bulunmamaktadır.</p>
+          </div>
+        ) : (
+          <DataTable
+            data={formattedSessions}
+            columns={[
+              { key: 'title', header: 'Başlık' },
+              { key: 'speakerName', header: 'Konuşmacı' },
+              { key: 'startTimeFormatted', header: 'Başlangıç' },
+              { key: 'endTimeFormatted', header: 'Bitiş' },
+              { key: 'sessionType', header: 'Tip' },
+            ]}
+            idKey="id"
+          />
+        )}
       </div>
     </AppShell>
   );
 }
-

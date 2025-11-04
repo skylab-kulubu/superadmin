@@ -9,10 +9,15 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Token yoksa login'e yönlendir
   if (!token) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
+  // Token geçerliliği client-side'da kontrol edilecek
+  // Middleware'de her istekte backend'e istek göndermek performans sorunu yaratabilir
+  // Bu yüzden token varlığını kontrol edip, geçerlilik kontrolünü client-side'a bırakıyoruz
+  
   return NextResponse.next();
 }
 
