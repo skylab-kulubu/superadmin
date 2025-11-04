@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useRouter } from 'next/navigation';
+import { getOAuth2LogoutUrl } from '@/lib/auth/oauth2';
 
 const menuItems = [
   { href: '/dashboard', label: 'Dashboard', icon: '📊' },
@@ -24,6 +25,9 @@ export function Sidebar() {
 
   const handleLogout = async () => {
     try {
+      // LocalStorage'ı önce temizle
+      localStorage.removeItem('auth_token');
+      
       // Logout endpoint'ini çağır
       const response = await fetch('/api/auth/logout', {
         method: 'POST',
@@ -34,16 +38,21 @@ export function Sidebar() {
         console.error('Logout response not ok:', response.status);
       }
       
-      // LocalStorage'ı da temizle
-      localStorage.removeItem('auth_token');
+      // Cookie'lerin silinmesi için bekleme
+      await new Promise(resolve => setTimeout(resolve, 200));
       
-      // Login sayfasına yönlendir
-      window.location.href = '/login';
+      // OAuth sağlayıcısından da çıkış yapmak için logout URL'ine git
+      // Post-logout redirect URI olarak login sayfasını kullan
+      const postLogoutRedirectUri = `${window.location.origin}/login?logout=${Date.now()}`;
+      const logoutUrl = getOAuth2LogoutUrl(postLogoutRedirectUri);
+      
+      // OAuth logout URL'ine git
+      window.location.href = logoutUrl;
     } catch (error) {
       console.error('Logout error:', error);
       // Hata olsa bile login'e yönlendir
       localStorage.removeItem('auth_token');
-      window.location.href = '/login';
+      window.location.replace(`/login?logout=${Date.now()}`);
     }
   };
 

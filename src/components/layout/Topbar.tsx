@@ -1,20 +1,42 @@
 'use client';
 
-import { usersApi } from '@/lib/api/users';
 import { useEffect, useState } from 'react';
 import type { UserDto } from '@/types/api';
 
 export function Topbar() {
   const [user, setUser] = useState<UserDto | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    usersApi.getMe().then((response) => {
-      if (response.success && response.data) {
-        setUser(response.data);
+    async function fetchUser() {
+      try {
+        const response = await fetch('/api/auth/me', {
+          credentials: 'include',
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.authenticated) {
+            if (data.user) {
+              setUser(data.user);
+            } else if (data.error) {
+              // Backend down ama authenticated durumda
+              setError(data.error);
+            }
+          }
+        } else {
+          setError('Kullanıcı bilgileri yüklenemedi');
+        }
+      } catch (error) {
+        console.error('Failed to fetch user:', error);
+        setError('Kullanıcı bilgileri yüklenemedi');
+      } finally {
+        setLoading(false);
       }
-    }).catch(() => {
-      // Handle error
-    });
+    }
+
+    fetchUser();
   }, []);
 
   return (
@@ -24,7 +46,13 @@ export function Topbar() {
       </div>
       
       <div className="flex items-center gap-4">
-        {user && (
+        {loading ? (
+          <div className="text-sm text-gray-500">Yükleniyor...</div>
+        ) : error ? (
+          <div className="text-sm text-yellow-600" title={error}>
+            ⚠️ Backend erişilemiyor
+          </div>
+        ) : user ? (
           <div className="flex items-center gap-3">
             {user.profilePictureUrl ? (
               <img
@@ -44,8 +72,11 @@ export function Topbar() {
               <p className="text-xs text-gray-500">{user.email}</p>
             </div>
           </div>
+        ) : (
+          <div className="text-sm text-gray-500">Kullanıcı bilgisi yok</div>
         )}
       </div>
     </div>
   );
 }
+

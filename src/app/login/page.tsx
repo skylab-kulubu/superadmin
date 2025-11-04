@@ -9,11 +9,12 @@ function LoginContent() {
   const searchParams = useSearchParams();
   const error = searchParams.get('error');
   const details = searchParams.get('details');
+  const logout = searchParams.get('logout');
   const [hasRedirected, setHasRedirected] = useState(false);
 
   useEffect(() => {
-    // Eğer hata varsa OAuth'a yönlendirme
-    if (error) {
+    // Eğer hata varsa veya logout parametresi varsa OAuth'a yönlendirme
+    if (error || logout) {
       return;
     }
 
@@ -22,7 +23,7 @@ function LoginContent() {
       setHasRedirected(true);
       window.location.href = getOAuth2AuthUrl();
     }
-  }, [error, hasRedirected]);
+  }, [error, logout, hasRedirected]);
 
   // Hata durumunda kullanıcıya göster
   if (error) {
@@ -62,6 +63,60 @@ function LoginContent() {
               Sayfayı Yenile
             </button>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Logout durumunda kullanıcıya göster
+  if (logout) {
+    const handleLogin = async () => {
+      try {
+        // LocalStorage'ı temizle
+        localStorage.removeItem('auth_token');
+        
+        // Cookie'leri kesinlikle temizlemek için logout endpoint'ini tekrar çağır
+        const logoutResponse = await fetch('/api/auth/logout', {
+          method: 'POST',
+          credentials: 'include',
+        }).catch(() => {
+          // Hata olsa bile devam et
+        });
+        
+        console.log('Logout response:', logoutResponse?.status);
+        
+        // Cookie'lerin temizlenmesi için bekleme
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        // OAuth URL'ini al
+        const oauthUrl = getOAuth2AuthUrl();
+        console.log('Redirecting to OAuth URL:', oauthUrl);
+        
+        // External URL'e git - bu middleware'i bypass eder
+        // window.location.href kullan (external URL olduğu için middleware intercept edemez)
+        window.location.href = oauthUrl;
+      } catch (error) {
+        console.error('Login redirect error:', error);
+        // Hata olsa bile OAuth'a git
+        const oauthUrl = getOAuth2AuthUrl();
+        console.log('Fallback redirect to OAuth URL:', oauthUrl);
+        window.location.href = oauthUrl;
+      }
+    };
+
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center max-w-md p-6 bg-green-50 border border-green-200 rounded-lg">
+          <h1 className="text-2xl font-bold mb-4 text-green-800">Başarıyla Çıkış Yaptınız</h1>
+          <p className="text-gray-700 mb-4">
+            Güvenli bir şekilde çıkış yaptınız. Tekrar giriş yapmak için lütfen aşağıdaki butona tıklayın.
+          </p>
+          <button
+            onClick={handleLogin}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Giriş Yap
+          </button>
         </div>
       </div>
     );

@@ -20,6 +20,9 @@ export async function GET(request: NextRequest) {
   try {
     const { access_token, refresh_token } = await exchangeCodeForToken(code);
     
+    console.log('✅ OAuth callback: Token exchange başarılı');
+    console.log('Token uzunlukları:', { access_token: access_token?.length, refresh_token: refresh_token?.length });
+    
     // Next.js 15'te cookies() async olmalı
     const cookieStore = await cookies();
     
@@ -28,6 +31,7 @@ export async function GET(request: NextRequest) {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7,
+      path: '/',
     });
 
     cookieStore.set('refresh_token', refresh_token, {
@@ -35,11 +39,14 @@ export async function GET(request: NextRequest) {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 30,
+      path: '/',
     });
+
+    console.log('✅ OAuth callback: Cookie\'ler set edildi, dashboard\'a yönlendiriliyor');
 
     return NextResponse.redirect(new URL('/dashboard', request.url));
   } catch (error) {
-    console.error('Token exchange failed:', error);
+    console.error('❌ OAuth callback: Token exchange başarısız:', error);
     const errorMessage = error instanceof Error ? error.message : 'unknown_error';
     return NextResponse.redirect(new URL('/login?error=token_exchange_failed&details=' + encodeURIComponent(errorMessage), request.url));
   }

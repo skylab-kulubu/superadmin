@@ -13,9 +13,8 @@ export async function getSeasons(params?: { includeEvents?: boolean }) {
     if (params?.includeEvents !== undefined) query.set('includeEvents', params.includeEvents.toString());
     const qs = query.toString();
     
-    const response = await serverFetch<DataResultListSeasonDto>(
-      `/api/seasons/${qs ? `?${qs}` : ''}`
-    );
+    const endpoint = qs ? `/api/seasons/?${qs}` : `/api/seasons/`;
+    const response = await serverFetch<DataResultListSeasonDto>(endpoint);
     
     if (!response || !response.data) {
       throw new Error('Geçersiz API yanıtı');

@@ -5,13 +5,23 @@ export function middleware(request: NextRequest) {
   const token = request.cookies.get('auth_token')?.value;
 
   const publicRoutes = ['/login', '/api/auth'];
-  if (publicRoutes.some(route => request.nextUrl.pathname.startsWith(route))) {
+  const pathname = request.nextUrl.pathname;
+  
+  // Public route'lar için izin ver
+  if (publicRoutes.some(route => pathname.startsWith(route))) {
     return NextResponse.next();
   }
 
   // Token yoksa login'e yönlendir
   if (!token) {
-    return NextResponse.redirect(new URL('/login', request.url));
+    // Ana sayfa (/) için direkt login'e yönlendir (dashboard'a redirect olmasın)
+    if (pathname === '/') {
+      return NextResponse.redirect(new URL('/login', request.url));
+    }
+    
+    // Diğer sayfalar için login'e yönlendir
+    const url = new URL('/login', request.url);
+    return NextResponse.redirect(url);
   }
 
   // Token geçerliliği client-side'da kontrol edilecek

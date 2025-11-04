@@ -1,5 +1,6 @@
 const OAUTH2_AUTH_URL = 'https://e.yildizskylab.com/realms/e-skylab/protocol/openid-connect/auth';
 const OAUTH2_TOKEN_URL = 'https://e.yildizskylab.com/realms/e-skylab/protocol/openid-connect/token';
+const OAUTH2_LOGOUT_URL = 'https://e.yildizskylab.com/realms/e-skylab/protocol/openid-connect/logout';
 const CLIENT_ID = process.env.NEXT_PUBLIC_OAUTH2_CLIENT_ID!;
 const CLIENT_SECRET = process.env.OAUTH2_CLIENT_SECRET; // Server-side only
 const REDIRECT_URI = process.env.NEXT_PUBLIC_OAUTH2_REDIRECT_URI!;
@@ -14,6 +15,15 @@ export function getOAuth2AuthUrl(state?: string): string {
   });
   
   return `${OAUTH2_AUTH_URL}?${params.toString()}`;
+}
+
+export function getOAuth2LogoutUrl(postLogoutRedirectUri?: string): string {
+  const params = new URLSearchParams({
+    client_id: CLIENT_ID,
+    ...(postLogoutRedirectUri && { post_logout_redirect_uri: postLogoutRedirectUri }),
+  });
+  
+  return `${OAUTH2_LOGOUT_URL}?${params.toString()}`;
 }
 
 export async function exchangeCodeForToken(code: string): Promise<{ access_token: string; refresh_token: string }> {

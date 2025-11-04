@@ -107,6 +107,16 @@ export async function serverFetch<T>(
       errorDetails.body = errorText || 'Boş response';
     }
     
+    // 502 Bad Gateway - Backend servisi çalışmıyor veya erişilemiyor
+    if (response.status === 502) {
+      console.error('❌ 502 Bad Gateway - Backend servisi çalışmıyor olabilir:', {
+        endpoint,
+        url,
+        errorDetails,
+      });
+      errorMessage = 'Backend servisi şu anda erişilebilir değil. Lütfen daha sonra tekrar deneyin.';
+    }
+    
     // 403 hatası için özel mesaj
     if (response.status === 403) {
       console.error('❌ 403 Forbidden - Yetki sorunu:', {

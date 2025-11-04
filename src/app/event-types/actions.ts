@@ -12,11 +12,52 @@ export async function getEventTypes() {
   try {
     const response = await serverFetch<DataResultListEventTypeDto>('/api/event-types/');
     
-    if (!response || !response.data) {
-      throw new Error('Geçersiz API yanıtı');
+    console.log('EventTypes API Response (full):', JSON.stringify(response, null, 2));
+    console.log('EventTypes API Response:', {
+      success: response?.success,
+      message: response?.message,
+      hasData: !!response?.data,
+      dataType: Array.isArray(response?.data) ? 'array' : typeof response?.data,
+      dataLength: Array.isArray(response?.data) ? response.data.length : 'N/A',
+      responseKeys: response ? Object.keys(response) : 'no response',
+    });
+    
+    // Eğer response boş obje ise ({}) veya hiç property yoksa, boş array döndür
+    if (!response || (typeof response === 'object' && Object.keys(response).length === 0)) {
+      console.warn('API boş yanıt döndü, boş array döndürülüyor');
+      return [];
+    }
+
+    // Eğer data array ise ve success false olsa bile, boş liste döndürebiliriz
+    if (Array.isArray(response.data)) {
+      return response.data;
+    }
+
+    // Eğer success false ise ve mesaj varsa hata fırlat
+    if (response.success === false) {
+      const errorMessage = response.message || 'API isteği başarısız';
+      console.error('API Error Details:', {
+        message: response.message,
+        httpStatus: response.httpStatus,
+        path: response.path,
+        timeStamp: response.timeStamp,
+      });
+      throw new Error(errorMessage);
+    }
+
+    // Eğer response var ama success undefined ise ve data yoksa, muhtemelen boş liste
+    if (response.success === undefined && !response.data) {
+      console.warn('API yanıtında success ve data yok, boş array döndürülüyor');
+      return [];
+    }
+
+    // data property'si olmalı ve array olmalı
+    if (response.data && !Array.isArray(response.data)) {
+      throw new Error('Geçersiz API yanıtı: data bir array değil');
     }
     
-    return response.data || [];
+    // Eğer buraya geldiysek ve data varsa döndür
+    return Array.isArray(response.data) ? response.data : [];
   } catch (error) {
     console.error('getEventTypes error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Bilinmeyen hata';
@@ -28,8 +69,16 @@ export async function getEventTypeById(id: string) {
   try {
     const response = await serverFetch<DataResultEventTypeDto>(`/api/event-types/${id}`);
     
-    if (!response || !response.data) {
-      throw new Error('Geçersiz API yanıtı');
+    if (!response) {
+      throw new Error('API yanıtı alınamadı');
+    }
+
+    if (!response.success) {
+      throw new Error(response.message || 'API isteği başarısız');
+    }
+
+    if (!response.data) {
+      throw new Error('Geçersiz API yanıtı: data bulunamadı');
     }
     
     return response.data;

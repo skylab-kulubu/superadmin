@@ -7,10 +7,17 @@ interface SelectProps {
   label: string;
   options: { value: string; label: string }[];
   required?: boolean;
+  disabled?: boolean;
 }
 
-export function Select({ name, label, options, required }: SelectProps) {
-  const { register, formState: { errors } } = useFormContext();
+export function Select({ name, label, options, required, disabled }: SelectProps) {
+  const { formState: { errors }, watch, setValue } = useFormContext();
+  const value = watch(name);
+
+  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedValue = e.target.value;
+    setValue(name, selectedValue, { shouldValidate: true });
+  };
 
   return (
     <div>
@@ -18,8 +25,11 @@ export function Select({ name, label, options, required }: SelectProps) {
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       <select
-        {...register(name)}
-        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        name={name}
+        value={value ?? ''}
+        disabled={disabled}
+        onChange={handleChange}
+        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
       >
         <option value="">Seçiniz</option>
         {options.map((option) => (

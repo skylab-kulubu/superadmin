@@ -9,9 +9,10 @@ interface ButtonProps {
   variant?: 'primary' | 'secondary' | 'danger';
   type?: 'button' | 'submit';
   disabled?: boolean;
+  className?: string;
 }
 
-export function Button({ children, onClick, href, variant = 'primary', type = 'button', disabled }: ButtonProps) {
+export function Button({ children, onClick, href, variant = 'primary', type = 'button', disabled, className }: ButtonProps) {
   const router = useRouter();
 
   const baseClasses = 'px-4 py-2 rounded-md font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed';
@@ -21,11 +22,13 @@ export function Button({ children, onClick, href, variant = 'primary', type = 'b
     danger: 'bg-red-600 text-white hover:bg-red-700',
   };
 
+  const combinedClassName = className ? `${baseClasses} ${variantClasses[variant]} ${className}` : `${baseClasses} ${variantClasses[variant]}`;
+
   if (href) {
     return (
       <button
         onClick={() => router.push(href)}
-        className={`${baseClasses} ${variantClasses[variant]}`}
+        className={combinedClassName}
         disabled={disabled}
       >
         {children}
@@ -38,7 +41,7 @@ export function Button({ children, onClick, href, variant = 'primary', type = 'b
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`${baseClasses} ${variantClasses[variant]}`}
+      className={combinedClassName}
     >
       {children}
     </button>

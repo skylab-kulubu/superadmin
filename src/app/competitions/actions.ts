@@ -15,14 +15,27 @@ export async function getCompetitions(params?: { includeEvent?: boolean; include
     if (params?.includeEventType !== undefined) query.set('includeEventType', params.includeEventType.toString());
     const qs = query.toString();
     
-    const endpoint = `/api/competitions/${qs ? `?${qs}` : ''}`;
+    const endpoint = qs ? `/api/competitions/?${qs}` : `/api/competitions/`;
     const response = await serverFetch<DataResultListCompetitionDto>(endpoint);
     
-    if (!response || !response.data) {
-      throw new Error('Geçersiz API yanıtı');
+    // Response yapısını kontrol et
+    if (!response) {
+      console.error('getCompetitions: Boş response');
+      throw new Error('Geçersiz API yanıtı: Boş response');
     }
     
-    return response.data || [];
+    // DataResult formatında mı kontrol et
+    if ('data' in response) {
+      return response.data || [];
+    }
+    
+    // Direkt array dönüyorsa onu kullan
+    if (Array.isArray(response)) {
+      return response;
+    }
+    
+    console.error('getCompetitions: Beklenmeyen response formatı:', JSON.stringify(response).substring(0, 200));
+    throw new Error('Geçersiz API yanıtı: Beklenmeyen format');
   } catch (error) {
     console.error('getCompetitions error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Bilinmeyen hata';

@@ -20,9 +20,8 @@ export async function getAnnouncements(params?: {
     });
     const qs = query.toString();
     
-    const response = await serverFetch<DataResultListAnnouncementDto>(
-      `/api/announcements/${qs ? `?${qs}` : ''}`
-    );
+    const endpoint = qs ? `/api/announcements/?${qs}` : `/api/announcements/`;
+    const response = await serverFetch<DataResultListAnnouncementDto>(endpoint);
     
     if (!response || !response.data) {
       throw new Error('Geçersiz API yanıtı');

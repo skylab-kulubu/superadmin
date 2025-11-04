@@ -22,9 +22,8 @@ export async function getEvents(params?: {
     });
     const qs = query.toString();
     
-    const response = await serverFetch<DataResultListEventDto>(
-      `/api/events/${qs ? `?${qs}` : ''}`
-    );
+    const endpoint = qs ? `/api/events/?${qs}` : `/api/events/`;
+    const response = await serverFetch<DataResultListEventDto>(endpoint);
     
     if (!response || !response.data) {
       throw new Error('Geçersiz API yanıtı');

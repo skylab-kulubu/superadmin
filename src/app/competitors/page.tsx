@@ -37,7 +37,18 @@ export default async function CompetitorsPage() {
         {error ? (
           <div className="bg-red-50 border border-red-200 rounded-lg p-6">
             <h2 className="text-lg font-semibold text-red-800 mb-2">Hata</h2>
-            <p className="text-red-700">{error}</p>
+            <p className="text-red-700 mb-4">{error}</p>
+            {error.includes('403') || error.includes('yetkiniz') ? (
+              <div className="text-sm text-red-600">
+                <p className="mb-2">Bu sayfayı görüntülemek için gerekli yetkiniz bulunmamaktadır.</p>
+                <p className="mt-2 text-xs text-gray-600">
+                  Bu endpoint için backend SecurityConfig'de izin tanımlanmamış olabilir.
+                </p>
+                <p className="mt-3">Lütfen yöneticinizle iletişime geçin.</p>
+              </div>
+            ) : (
+              <p className="text-sm text-red-600">Lütfen sayfayı yenileyin veya daha sonra tekrar deneyin.</p>
+            )}
           </div>
         ) : competitors.length === 0 ? (
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">

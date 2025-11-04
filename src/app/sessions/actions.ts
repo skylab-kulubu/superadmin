@@ -13,9 +13,8 @@ export async function getSessions(params?: { includeEvent?: boolean }) {
     if (params?.includeEvent !== undefined) query.set('includeEvent', params.includeEvent.toString());
     const qs = query.toString();
     
-    const response = await serverFetch<DataResultListSessionDto>(
-      `/api/sessions/${qs ? `?${qs}` : ''}`
-    );
+    const endpoint = qs ? `/api/sessions/?${qs}` : `/api/sessions/`;
+    const response = await serverFetch<DataResultListSessionDto>(endpoint);
     
     if (!response || !response.data) {
       throw new Error('Geçersiz API yanıtı');

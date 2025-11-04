@@ -11,18 +11,22 @@ interface FileUploadProps {
 }
 
 export function FileUpload({ name, label, accept, required }: FileUploadProps) {
-  const { register, formState: { errors }, watch } = useFormContext();
+  const { formState: { errors }, watch, setValue } = useFormContext();
   const [preview, setPreview] = useState<string | null>(null);
   const file = watch(name);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setValue(name, file, { shouldValidate: true });
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreview(reader.result as string);
       };
       reader.readAsDataURL(file);
+    } else {
+      setValue(name, undefined, { shouldValidate: true });
+      setPreview(null);
     }
   };
 
@@ -32,7 +36,7 @@ export function FileUpload({ name, label, accept, required }: FileUploadProps) {
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       <input
-        {...register(name)}
+        name={name}
         type="file"
         accept={accept}
         onChange={handleFileChange}
