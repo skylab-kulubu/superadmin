@@ -133,8 +133,8 @@ export default function EditSessionPage() {
             description: session.description || '',
             startTime: formatDateTimeForInput(session.startTime),
             endTime: session.endTime ? formatDateTimeForInput(session.endTime) : '',
-            orderIndex: session.orderIndex?.toString() || '',
-            sessionType: session.sessionType || '',
+            orderIndex: session.orderIndex ?? undefined,
+            sessionType: session.sessionType ?? undefined,
           }}
         >
           {(methods) => {

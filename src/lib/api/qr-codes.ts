@@ -22,12 +22,18 @@ export const qrCodesApi = {
     const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.yildizskylab.com';
     const headers = apiClient.getHeaders();
     // Blob response için Content-Type header'ını kaldır
-    delete headers['Content-Type'];
+    const headersObj: Record<string, string> =
+      headers instanceof Headers
+        ? Object.fromEntries(headers.entries())
+        : Array.isArray(headers)
+          ? Object.fromEntries(headers)
+          : { ...(headers as Record<string, string>) };
+    delete headersObj['Content-Type'];
     
     const response = await fetch(
       `${API_BASE_URL}/api/qrCodes/generateQRCode?url=${encodeURIComponent(url)}&width=${width}&height=${height}`,
       {
-        headers,
+        headers: headersObj,
         credentials: 'include',
       }
     );
@@ -61,12 +67,18 @@ export const qrCodesApi = {
     const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.yildizskylab.com';
     const headers = apiClient.getHeaders();
     // Blob response için Content-Type header'ını kaldır
-    delete headers['Content-Type'];
+    const headersObj: Record<string, string> =
+      headers instanceof Headers
+        ? Object.fromEntries(headers.entries())
+        : Array.isArray(headers)
+          ? Object.fromEntries(headers)
+          : { ...(headers as Record<string, string>) };
+    delete headersObj['Content-Type'];
     
     const response = await fetch(
       `${API_BASE_URL}/api/qrCodes/generateQRCodeWithLogo?url=${encodeURIComponent(url)}&width=${width}&height=${height}&logoSize=${logoSize}`,
       {
-        headers,
+        headers: headersObj,
         credentials: 'include',
       }
     );

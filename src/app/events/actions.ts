@@ -58,7 +58,7 @@ export async function createEvent(formData: FormData) {
   const data: CreateEventRequest = {
     name: formData.get('name') as string,
     description: formData.get('description') as string || undefined,
-    location: formData.get('location') as string || undefined,
+    location: formData.get('location') as string,
     eventTypeId: formData.get('eventTypeId') as string,
     formUrl: formData.get('formUrl') as string || undefined,
     startDate: formData.get('startDate') as string,

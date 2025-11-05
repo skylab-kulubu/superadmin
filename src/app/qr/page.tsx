@@ -42,7 +42,7 @@ export default function QRPage() {
         <Form
           schema={qrSchema}
           onSubmit={handleGenerate}
-          defaultValues={{ url: 'https://example.com', width: '300', height: '300' }}
+          defaultValues={{ url: 'https://example.com', width: 300, height: 300 }}
         >
           {(methods) => (
             <>

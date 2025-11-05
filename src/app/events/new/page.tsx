@@ -63,7 +63,7 @@ export default function NewEventPage() {
         const eventData = {
           name: data.name,
           description: data.description || undefined,
-          location: data.location || undefined,
+          location: data.location ?? '',
           eventTypeId: data.eventTypeId,
           formUrl: data.formUrl || undefined,
           startDate: new Date(data.startDate).toISOString(),

@@ -115,7 +115,7 @@ export default function EditCompetitorPage() {
           defaultValues={{ 
             userId: competitor.user?.id || '',
             eventId: competitor.event?.id || '',
-            points: competitor.points?.toString() || '',
+            points: competitor.points ?? undefined,
             winner: competitor.winner || false,
           }}
         >

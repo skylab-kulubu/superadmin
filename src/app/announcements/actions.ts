@@ -57,7 +57,7 @@ export async function createAnnouncement(formData: FormData) {
     title: formData.get('title') as string,
     body: formData.get('body') as string,
     active: formData.get('active') === 'true' || undefined,
-    eventTypeId: formData.get('eventTypeId') as string || undefined,
+    eventTypeId: formData.get('eventTypeId') as string,
     formUrl: formData.get('formUrl') as string || undefined,
   };
 

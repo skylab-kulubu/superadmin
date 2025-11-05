@@ -24,20 +24,26 @@ export async function serverFetch<T>(
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.yildizskylab.com';
   const url = `${API_BASE_URL}${endpoint}`;
   
-  const headers: HeadersInit = {
-    'Content-Type': 'application/json',
-    ...options.headers,
-  };
+  const headersObj: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (options.headers) {
+    if (options.headers instanceof Headers) {
+      Object.assign(headersObj, Object.fromEntries(options.headers.entries()));
+    } else if (Array.isArray(options.headers)) {
+      Object.assign(headersObj, Object.fromEntries(options.headers));
+    } else {
+      Object.assign(headersObj, options.headers as Record<string, string>);
+    }
+  }
   
   if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+    headersObj['Authorization'] = `Bearer ${token}`;
   } else {
     console.error('⚠️ Token bulunamadı! Cookie:', cookieStore.getAll().map(c => c.name));
   }
   
   let response = await fetch(url, {
     ...options,
-    headers,
+    headers: headersObj,
     // Server-side'da credentials include gerekmez, cookie'ler otomatik gönderilmez
   });
   
@@ -72,10 +78,10 @@ export async function serverFetch<T>(
           }
           
           // Yeni token ile isteği tekrar gönder
-          headers['Authorization'] = `Bearer ${access_token}`;
+          headersObj['Authorization'] = `Bearer ${access_token}`;
           response = await fetch(url, {
             ...options,
-            headers,
+            headers: headersObj,
           });
           
           console.log('✅ Token yenilendi, istek tekrar gönderildi');

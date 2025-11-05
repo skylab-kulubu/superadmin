@@ -5,16 +5,16 @@ import { useForm, FormProvider, UseFormReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 
-interface FormProps<T extends z.ZodType> {
+interface FormProps<T extends z.ZodType<Record<string, any>>> {
   schema: T;
   onSubmit: (data: z.infer<T>) => Promise<void> | void;
   children: (methods: UseFormReturn<z.infer<T>>) => ReactNode;
   defaultValues?: Partial<z.infer<T>>;
 }
 
-export function Form<T extends z.ZodType>({ schema, onSubmit, children, defaultValues }: FormProps<T>) {
+export function Form<T extends z.ZodType<Record<string, any>>>({ schema, onSubmit, children, defaultValues }: FormProps<T>) {
   const methods = useForm<z.infer<T>>({
-    resolver: zodResolver(schema),
+    resolver: (zodResolver as any)(schema) as any,
     defaultValues: defaultValues as any,
   });
 
