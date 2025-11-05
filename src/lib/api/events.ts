@@ -71,9 +71,11 @@ export const eventsApi = {
     return apiClient.get<DataResultEventDto>(`/api/events/${id}${qs ? `?${qs}` : ''}`);
   },
 
-  async create(coverImage: File, data: CreateEventRequest) {
+  async create(data: CreateEventRequest, coverImage?: File) {
     const formData = new FormData();
-    formData.append('coverImage', coverImage);
+    if (coverImage) {
+      formData.append('coverImage', coverImage);
+    }
     formData.append('data', JSON.stringify(data));
     return apiClient.postFormData<DataResultEventDto>('/api/events/', formData);
   },

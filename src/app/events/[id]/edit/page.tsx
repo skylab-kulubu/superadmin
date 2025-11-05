@@ -10,6 +10,7 @@ import { DatePicker } from '@/components/forms/DatePicker';
 import { Select } from '@/components/forms/Select';
 import { FileUpload } from '@/components/forms/FileUpload';
 import { Button } from '@/components/ui/Button';
+import { Checkbox } from '@/components/forms/Checkbox';
 import { z } from 'zod';
 import { eventsApi } from '@/lib/api/events';
 import { eventTypesApi } from '@/lib/api/event-types';
@@ -42,7 +43,7 @@ export default function EditEventPage() {
   useEffect(() => {
     if (id) {
       Promise.all([
-        eventsApi.getById(id),
+        eventsApi.getById(id, { includeEventType: true }),
         eventTypesApi.getAll(),
       ]).then(([eventResponse, eventTypesResponse]) => {
         if (eventResponse.success && eventResponse.data) {
@@ -119,14 +120,16 @@ export default function EditEventPage() {
     );
   }
 
-  // Tarih formatını düzenle (datetime-local için)
+  // Tarih formatını düzenle (datetime-local için YYYY-MM-DDTHH:mm)
   const formatDateForInput = (dateString: string) => {
     if (!dateString) return '';
     const date = new Date(dateString);
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
   return (
@@ -180,7 +183,14 @@ export default function EditEventPage() {
                   <DatePicker name="startDate" label="Başlangıç Tarihi" required />
                   <DatePicker name="endDate" label="Bitiş Tarihi" />
                   <TextField name="linkedin" label="LinkedIn URL" type="url" />
+                  {event.coverImageUrl && (
+                    <div>
+                      <label className="block text-sm font-medium text-black mb-1">Mevcut Kapak</label>
+                      <img src={event.coverImageUrl} alt="Mevcut Kapak" className="h-24 w-40 object-cover rounded border" />
+                    </div>
+                  )}
                   <FileUpload name="coverImage" label="Kapak Resmi" accept="image/*" />
+                  <Checkbox name="active" label="Aktif" />
                 </div>
                 <div className="mt-6 flex gap-4">
                   <Button type="submit" disabled={isPending}>

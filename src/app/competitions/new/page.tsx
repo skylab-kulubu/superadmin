@@ -8,6 +8,7 @@ import { TextField } from '@/components/forms/TextField';
 import { DatePicker } from '@/components/forms/DatePicker';
 import { Select } from '@/components/forms/Select';
 import { Button } from '@/components/ui/Button';
+import { Checkbox } from '@/components/forms/Checkbox';
 import { z } from 'zod';
 import { competitionsApi } from '@/lib/api/competitions';
 import { eventTypesApi } from '@/lib/api/event-types';
@@ -62,6 +63,7 @@ export default function NewCompetitionPage() {
                 {eventTypes.length > 0 && (
                   <Select name="eventTypeId" label="Etkinlik Tipi" options={eventTypes} />
                 )}
+                <Checkbox name="active" label="Aktif" />
               </div>
               <div className="mt-6 flex gap-4">
                 <Button type="submit" disabled={isPending}>
@@ -78,4 +80,5 @@ export default function NewCompetitionPage() {
     </AppShell>
   );
 }
+
 

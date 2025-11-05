@@ -39,4 +39,12 @@ body {
 @layer base {
   h1 { @apply text-blue-900; }
   h2 { @apply text-blue-900; }
+  select, option { color: #000; }
+  input, textarea, select { color: #000; }
+  /* Görünür gri (Tailwind gray-700: rgb(55 65 81)) */
+  ::placeholder { color: rgb(55 65 81); opacity: 1; }
+  input[type="date"], input[type="time"], input[type="datetime-local"] { color: #000; }
+  input[type="date"]::-webkit-datetime-edit,
+  input[type="time"]::-webkit-datetime-edit,
+  input[type="datetime-local"]::-webkit-datetime-edit { color: rgb(55 65 81); opacity: 1; }
 }

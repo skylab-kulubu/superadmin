@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition, useEffect } from 'react';
+import { useState, useTransition, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/layout/AppShell';
 import { Form } from '@/components/forms/Form';
@@ -10,6 +10,7 @@ import { DatePicker } from '@/components/forms/DatePicker';
 import { Select } from '@/components/forms/Select';
 import { FileUpload } from '@/components/forms/FileUpload';
 import { Button } from '@/components/ui/Button';
+import { Checkbox } from '@/components/forms/Checkbox';
 import { Modal } from '@/components/ui/Modal';
 import { z } from 'zod';
 import { eventsApi } from '@/lib/api/events';
@@ -39,7 +40,7 @@ export default function NewEventPage() {
   const [eventTypes, setEventTypes] = useState<{ value: string; label: string }[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCreatingEventType, setIsCreatingEventType] = useState(false);
-  const [eventFormMethods, setEventFormMethods] = useState<any>(null);
+  const eventFormMethodsRef = useRef<any>(null);
 
   const loadEventTypes = () => {
     eventTypesApi.getAll().then((response) => {
@@ -71,13 +72,7 @@ export default function NewEventPage() {
           active: data.active || undefined,
           competitionId: data.competitionId || undefined,
         };
-
-        if (coverImage) {
-          await eventsApi.create(coverImage, eventData);
-        } else {
-          // Cover image yoksa sadece data gönder
-          await eventsApi.create(new File([], ''), eventData);
-        }
+        await eventsApi.create(eventData, coverImage);
         
         router.push('/events');
       } catch (error) {
@@ -87,13 +82,13 @@ export default function NewEventPage() {
     });
   };
 
-  const handleCreateEventType = async (data: z.infer<typeof eventTypeSchema>, setValue: (name: string, value: string) => void) => {
+  const handleCreateEventType = async (data: z.infer<typeof eventTypeSchema>) => {
     setIsCreatingEventType(true);
     try {
       const response = await eventTypesApi.create({ name: data.name });
       if (response.success && response.data) {
         loadEventTypes();
-        setValue('eventTypeId', response.data.id);
+        eventFormMethodsRef.current?.setValue?.('eventTypeId', response.data.id);
         setIsModalOpen(false);
       }
     } catch (error) {
@@ -110,9 +105,8 @@ export default function NewEventPage() {
         <h1 className="text-2xl font-bold mb-6">Yeni Etkinlik</h1>
         <Form schema={eventSchema} onSubmit={handleSubmit} defaultValues={{ coverImage: undefined, eventTypeId: '' }}>
           {(methods) => {
-            if (!eventFormMethods) {
-              setEventFormMethods(methods);
-            }
+            // Form method'larını ref'te sakla (state set etme, render sırasında setState hatasına yol açar)
+            eventFormMethodsRef.current = methods;
             const formErrors = methods.formState.errors;
             return (
               <>
@@ -153,6 +147,7 @@ export default function NewEventPage() {
                   <DatePicker name="endDate" label="Bitiş Tarihi" />
                   <TextField name="linkedin" label="LinkedIn URL" type="url" />
                   <FileUpload name="coverImage" label="Kapak Resmi" accept="image/*" />
+                <Checkbox name="active" label="Aktif" />
                 </div>
                 <div className="mt-6 flex gap-4">
                   <Button type="submit" disabled={isPending}>
@@ -172,7 +167,7 @@ export default function NewEventPage() {
           onClose={() => setIsModalOpen(false)}
           title="Yeni Etkinlik Tipi"
         >
-          <Form schema={eventTypeSchema} onSubmit={(data) => handleCreateEventType(data, eventFormMethods?.setValue || (() => {}))}>
+          <Form schema={eventTypeSchema} onSubmit={(data) => handleCreateEventType(data)}>
             {(methods) => (
               <>
                 <div className="space-y-4">

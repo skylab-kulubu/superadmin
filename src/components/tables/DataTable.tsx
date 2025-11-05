@@ -78,7 +78,7 @@ export function DataTable<T extends Record<string, any>>({
                       {onEdit && (
                         <button
                           onClick={() => onEdit(row)}
-                          className="text-blue-600 hover:text-blue-900"
+                          className="text-blue-600 hover:text-blue-900 cursor-pointer"
                         >
                           Düzenle
                         </button>
@@ -86,7 +86,7 @@ export function DataTable<T extends Record<string, any>>({
                       {onDelete && (
                         <button
                           onClick={() => onDelete(row)}
-                          className="text-red-600 hover:text-red-900"
+                          className="text-red-600 hover:text-red-900 cursor-pointer"
                         >
                           Sil
                         </button>

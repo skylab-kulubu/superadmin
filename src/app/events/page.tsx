@@ -69,6 +69,7 @@ export default function EventsPage() {
     startDateFormatted: event.startDate ? new Date(event.startDate).toLocaleDateString('tr-TR') : '',
     eventTypeName: event.type?.name || '-',
     statusText: event.active ? 'Aktif' : 'Pasif',
+    locationText: event.location || '-',
   }));
 
   if (loading) {
@@ -106,10 +107,17 @@ export default function EventsPage() {
             data={formattedEvents}
             columns={[
               { key: 'name', header: 'Ad' },
-              { key: 'location', header: 'Konum' },
+              { key: 'locationText', header: 'Konum' },
               { key: 'startDateFormatted', header: 'Başlangıç' },
               { key: 'eventTypeName', header: 'Tip' },
               { key: 'statusText', header: 'Durum' },
+              {
+                key: 'coverImageUrl',
+                header: 'Kapak',
+                render: (value) => value ? (
+                  <img src={String(value)} alt="Kapak" className="h-10 w-16 object-cover rounded" />
+                ) : '-',
+              },
             ]}
             onEdit={handleEdit}
             onDelete={handleDelete}

@@ -6,12 +6,14 @@ import { AppShell } from '@/components/layout/AppShell';
 import { Form } from '@/components/forms/Form';
 import { TextField } from '@/components/forms/TextField';
 import { Button } from '@/components/ui/Button';
+import { Checkbox } from '@/components/forms/Checkbox';
 import { z } from 'zod';
 import { eventTypesApi } from '@/lib/api/event-types';
 import type { EventTypeDto } from '@/types/api';
 
 const eventTypeSchema = z.object({
   name: z.string().min(2, 'En az 2 karakter olmalı'),
+  competitive: z.boolean().optional(),
 });
 
 export default function EditEventTypePage() {
@@ -43,7 +45,7 @@ export default function EditEventTypePage() {
   const handleSubmit = async (data: z.infer<typeof eventTypeSchema>) => {
     startTransition(async () => {
       try {
-        await eventTypesApi.update(id, { name: data.name });
+        await eventTypesApi.update(id, { name: data.name, competitive: data.competitive });
         router.push('/event-types');
       } catch (error) {
         console.error('Event type update error:', error);
@@ -101,6 +103,7 @@ export default function EditEventTypePage() {
                 )}
                 <div className="space-y-4">
                   <TextField name="name" label="Ad" required />
+                  <Checkbox name="competitive" label="Rekabetçi" />
                 </div>
                 <div className="mt-6 flex gap-4">
                   <Button type="submit" disabled={isPending}>
