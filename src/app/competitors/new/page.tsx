@@ -62,7 +62,11 @@ export default function NewCompetitorPage() {
         router.push('/competitors');
       } catch (error) {
         console.error('Competitor creation error:', error);
-        alert('Yarışmacı oluşturulurken hata oluştu: ' + (error instanceof Error ? error.message : 'Bilinmeyen hata'));
+        const rawMessage = error instanceof Error ? error.message : 'Bilinmeyen hata';
+        const userMessage = rawMessage.includes('405') || rawMessage.toLowerCase().includes('method not allowed')
+          ? 'Yarışmacı oluşturma şu anda desteklenmiyor. Lütfen daha sonra tekrar deneyin.'
+          : rawMessage;
+        alert('Yarışmacı oluşturulurken hata oluştu: ' + userMessage);
       }
     });
   };

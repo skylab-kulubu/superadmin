@@ -39,6 +39,22 @@ class ApiClient {
     return headers;
   }
 
+  private mapErrorMessage(message: string | undefined): string | undefined {
+    if (!message) return message;
+    const key = message.trim();
+    const map: Record<string, string> = {
+      'announcement.not.found': 'Duyuru bulunamadı.',
+      'announcements.not.found': 'Duyuru bulunamadı.',
+      'session.not.found': 'Oturum bulunamadı.',
+      'season.not.found': 'Sezon bulunamadı.',
+      'competitor.not.found': 'Yarışmacı bulunamadı.',
+      'method.not.allowed': 'Bu işlem şu anda desteklenmiyor.',
+      'forbidden': 'Bu işlem için yetkiniz yok.',
+      'unauthorized': 'Oturum süreniz dolmuş olabilir. Lütfen tekrar giriş yapın.',
+    };
+    return map[key] || message;
+  }
+
   async request<T>(
     endpoint: string,
     options: RequestInit = {}
@@ -88,11 +104,35 @@ class ApiClient {
           window.location.href = '/login';
         }
       }
-      const error = await response.json().catch(() => ({ message: 'Bir hata oluştu' }));
-      throw new Error(error.message || `HTTP ${response.status}`);
+      // Hata gövdesi boş olabilir; güvenle okumak için text() üzerinden ilerleyelim
+      const errorText = await response.text().catch(() => '');
+      let errorPayload: any = { message: 'Bir hata oluştu' };
+      if (errorText && errorText.trim() !== '') {
+        try {
+          errorPayload = JSON.parse(errorText);
+        } catch {
+          errorPayload = { message: errorText };
+        }
+      }
+      const error = errorPayload;
+      const mapped = this.mapErrorMessage(error.message);
+      throw new Error(mapped || `HTTP ${response.status}`);
     }
 
-    return response.json();
+    // Başarılı durumda gövde boş olabilir (204 No Content veya boş string)
+    if (response.status === 204) {
+      return {} as T;
+    }
+    const text = await response.text();
+    if (!text || text.trim() === '') {
+      return {} as T;
+    }
+    try {
+      return JSON.parse(text) as T;
+    } catch {
+      // Beklenmedik plain text vs. gelirse yine de anlamlı bir obje dönelim
+      return { message: text } as unknown as T;
+    }
   }
 
   get<T>(endpoint: string, options?: RequestInit): Promise<T> {
@@ -148,9 +188,26 @@ class ApiClient {
             window.location.href = '/login';
           }
         }
-        throw new Error(`HTTP ${res.status}`);
+        return res.text().then(txt => {
+          try {
+            const err = txt ? JSON.parse(txt) : { message: `HTTP ${res.status}` };
+            const mapped = this.mapErrorMessage(err.message);
+            throw new Error(mapped || `HTTP ${res.status}`);
+          } catch {
+            const mapped = this.mapErrorMessage(txt);
+            throw new Error(mapped || `HTTP ${res.status}`);
+          }
+        });
       }
-      return res.json();
+      if (res.status === 204) return {} as T;
+      return res.text().then(txt => {
+        if (!txt || txt.trim() === '') return {} as T;
+        try {
+          return JSON.parse(txt) as T;
+        } catch {
+          return { message: txt } as unknown as T;
+        }
+      });
     });
   }
 
@@ -174,9 +231,26 @@ class ApiClient {
             window.location.href = '/login';
           }
         }
-        throw new Error(`HTTP ${res.status}`);
+        return res.text().then(txt => {
+          try {
+            const err = txt ? JSON.parse(txt) : { message: `HTTP ${res.status}` };
+            const mapped = this.mapErrorMessage(err.message);
+            throw new Error(mapped || `HTTP ${res.status}`);
+          } catch {
+            const mapped = this.mapErrorMessage(txt);
+            throw new Error(mapped || `HTTP ${res.status}`);
+          }
+        });
       }
-      return res.json();
+      if (res.status === 204) return {} as T;
+      return res.text().then(txt => {
+        if (!txt || txt.trim() === '') return {} as T;
+        try {
+          return JSON.parse(txt) as T;
+        } catch {
+          return { message: txt } as unknown as T;
+        }
+      });
     });
   }
 }
