@@ -134,9 +134,9 @@ export default function UserDetailPage() {
     return (
       <AppShell>
         <div className="max-w-4xl mx-auto">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-            <h2 className="text-lg font-semibold text-red-800 mb-2">Hata</h2>
-            <p className="text-red-700">{error || 'Kullanıcı bulunamadı'}</p>
+          <div className="bg-pembe-50 border border-pembe-200 rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-pembe-700 mb-2">Hata</h2>
+            <p className="text-pembe-700">{error || 'Kullanıcı bulunamadı'}</p>
             <Button href="/users" variant="secondary" className="mt-4">
               Geri Dön
             </Button>
@@ -152,7 +152,7 @@ export default function UserDetailPage() {
     <AppShell>
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-blue-900">Kullanıcı Detayı</h1>
+          <h1 className="text-2xl font-bold text-yesil">Kullanıcı Detayı</h1>
           <div className="flex items-center gap-2">
             <button
               onClick={async () => {
@@ -168,7 +168,7 @@ export default function UserDetailPage() {
                   setIsProcessing(false);
                 }
               }}
-              className="px-4 py-2 rounded-md font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed bg-red-600 text-white hover:bg-red-700"
+              className="px-4 py-2 rounded-md font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed bg-pembe-500 text-lacivert hover:bg-pembe-600"
               disabled={isProcessing}
             >
               Sil
@@ -179,71 +179,71 @@ export default function UserDetailPage() {
           </div>
         </div>
         
-        <div className="bg-white p-6 rounded-lg shadow">
+        <div className="bg-lacivert p-6 rounded-lg shadow border border-pembe-200">
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div>
-              <label className="block text-sm font-medium text-black mb-1">Ad</label>
+              <label className="block text-sm font-medium text-pembe mb-1">Ad</label>
               <input
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                className="w-full px-3 py-2 border border-pembe-200 rounded-md focus:outline-none focus:ring-2 focus:ring-lacivert focus:border-transparent text-lacivert bg-pembe-50"
                 value={editData.firstName || ''}
                 onChange={(e) => setEditData((d) => ({ ...d, firstName: e.target.value }))}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-black mb-1">Soyad</label>
+              <label className="block text-sm font-medium text-pembe mb-1">Soyad</label>
               <input
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                className="w-full px-3 py-2 border border-pembe-200 rounded-md focus:outline-none focus:ring-2 focus:ring-lacivert focus:border-transparent text-lacivert bg-pembe-50"
                 value={editData.lastName || ''}
                 onChange={(e) => setEditData((d) => ({ ...d, lastName: e.target.value }))}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-black mb-1">Email</label>
+              <label className="block text-sm font-medium text-pembe mb-1">Email</label>
               <input
                 disabled
-                className="w-full px-3 py-2 border border-gray-200 bg-gray-50 rounded-md text-black"
+                className="w-full px-3 py-2 border border-pembe-200 bg-pembe-50 rounded-md text-lacivert"
                 value={user.email}
                 readOnly
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-black mb-1">Kullanıcı Adı</label>
+              <label className="block text-sm font-medium text-pembe mb-1">Kullanıcı Adı</label>
               <input
                 disabled
-                className="w-full px-3 py-2 border border-gray-200 bg-gray-50 rounded-md text-black"
+                className="w-full px-3 py-2 border border-pembe-200 bg-pembe-50 rounded-md text-lacivert"
                 value={user.username}
                 readOnly
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-black mb-1">LinkedIn</label>
+              <label className="block text-sm font-medium text-pembe mb-1">LinkedIn</label>
               <input
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                className="w-full px-3 py-2 border border-pembe-200 rounded-md focus:outline-none focus:ring-2 focus:ring-lacivert focus:border-transparent text-lacivert bg-pembe-50"
                 value={editData.linkedin || ''}
                 onChange={(e) => setEditData((d) => ({ ...d, linkedin: e.target.value }))}
                 placeholder="https://www.linkedin.com/in/..."
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-black mb-1">Üniversite</label>
+              <label className="block text-sm font-medium text-pembe mb-1">Üniversite</label>
               <input
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                className="w-full px-3 py-2 border border-pembe-200 rounded-md focus:outline-none focus:ring-2 focus:ring-lacivert focus:border-transparent text-lacivert bg-pembe-50"
                 value={editData.university || ''}
                 onChange={(e) => setEditData((d) => ({ ...d, university: e.target.value }))}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-black mb-1">Fakülte</label>
+              <label className="block text-sm font-medium text-pembe mb-1">Fakülte</label>
               <input
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                className="w-full px-3 py-2 border border-pembe-200 rounded-md focus:outline-none focus:ring-2 focus:ring-lacivert focus:border-transparent text-lacivert bg-pembe-50"
                 value={editData.faculty || ''}
                 onChange={(e) => setEditData((d) => ({ ...d, faculty: e.target.value }))}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-black mb-1">Bölüm</label>
+              <label className="block text-sm font-medium text-pembe mb-1">Bölüm</label>
               <input
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                className="w-full px-3 py-2 border border-pembe-200 rounded-md focus:outline-none focus:ring-2 focus:ring-lacivert focus:border-transparent text-lacivert bg-pembe-50"
                 value={editData.department || ''}
                 onChange={(e) => setEditData((d) => ({ ...d, department: e.target.value }))}
               />
@@ -252,11 +252,11 @@ export default function UserDetailPage() {
 
           <div className="border-t pt-6">
             <div className="mb-2">
-              <label className="text-sm font-medium text-black">Roller</label>
+              <label className="text-sm font-medium text-pembe">Roller</label>
             </div>
             <div className="grid grid-cols-2 gap-2">
               {(availableRoles || []).map((role) => (
-                <label key={role} className="flex items-center gap-2 text-black">
+                <label key={role} className="flex items-center gap-2 text-pembe">
                   <input
                     type="checkbox"
                     className="h-4 w-4"
@@ -271,7 +271,7 @@ export default function UserDetailPage() {
                 </label>
               ))}
             </div>
-            <p className="mt-2 text-sm text-black opacity-70">Değişiklikleri kaydetmek için Kaydet'e basın.</p>
+            <p className="mt-2 text-sm text-pembe opacity-70">Değişiklikleri kaydetmek için Kaydet'e basın.</p>
           </div>
 
           <div className="flex justify-end mt-6">

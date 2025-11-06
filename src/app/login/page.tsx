@@ -29,9 +29,9 @@ function LoginContent() {
   if (error) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center max-w-md p-6 bg-red-50 border border-red-200 rounded-lg">
-          <h1 className="text-2xl font-bold mb-4 text-red-800">Giriş Hatası</h1>
-          <p className="text-gray-700 mb-4">
+        <div className="text-center max-w-md p-6 bg-lacivert border border-pembe-200 rounded-lg">
+          <h1 className="text-2xl font-bold mb-4 text-yesil">Giriş Hatası</h1>
+          <p className="text-pembe mb-4">
             {error === 'token_exchange_failed' 
               ? 'Token değişimi başarısız oldu. Lütfen tekrar deneyin.'
               : error === 'no_code'
@@ -40,7 +40,7 @@ function LoginContent() {
             }
           </p>
           {details && (
-            <div className="mb-4 p-3 bg-gray-100 rounded text-sm text-left text-gray-600 break-all">
+            <div className="mb-4 p-3 bg-lacivert rounded text-sm text-left text-pembe opacity-80 break-all border border-pembe-200">
               <strong>Detay:</strong> {details}
             </div>
           )}
@@ -49,7 +49,7 @@ function LoginContent() {
               setHasRedirected(false);
               window.location.href = getOAuth2AuthUrl();
             }}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="px-4 py-2 bg-pembe text-lacivert rounded hover:bg-pembe-300 font-medium"
           >
             Tekrar Dene
           </button>
@@ -58,7 +58,7 @@ function LoginContent() {
               onClick={() => {
                 router.push('/login');
               }}
-              className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 text-sm"
+              className="px-4 py-2 bg-pembe-300 text-lacivert rounded hover:bg-pembe-400 text-sm"
             >
               Sayfayı Yenile
             </button>
@@ -106,14 +106,14 @@ function LoginContent() {
 
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center max-w-md p-6 bg-green-50 border border-green-200 rounded-lg">
-          <h1 className="text-2xl font-bold mb-4 text-green-800">Başarıyla Çıkış Yaptınız</h1>
-          <p className="text-gray-700 mb-4">
+        <div className="text-center max-w-md p-6 bg-lacivert border border-pembe-200 rounded-lg">
+          <h1 className="text-2xl font-bold mb-4 text-yesil">Başarıyla Çıkış Yaptınız</h1>
+          <p className="text-pembe mb-4">
             Güvenli bir şekilde çıkış yaptınız. Tekrar giriş yapmak için lütfen aşağıdaki butona tıklayın.
           </p>
           <button
             onClick={handleLogin}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="px-4 py-2 bg-pembe text-lacivert rounded hover:bg-pembe-300 font-medium"
           >
             Giriş Yap
           </button>
@@ -125,8 +125,8 @@ function LoginContent() {
   return (
     <div className="flex min-h-screen items-center justify-center">
       <div className="text-center">
-        <h1 className="text-2xl font-bold mb-4">Yönlendiriliyor...</h1>
-        <p className="text-gray-600">Giriş sayfasına yönlendiriliyorsunuz.</p>
+        <h1 className="text-2xl font-bold mb-4 text-yesil">Yönlendiriliyor...</h1>
+        <p className="text-pembe opacity-60">Giriş sayfasına yönlendiriliyorsunuz.</p>
       </div>
     </div>
   );
@@ -137,7 +137,7 @@ export default function LoginPage() {
     <Suspense fallback={
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Yükleniyor...</h1>
+          <h1 className="text-2xl font-bold mb-4 text-yesil">Yükleniyor...</h1>
         </div>
       </div>
     }>

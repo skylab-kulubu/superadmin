@@ -6,9 +6,10 @@ interface CheckboxProps {
   name: string;
   label: string;
   required?: boolean;
+  hint?: string;
 }
 
-export function Checkbox({ name, label, required }: CheckboxProps) {
+export function Checkbox({ name, label, required, hint }: CheckboxProps) {
   const { register, formState: { errors } } = useFormContext();
 
   return (
@@ -17,14 +18,17 @@ export function Checkbox({ name, label, required }: CheckboxProps) {
         <input
           type="checkbox"
           {...register(name)}
-          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+          className="w-4 h-4 text-lacivert border-pembe-200 rounded focus:ring-lacivert"
         />
-        <span className="text-sm font-medium text-gray-700">
-          {label} {required && <span className="text-red-500">*</span>}
+        <span className="text-sm font-medium text-pembe">
+          {label} {required && <span className="text-pembe">*</span>}
         </span>
       </label>
+      {hint && (
+        <p className="text-xs text-pembe opacity-70 mt-1 ml-6">{hint}</p>
+      )}
       {errors[name] && (
-        <p className="mt-1 text-sm text-red-600">{errors[name]?.message as string}</p>
+        <p className="mt-1 text-sm text-pembe">{errors[name]?.message as string}</p>
       )}
     </div>
   );

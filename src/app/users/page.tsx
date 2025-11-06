@@ -37,37 +37,37 @@ export default async function UsersPage() {
     <AppShell>
       <div>
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-blue-900">Kullanıcılar</h1>
+          <h1 className="text-2xl font-bold text-yesil">Kullanıcılar</h1>
           <Link href="/users/new">
             <Button>Yeni Kullanıcı</Button>
           </Link>
         </div>
 
         {error ? (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-            <h2 className="text-lg font-semibold text-red-800 mb-2">Hata</h2>
-            <p className="text-red-700 mb-4">{error}</p>
+          <div className="bg-lacivert border border-pembe-200 rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-yesil mb-2">Hata</h2>
+            <p className="text-pembe mb-4">{error}</p>
             {error.includes('403') || error.includes('yetkiniz') ? (
-              <div className="text-sm text-red-600">
+              <div className="text-sm text-pembe">
                 <p className="mb-2">Bu sayfayı görüntülemek için gerekli yetkiniz bulunmamaktadır.</p>
                 {currentUser && (
-                  <div className="mt-3 p-3 bg-white rounded border border-red-200">
-                    <p className="font-semibold mb-1">Mevcut Rolleriniz:</p>
-                    <p className="text-gray-700">{currentUser.roles.join(', ') || 'Rol atanmamış'}</p>
-                    <p className="mt-2 text-xs text-gray-600">
+                  <div className="mt-3 p-3 bg-lacivert rounded border border-pembe-200">
+                    <p className="font-semibold mb-1 text-pembe">Mevcut Rolleriniz:</p>
+                    <p className="text-pembe">{currentUser.roles.join(', ') || 'Rol atanmamış'}</p>
+                    <p className="mt-2 text-xs text-pembe opacity-60">
                       Bu sayfa için muhtemelen <strong>ADMIN</strong> veya <strong>USER_MANAGER</strong> rolü gerekmektedir.
                     </p>
                   </div>
                 )}
-                <p className="mt-3">Lütfen yöneticinizle iletişime geçin.</p>
+                <p className="mt-3 text-pembe">Lütfen yöneticinizle iletişime geçin.</p>
               </div>
             ) : (
-              <p className="text-sm text-red-600">Lütfen sayfayı yenileyin veya daha sonra tekrar deneyin.</p>
+              <p className="text-sm text-pembe">Lütfen sayfayı yenileyin veya daha sonra tekrar deneyin.</p>
             )}
           </div>
         ) : users.length === 0 ? (
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
-            <p className="text-gray-600">Henüz kullanıcı bulunmamaktadır.</p>
+          <div className="bg-lacivert border border-pembe-200 rounded-lg p-6 text-center">
+            <p className="text-pembe opacity-60">Henüz kullanıcı bulunmamaktadır.</p>
           </div>
         ) : (
           <UsersTableClient data={usersWithFormattedRoles as any} />

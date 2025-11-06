@@ -134,15 +134,15 @@ export default function EditAnnouncementPage() {
                   </div>
                 )}
                 <div className="space-y-4">
-                  <TextField name="title" label="Başlık" required />
-                  <Textarea name="body" label="İçerik" rows={6} required />
+                  <TextField name="title" label="Başlık" required placeholder="Önemli Duyuru Başlığı" />
+                  <Textarea name="body" label="İçerik" rows={6} required placeholder="Duyuru içeriği..." />
                   <Select 
                     name="eventTypeId" 
                     label="Etkinlik Tipi" 
                     options={eventTypes}
                     required 
                   />
-                  <TextField name="formUrl" label="Form URL" type="url" />
+                  <TextField name="formUrl" label="Form URL" type="url" placeholder="https://forms.google.com/..." />
                   <FileUpload name="coverImage" label="Kapak Resmi" accept="image/*" />
                   <Checkbox name="active" label="Aktif" />
                 </div>

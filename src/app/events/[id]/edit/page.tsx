@@ -170,22 +170,22 @@ export default function EditEventPage() {
                   </div>
                 )}
                 <div className="space-y-4">
-                  <TextField name="name" label="Ad" required />
-                  <Textarea name="description" label="Açıklama" rows={4} />
-                  <TextField name="location" label="Konum" />
+                  <TextField name="name" label="Ad" required placeholder="Yazılım Geliştirme Workshop'u" />
+                  <Textarea name="description" label="Açıklama" rows={4} placeholder="Etkinlik hakkında detaylı bilgi..." />
+                  <TextField name="location" label="Konum" placeholder="YTÜ Davutpaşa Kampüsü" />
                   <Select 
                     name="eventTypeId" 
                     label="Etkinlik Tipi" 
                     options={eventTypes}
                     required 
                   />
-                  <TextField name="formUrl" label="Form URL" type="url" />
+                  <TextField name="formUrl" label="Form URL" type="url" placeholder="https://forms.google.com/..." />
                   <DatePicker name="startDate" label="Başlangıç Tarihi" required />
                   <DatePicker name="endDate" label="Bitiş Tarihi" />
-                  <TextField name="linkedin" label="LinkedIn URL" type="url" />
+                  <TextField name="linkedin" label="LinkedIn URL" type="url" placeholder="https://www.linkedin.com/events/..." />
                   {event.coverImageUrl && (
                     <div>
-                      <label className="block text-sm font-medium text-black mb-1">Mevcut Kapak</label>
+                      <label className="block text-sm font-medium text-pembe mb-1">Mevcut Kapak</label>
                       <img src={event.coverImageUrl} alt="Mevcut Kapak" className="h-24 w-40 object-cover rounded border" />
                     </div>
                   )}

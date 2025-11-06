@@ -148,7 +148,7 @@ export default function EditCompetitorPage() {
                     options={events}
                     required 
                   />
-                  <TextField name="points" label="Puan" type="number" />
+                  <TextField name="points" label="Puan" type="number" placeholder="100" />
                   <Checkbox name="winner" label="Kazanan" />
                 </div>
                 <div className="mt-6 flex gap-4">

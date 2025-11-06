@@ -123,29 +123,19 @@ export default function NewEventPage() {
                   </div>
                 )}
                 <div className="space-y-4">
-                  <TextField name="name" label="Ad" required />
-                  <Textarea name="description" label="Açıklama" rows={4} />
-                  <TextField name="location" label="Konum" />
-                  <div>
-                    <Select 
-                      name="eventTypeId" 
-                      label="Etkinlik Tipi" 
-                      options={eventTypes}
-                      required 
-                    />
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      onClick={() => setIsModalOpen(true)}
-                      className="mt-2 text-sm py-1 px-2"
-                    >
-                      + Yeni Etkinlik Tipi Ekle
-                    </Button>
-                  </div>
-                  <TextField name="formUrl" label="Form URL" type="url" />
+                  <TextField name="name" label="Ad" required placeholder="Yazılım Geliştirme Workshop'u" />
+                  <Textarea name="description" label="Açıklama" rows={4} placeholder="Etkinlik hakkında detaylı bilgi..." />
+                  <TextField name="location" label="Konum" placeholder="YTÜ Davutpaşa Kampüsü" />
+                  <Select 
+                    name="eventTypeId" 
+                    label="Etkinlik Tipi" 
+                    options={eventTypes}
+                    required 
+                  />
+                  <TextField name="formUrl" label="Form URL" type="url" placeholder="https://forms.google.com/..." />
                   <DatePicker name="startDate" label="Başlangıç Tarihi" required />
                   <DatePicker name="endDate" label="Bitiş Tarihi" />
-                  <TextField name="linkedin" label="LinkedIn URL" type="url" />
+                  <TextField name="linkedin" label="LinkedIn URL" type="url" placeholder="https://www.linkedin.com/events/..." />
                   <FileUpload name="coverImage" label="Kapak Resmi" accept="image/*" />
                 <Checkbox name="active" label="Aktif" />
                 </div>
@@ -171,7 +161,7 @@ export default function NewEventPage() {
             {(methods) => (
               <>
                 <div className="space-y-4">
-                  <TextField name="name" label="Ad" required />
+                  <TextField name="name" label="Ad" required placeholder="Workshop, Seminer, vb." />
                 </div>
                 <div className="mt-6 flex gap-4">
                   <Button type="submit" disabled={isCreatingEventType}>

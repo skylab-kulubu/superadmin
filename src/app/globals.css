@@ -1,22 +1,21 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #06032C;
+  --foreground: #eadaff;
+  --lacivert: #06032C;
+  --pembe: #eadaff;
+  --yesil: #27a68e;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-lacivert: var(--lacivert);
+  --color-pembe: var(--pembe);
+  --color-yesil: var(--yesil);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
@@ -25,26 +24,42 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* Lacivert metin: Gri tonları laciverte (blue-900) zorla yönlendir */
-@layer utilities {
-  .text-gray-400 { color: rgb(30 58 138) !important; }
-  .text-gray-500 { color: rgb(30 58 138) !important; }
-  .text-gray-600 { color: rgb(30 58 138) !important; }
-  .text-gray-700 { color: rgb(30 58 138) !important; }
-  .text-gray-800 { color: rgb(30 58 138) !important; }
-  .text-gray-900 { color: rgb(30 58 138) !important; }
-}
-
-/* Başlıkları (Users sayfasındaki gibi) lacivert yap */
+/* Başlıkları yeşil yap */
 @layer base {
-  h1 { @apply text-blue-900; }
-  h2 { @apply text-blue-900; }
-  select, option { color: #000; }
-  input, textarea, select { color: #000; }
-  /* Görünür gri (Tailwind gray-700: rgb(55 65 81)) */
-  ::placeholder { color: rgb(55 65 81); opacity: 1; }
-  input[type="date"], input[type="time"], input[type="datetime-local"] { color: #000; }
+  h1 { color: #27a68e; }
+  h2 { color: #27a68e; }
+  select, option { color: #06032C; }
+  input, textarea, select { color: #06032C; }
+  ::placeholder { color: #eadaff; opacity: 0.6; }
+  input[type="date"], input[type="time"], input[type="datetime-local"] { color: #06032C; }
   input[type="date"]::-webkit-datetime-edit,
   input[type="time"]::-webkit-datetime-edit,
-  input[type="datetime-local"]::-webkit-datetime-edit { color: rgb(55 65 81); opacity: 1; }
+  input[type="datetime-local"]::-webkit-datetime-edit { color: #06032C; }
+  input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+  input[type="time"]::-webkit-datetime-edit-fields-wrapper,
+  input[type="datetime-local"]::-webkit-datetime-edit-fields-wrapper { color: #06032C; }
+  input[type="date"]::-webkit-datetime-edit-text,
+  input[type="time"]::-webkit-datetime-edit-text,
+  input[type="datetime-local"]::-webkit-datetime-edit-text { color: #06032C; opacity: 0.7; }
+  input[type="date"]::-webkit-datetime-edit-month-field,
+  input[type="date"]::-webkit-datetime-edit-day-field,
+  input[type="date"]::-webkit-datetime-edit-year-field,
+  input[type="time"]::-webkit-datetime-edit-hour-field,
+  input[type="time"]::-webkit-datetime-edit-minute-field,
+  input[type="datetime-local"]::-webkit-datetime-edit-month-field,
+  input[type="datetime-local"]::-webkit-datetime-edit-day-field,
+  input[type="datetime-local"]::-webkit-datetime-edit-year-field,
+  input[type="datetime-local"]::-webkit-datetime-edit-hour-field,
+  input[type="datetime-local"]::-webkit-datetime-edit-minute-field { color: #06032C; }
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="time"]::-webkit-calendar-picker-indicator,
+  input[type="datetime-local"]::-webkit-calendar-picker-indicator { 
+    filter: brightness(0) saturate(100%) invert(4%) sepia(8%) saturate(2000%) hue-rotate(200deg) brightness(0.2);
+    cursor: pointer;
+  }
+  input[type="date"]::-webkit-inner-spin-button,
+  input[type="time"]::-webkit-inner-spin-button,
+  input[type="datetime-local"]::-webkit-inner-spin-button { 
+    opacity: 1;
+  }
 }

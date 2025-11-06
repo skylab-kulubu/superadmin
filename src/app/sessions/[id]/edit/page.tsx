@@ -160,13 +160,13 @@ export default function EditSessionPage() {
                     options={events}
                     required 
                   />
-                  <TextField name="title" label="Başlık" required />
-                  <TextField name="speakerName" label="Konuşmacı Adı" />
-                  <TextField name="speakerLinkedin" label="Konuşmacı LinkedIn" type="url" />
-                  <Textarea name="description" label="Açıklama" rows={4} />
+                  <TextField name="title" label="Başlık" required placeholder="React ile Modern Web Geliştirme" />
+                  <TextField name="speakerName" label="Konuşmacı Adı" placeholder="Ahmet Yılmaz" />
+                  <TextField name="speakerLinkedin" label="Konuşmacı LinkedIn" type="url" placeholder="https://www.linkedin.com/in/..." />
+                  <Textarea name="description" label="Açıklama" rows={4} placeholder="Oturum hakkında detaylı bilgi..." />
                   <TextField name="startTime" label="Başlangıç Zamanı" type="datetime-local" required />
                   <TextField name="endTime" label="Bitiş Zamanı" type="datetime-local" />
-                  <TextField name="orderIndex" label="Sıra" type="number" />
+                  <TextField name="orderIndex" label="Sıra" type="number" placeholder="1" />
                   <Select 
                     name="sessionType" 
                     label="Oturum Tipi" 

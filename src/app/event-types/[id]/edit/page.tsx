@@ -102,7 +102,7 @@ export default function EditEventTypePage() {
                   </div>
                 )}
                 <div className="space-y-4">
-                  <TextField name="name" label="Ad" required />
+                  <TextField name="name" label="Ad" required placeholder="Workshop, Seminer, vb." />
                   <Checkbox name="competitive" label="Rekabetçi" />
                 </div>
                 <div className="mt-6 flex gap-4">

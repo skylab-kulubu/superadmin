@@ -61,7 +61,7 @@ export default function NewSeasonPage() {
                   </div>
                 )}
                 <div className="space-y-4">
-                  <TextField name="name" label="Ad" required />
+                  <TextField name="name" label="Ad" required placeholder="2024-2025" />
                   <DatePicker name="startDate" label="Başlangıç Tarihi" required />
                   <DatePicker name="endDate" label="Bitiş Tarihi" required />
                   <Checkbox name="active" label="Aktif" />

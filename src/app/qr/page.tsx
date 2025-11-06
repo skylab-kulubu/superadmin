@@ -47,9 +47,9 @@ export default function QRPage() {
           {(methods) => (
             <>
               <div className="space-y-4">
-                <TextField name="url" label="URL" type="url" required />
-                <TextField name="width" label="Genişlik" type="number" required />
-                <TextField name="height" label="Yükseklik" type="number" required />
+                <TextField name="url" label="URL" type="url" required placeholder="https://example.com" />
+                <TextField name="width" label="Genişlik" type="number" required placeholder="300" />
+                <TextField name="height" label="Yükseklik" type="number" required placeholder="300" />
               </div>
               <div className="mt-6">
                 <Button type="submit" disabled={loading}>

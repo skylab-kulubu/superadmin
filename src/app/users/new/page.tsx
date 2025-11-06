@@ -93,25 +93,25 @@ export default function NewUserPage() {
   return (
     <AppShell>
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6 text-blue-900">Yeni Kullanıcı</h1>
+        <h1 className="text-2xl font-bold mb-6 text-yesil">Yeni Kullanıcı</h1>
         <Form schema={registerSchema} onSubmit={handleSubmit}>
           {(methods) => (
             <>
               <div className="space-y-4">
-                <TextField name="username" label="Kullanıcı Adı" required />
-                <TextField name="email" label="Email" type="email" required />
-                <TextField name="firstName" label="Ad" required />
-                <TextField name="lastName" label="Soyad" required />
-                <TextField name="password" label="Şifre" type="password" required />
+                <TextField name="username" label="Kullanıcı Adı" required placeholder="johndoe" />
+                <TextField name="email" label="Email" type="email" required placeholder="ornek@email.com" />
+                <TextField name="firstName" label="Ad" required placeholder="Ahmet" />
+                <TextField name="lastName" label="Soyad" required placeholder="Yılmaz" />
+                <TextField name="password" label="Şifre" type="password" required placeholder="••••••" />
                 <TextField name="linkedin" label="LinkedIn" placeholder="https://www.linkedin.com/in/..." />
-                <TextField name="university" label="Üniversite" />
-                <TextField name="faculty" label="Fakülte" />
-                <TextField name="department" label="Bölüm" />
+                <TextField name="university" label="Üniversite" placeholder="Yıldız Teknik Üniversitesi" />
+                <TextField name="faculty" label="Fakülte" placeholder="Bilgisayar ve Bilişim Fakültesi" />
+                <TextField name="department" label="Bölüm" placeholder="Bilgisayar Mühendisliği" />
                 <div>
-                  <label className="block text-sm font-medium text-black mb-2">Roller</label>
+                  <label className="block text-sm font-medium text-pembe mb-2">Roller</label>
                   <div className="grid grid-cols-2 gap-2">
                     {(availableRoles || []).map((role) => (
-                      <label key={role} className="flex items-center gap-2 text-black">
+                      <label key={role} className="flex items-center gap-2 text-pembe">
                         <input
                           type="checkbox"
                           className="h-4 w-4"

@@ -51,7 +51,7 @@ export default function NewEventTypePage() {
                   </div>
                 )}
                 <div className="space-y-4">
-                  <TextField name="name" label="Ad" required />
+                  <TextField name="name" label="Ad" required placeholder="Workshop, Seminer, vb." />
                 </div>
                 <div className="mt-6 flex gap-4">
                   <Button type="submit" disabled={isPending}>

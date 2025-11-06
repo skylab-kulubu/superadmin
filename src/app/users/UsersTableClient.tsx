@@ -36,10 +36,10 @@ export function UsersTableClient({ data }: { data: UserRow[] }) {
           header: 'İşlemler',
           render: (_value, row) => (
             <div className="flex items-center gap-3">
-              <Link href={`/users/${row.id}`} className="text-blue-600 hover:text-blue-800 underline cursor-pointer">
+              <Link href={`/users/${row.id}`} className="text-pembe hover:text-yesil underline cursor-pointer">
                 Düzenle
               </Link>
-              <button onClick={() => handleDelete(row)} className="text-red-600 hover:text-red-800 underline cursor-pointer">
+              <button onClick={() => handleDelete(row)} className="text-pembe-600 hover:text-pembe-700 underline cursor-pointer">
                 Sil
               </button>
             </div>
