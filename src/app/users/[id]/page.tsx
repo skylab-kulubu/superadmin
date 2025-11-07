@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { AppShell } from '@/components/layout/AppShell';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
 // import { Modal } from '@/components/ui/Modal';
 import { usersApi } from '@/lib/api/users';
@@ -124,7 +125,12 @@ export default function UserDetailPage() {
     return (
       <AppShell>
         <div className="max-w-4xl mx-auto">
-          <div className="text-center py-8">Yükleniyor...</div>
+          <div className="flex items-center justify-center py-20">
+            <div className="text-center">
+              <div className="w-16 h-16 border-4 border-brand-200 border-t-brand rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-dark-600 font-medium">Yükleniyor...</p>
+            </div>
+          </div>
         </div>
       </AppShell>
     );
@@ -134,12 +140,23 @@ export default function UserDetailPage() {
     return (
       <AppShell>
         <div className="max-w-4xl mx-auto">
-          <div className="bg-light-50 border border-dark-200 rounded-lg p-6">
-            <h2 className="text-lg font-semibold text-dark-700 mb-2">Hata</h2>
-            <p className="text-dark-700">{error || 'Kullanıcı bulunamadı'}</p>
+          <div className="bg-light border-l-4 border-danger rounded-xl shadow-lg p-6">
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0">
+                <div className="w-12 h-12 rounded-full bg-danger-100 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-danger-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+              </div>
+              <div className="flex-1">
+                <h2 className="text-lg font-semibold text-danger-800 mb-2">Hata</h2>
+                <p className="text-dark-700 mb-4">{error || 'Kullanıcı bulunamadı'}</p>
             <Button href="/users" variant="secondary" className="mt-4">
               Geri Dön
             </Button>
+              </div>
+            </div>
           </div>
         </div>
       </AppShell>
@@ -150,10 +167,11 @@ export default function UserDetailPage() {
 
   return (
     <AppShell>
-      <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-brand">Kullanıcı Detayı</h1>
-          <div className="flex items-center gap-2">
+      <div className="space-y-6">
+        <PageHeader
+          title="Kullanıcı Düzenle"
+          description={`${user.firstName} ${user.lastName} - ${user.email}`}
+          actions={(
             <button
               onClick={async () => {
                 if (!user) return;
@@ -173,14 +191,16 @@ export default function UserDetailPage() {
             >
               Sil
             </button>
-            <Button href="/users" variant="secondary">
-              Geri Dön
-            </Button>
-          </div>
-        </div>
+          )}
+        />
         
-        <div className="bg-light p-6 rounded-lg shadow border border-dark-200">
-          <div className="grid grid-cols-2 gap-4 mb-6">
+        <div className="max-w-3xl mx-auto">
+        <div className="bg-light p-4 rounded-lg shadow border border-dark-200">
+          <div className="space-y-5">
+            {/* Temel Bilgiler */}
+            <div>
+              <h3 className="text-sm font-semibold text-dark-800 mb-3">Temel Bilgiler</h3>
+              <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-dark mb-1">Ad</label>
               <input
@@ -201,7 +221,7 @@ export default function UserDetailPage() {
               <label className="block text-sm font-medium text-dark mb-1">Email</label>
               <input
                 disabled
-                className="w-full px-3 py-2 border border-dark-200 bg-light-50 rounded-md text-dark"
+                    className="w-full px-3 py-2 border border-dark-200 bg-dark-50 rounded-md text-dark-500 cursor-not-allowed"
                 value={user.email}
                 readOnly
               />
@@ -210,11 +230,18 @@ export default function UserDetailPage() {
               <label className="block text-sm font-medium text-dark mb-1">Kullanıcı Adı</label>
               <input
                 disabled
-                className="w-full px-3 py-2 border border-dark-200 bg-light-50 rounded-md text-dark"
+                    className="w-full px-3 py-2 border border-dark-200 bg-dark-50 rounded-md text-dark-500 cursor-not-allowed"
                 value={user.username}
                 readOnly
               />
             </div>
+              </div>
+            </div>
+
+            {/* Ek Bilgiler */}
+            <div className="border-t border-dark-200 pt-5">
+              <h3 className="text-sm font-semibold text-dark-800 mb-3">Ek Bilgiler</h3>
+              <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-dark mb-1">LinkedIn</label>
               <input
@@ -249,40 +276,74 @@ export default function UserDetailPage() {
               />
             </div>
           </div>
-
-          <div className="border-t pt-6">
-            <div className="mb-2">
-              <label className="text-sm font-medium text-dark">Roller</label>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              {(availableRoles || []).map((role) => (
-                <label key={role} className="flex items-center gap-2 text-dark">
+
+            {/* Roller */}
+            <div className="border-t border-dark-200 pt-5">
+              <h3 className="text-sm font-semibold text-dark-800 mb-3">Roller</h3>
+              <div className="grid grid-cols-3 gap-2">
+                {(availableRoles || []).map((role) => {
+                  const isSelected = selectedRoles.includes(role);
+                  return (
+                    <label
+                      key={role}
+                      style={{
+                        backgroundColor: isSelected ? '#e6f5f2' : undefined,
+                        borderColor: isSelected ? '#27a68e' : undefined,
+                      }}
+                      className={`flex items-center gap-2 p-2 rounded-md border cursor-pointer transition-all ${
+                        isSelected
+                          ? ''
+                          : 'bg-light border-dark-200'
+                      }`}
+                      onMouseEnter={(e) => {
+                        if (!isSelected) {
+                          e.currentTarget.style.backgroundColor = '#e6f5f2';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isSelected) {
+                          e.currentTarget.style.backgroundColor = '';
+                        }
+                      }}
+                    >
                   <input
                     type="checkbox"
-                    className="h-4 w-4"
-                    checked={selectedRoles.includes(role)}
+                        style={{ accentColor: '#27a68e' }}
+                        className="h-4 w-4 rounded"
+                        checked={isSelected}
                     onChange={(e) => {
                       setSelectedRoles((prev) =>
                         e.target.checked ? [...prev, role] : prev.filter((r) => r !== role)
                       );
                     }}
                   />
-                  <span>{role}</span>
+                      <span 
+                        style={{ color: isSelected ? '#27a68e' : undefined }}
+                        className={`text-sm ${isSelected ? 'font-medium' : 'text-dark-700'}`}
+                      >
+                        {role}
+                      </span>
                 </label>
-              ))}
+                  );
+                })}
             </div>
-            <p className="mt-2 text-sm text-dark opacity-70">Değişiklikleri kaydetmek için Kaydet'e basın.</p>
+              <p className="mt-3 text-xs text-dark-500">Değişiklikleri kaydetmek için Kaydet butonuna basın.</p>
           </div>
 
-          <div className="flex justify-end mt-6">
-            <Button onClick={handleSave} disabled={isSaving}>
+            {/* Action Buttons */}
+            <div className="flex justify-between items-center gap-3 pt-5 border-t border-dark-200">
+              <Button href="/users" variant="secondary" className="text-red-500 hover:bg-red-500 hover:text-white bg-transparent border-red-500">
+                İptal
+              </Button>
+              <Button onClick={handleSave} disabled={isSaving} className="!text-brand hover:!bg-brand hover:!text-white !bg-transparent border-brand">
               {isSaving ? 'Kaydediliyor...' : 'Kaydet'}
             </Button>
+            </div>
           </div>
         </div>
+        </div>
       </div>
-
-      {/* Rol modalı kaldırıldı */}
     </AppShell>
   );
 }

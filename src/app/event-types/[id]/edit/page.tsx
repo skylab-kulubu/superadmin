@@ -3,6 +3,7 @@
 import { useState, useEffect, useTransition } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { AppShell } from '@/components/layout/AppShell';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Form } from '@/components/forms/Form';
 import { TextField } from '@/components/forms/TextField';
 import { Button } from '@/components/ui/Button';
@@ -82,8 +83,12 @@ export default function EditEventTypePage() {
 
   return (
     <AppShell>
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6">Etkinlik Tipi Düzenle</h1>
+      <div className="space-y-6">
+        <PageHeader
+          title="Etkinlik Tipi Düzenle"
+          description={eventType.name}
+        />
+        <div className="max-w-2xl mx-auto">
         <Form schema={eventTypeSchema} onSubmit={handleSubmit} defaultValues={{ name: eventType.name }}>
           {(methods) => {
             const formErrors = methods.formState.errors;
@@ -117,6 +122,7 @@ export default function EditEventTypePage() {
             );
           }}
         </Form>
+        </div>
       </div>
     </AppShell>
   );

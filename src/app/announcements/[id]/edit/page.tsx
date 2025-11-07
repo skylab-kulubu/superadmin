@@ -3,13 +3,14 @@
 import { useState, useTransition, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { AppShell } from '@/components/layout/AppShell';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Form } from '@/components/forms/Form';
 import { TextField } from '@/components/forms/TextField';
 import { Textarea } from '@/components/forms/Textarea';
 import { Select } from '@/components/forms/Select';
 import { FileUpload } from '@/components/forms/FileUpload';
-import { Checkbox } from '@/components/forms/Checkbox';
 import { Button } from '@/components/ui/Button';
+import { Toggle } from '@/components/ui/Toggle';
 import { z } from 'zod';
 import { announcementsApi } from '@/lib/api/announcements';
 import { eventTypesApi } from '@/lib/api/event-types';
@@ -33,6 +34,7 @@ export default function EditAnnouncementPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [eventTypes, setEventTypes] = useState<{ value: string; label: string }[]>([]);
+  const [isActive, setIsActive] = useState(true);
 
   useEffect(() => {
     if (id) {
@@ -42,6 +44,7 @@ export default function EditAnnouncementPage() {
       ]).then(([announcementResponse, eventTypesResponse]) => {
         if (announcementResponse.success && announcementResponse.data) {
           setAnnouncement(announcementResponse.data);
+          setIsActive(announcementResponse.data.active ?? true);
         } else {
           setError('Duyuru bulunamadı');
         }
@@ -63,7 +66,7 @@ export default function EditAnnouncementPage() {
         await announcementsApi.update(id, {
           title: data.title,
           body: data.body,
-          active: data.active,
+          active: isActive,
           eventTypeId: data.eventTypeId,
           formUrl: data.formUrl || undefined,
         });
@@ -103,15 +106,21 @@ export default function EditAnnouncementPage() {
 
   return (
     <AppShell>
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6">Duyuru Düzenle</h1>
+      <div className="space-y-6">
+        <PageHeader
+          title="Duyuru Düzenle"
+          description={announcement.title}
+          actions={<Toggle checked={isActive} onChange={setIsActive} />}
+        />
+
+        <div className="max-w-3xl mx-auto">
+        <div className="bg-light p-4 rounded-lg shadow border border-dark-200">
         <Form 
           schema={announcementSchema} 
           onSubmit={handleSubmit} 
           defaultValues={{ 
             title: announcement.title,
             body: announcement.body,
-            active: announcement.active,
             eventTypeId: announcement.eventType?.id || '',
             formUrl: announcement.formUrl || '',
             coverImage: undefined,
@@ -133,9 +142,18 @@ export default function EditAnnouncementPage() {
                     </ul>
                   </div>
                 )}
+                  <div className="space-y-5">
+                    <div>
+                      <h3 className="text-sm font-semibold text-dark-800 mb-3">Temel Bilgiler</h3>
                 <div className="space-y-4">
                   <TextField name="title" label="Başlık" required placeholder="Önemli Duyuru Başlığı" />
                   <Textarea name="body" label="İçerik" rows={6} required placeholder="Duyuru içeriği..." />
+                      </div>
+                    </div>
+
+                    <div className="border-t border-dark-200 pt-5">
+                      <h3 className="text-sm font-semibold text-dark-800 mb-3">Ek Bilgiler</h3>
+                      <div className="grid grid-cols-2 gap-4">
                   <Select 
                     name="eventTypeId" 
                     label="Etkinlik Tipi" 
@@ -144,20 +162,23 @@ export default function EditAnnouncementPage() {
                   />
                   <TextField name="formUrl" label="Form URL" type="url" placeholder="https://forms.google.com/..." />
                   <FileUpload name="coverImage" label="Kapak Resmi" accept="image/*" />
-                  <Checkbox name="active" label="Aktif" />
+                      </div>
+                    </div>
                 </div>
-                <div className="mt-6 flex gap-4">
-                  <Button type="submit" disabled={isPending}>
+                  <div className="flex justify-between items-center gap-3 mt-6 pt-5 border-t border-dark-200">
+                    <Button href="/announcements" variant="secondary" className="text-red-500 hover:bg-red-500 hover:text-white bg-transparent border-red-500">
+                      İptal
+                    </Button>
+                    <Button type="submit" disabled={isPending} className="!text-brand hover:!bg-brand hover:!text-white !bg-transparent border-brand">
                     {isPending ? 'Güncelleniyor...' : 'Güncelle'}
-                  </Button>
-                  <Button href="/announcements" variant="secondary">
-                    İptal
                   </Button>
                 </div>
               </>
             );
           }}
         </Form>
+        </div>
+        </div>
       </div>
     </AppShell>
   );

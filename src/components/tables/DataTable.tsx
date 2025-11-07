@@ -59,8 +59,11 @@ export function DataTable<T extends Record<string, any>>({
               </td>
             </tr>
           ) : (
-            data.map((row) => (
-              <tr key={getRowId(row)} className="hover:bg-light-300">
+            data.map((row, index) => (
+              <tr 
+                key={getRowId(row)} 
+                className="hover:bg-light-300 transition-colors"
+              >
                 {columns.map((column) => {
                   const value = typeof column.key === 'string' 
                     ? column.key.split('.').reduce((obj, key) => obj?.[key], row)

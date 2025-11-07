@@ -3,6 +3,7 @@
 import { useState, useTransition, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { AppShell } from '@/components/layout/AppShell';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Form } from '@/components/forms/Form';
 import { TextField } from '@/components/forms/TextField';
 import { Select } from '@/components/forms/Select';
@@ -107,8 +108,12 @@ export default function EditCompetitorPage() {
 
   return (
     <AppShell>
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6">Yarışmacı Düzenle</h1>
+      <div className="space-y-6">
+        <PageHeader
+          title="Yarışmacı Düzenle"
+          description={competitor.user ? `${competitor.user.firstName} ${competitor.user.lastName}` : undefined}
+        />
+        <div className="max-w-2xl mx-auto">
         <Form 
           schema={competitorSchema} 
           onSubmit={handleSubmit} 
@@ -163,6 +168,7 @@ export default function EditCompetitorPage() {
             );
           }}
         </Form>
+        </div>
       </div>
     </AppShell>
   );

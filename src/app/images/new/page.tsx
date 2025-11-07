@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/layout/AppShell';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { FileUpload } from '@/components/forms/FileUpload';
 import { Form } from '@/components/forms/Form';
 import { Button } from '@/components/ui/Button';
@@ -43,33 +44,40 @@ export default function NewImagePage() {
 
   return (
     <AppShell>
-      <div className="max-w-2xl mx-auto px-4">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">Yeni Resim</h1>
-        </div>
+      <div className="space-y-6">
+        <PageHeader
+          title="Yeni Resim"
+          description="Sisteme yeni resim yükleyin"
+        />
 
+        <div className="max-w-3xl mx-auto space-y-6">
         {error && (
-          <div className="bg-light border border-dark-200 rounded-lg p-4 mb-6 text-dark">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
             {error}
           </div>
         )}
 
-        <div className="bg-light border border-dark-200 rounded-lg p-6">
+        <div className="bg-light p-4 rounded-lg shadow border border-dark-200">
           <Form schema={uploadSchema} onSubmit={handleSubmit}>
             {() => (
               <>
+                <div className="space-y-5">
+                  <div>
                 <FileUpload name="image" label="Resim" accept="image/*" required />
-                <div className="mt-6 flex items-center gap-3">
-                  <Button type="submit" disabled={uploading}>
-                    {uploading ? 'Yükleniyor...' : 'Yükle'}
-                  </Button>
-                  <Button type="button" variant="secondary" onClick={() => router.back()}>
+                  </div>
+                </div>
+                <div className="flex justify-between items-center gap-3 mt-6 pt-5 border-t border-dark-200">
+                  <Button type="button" variant="secondary" onClick={() => router.back()} className="text-red-500 hover:bg-red-500 hover:text-white bg-transparent border-red-500">
                     İptal
+                  </Button>
+                  <Button type="submit" disabled={uploading} className="!text-brand hover:!bg-brand hover:!text-white !bg-transparent border-brand">
+                    {uploading ? 'Yükleniyor...' : 'Yükle'}
                   </Button>
                 </div>
               </>
             )}
           </Form>
+        </div>
         </div>
       </div>
     </AppShell>

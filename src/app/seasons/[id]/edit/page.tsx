@@ -3,14 +3,16 @@
 import { useState, useTransition, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { AppShell } from '@/components/layout/AppShell';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Form } from '@/components/forms/Form';
 import { TextField } from '@/components/forms/TextField';
 import { DatePicker } from '@/components/forms/DatePicker';
-import { Checkbox } from '@/components/forms/Checkbox';
 import { Button } from '@/components/ui/Button';
+import { Toggle } from '@/components/ui/Toggle';
 import { z } from 'zod';
 import { seasonsApi } from '@/lib/api/seasons';
 import type { SeasonDto } from '@/types/api';
+import { formatGMT0ToLocalInput, convertGMT3ToGMT0 } from '@/lib/utils/date';
 
 const seasonSchema = z.object({
   name: z.string().min(2, 'En az 2 karakter olmalı'),
@@ -27,12 +29,14 @@ export default function EditSeasonPage() {
   const [season, setSeason] = useState<SeasonDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isActive, setIsActive] = useState(true);
 
   useEffect(() => {
     if (id) {
       seasonsApi.getById(id).then((response) => {
         if (response.success && response.data) {
           setSeason(response.data);
+          setIsActive(response.data.active ?? true);
         } else {
           setError('Sezon bulunamadı');
         }
@@ -50,9 +54,9 @@ export default function EditSeasonPage() {
       try {
         await seasonsApi.update(id, {
           name: data.name,
-          startDate: new Date(data.startDate).toISOString(),
-          endDate: new Date(data.endDate).toISOString(),
-          active: data.active,
+          startDate: convertGMT3ToGMT0(data.startDate),
+          endDate: convertGMT3ToGMT0(data.endDate),
+          active: isActive,
         });
         router.push('/seasons');
       } catch (error) {
@@ -88,28 +92,25 @@ export default function EditSeasonPage() {
     );
   }
 
-  // Tarih formatını düzenle (datetime-local için)
-  const formatDateForInput = (dateString: string) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
 
   return (
     <AppShell>
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6">Sezon Düzenle</h1>
+      <div className="space-y-6">
+        <PageHeader
+          title="Sezon Düzenle"
+          description={season.name}
+          actions={<Toggle checked={isActive} onChange={setIsActive} />}
+        />
+
+        <div className="max-w-3xl mx-auto">
+        <div className="bg-light p-4 rounded-lg shadow border border-dark-200">
         <Form 
           schema={seasonSchema} 
           onSubmit={handleSubmit} 
           defaultValues={{ 
             name: season.name,
-            startDate: formatDateForInput(season.startDate),
-            endDate: formatDateForInput(season.endDate),
-            active: season.active,
+            startDate: formatGMT0ToLocalInput(season.startDate),
+            endDate: formatGMT0ToLocalInput(season.endDate),
           }}
         >
           {(methods) => {
@@ -128,24 +129,30 @@ export default function EditSeasonPage() {
                     </ul>
                   </div>
                 )}
-                <div className="space-y-4">
+                  <div className="space-y-5">
+                    <div>
+                      <h3 className="text-sm font-semibold text-dark-800 mb-3">Temel Bilgiler</h3>
+                      <div className="grid grid-cols-2 gap-4">
                   <TextField name="name" label="Ad" required placeholder="2024-2025" />
                   <DatePicker name="startDate" label="Başlangıç Tarihi" required />
                   <DatePicker name="endDate" label="Bitiş Tarihi" required />
-                  <Checkbox name="active" label="Aktif" />
+                      </div>
+                    </div>
                 </div>
-                <div className="mt-6 flex gap-4">
-                  <Button type="submit" disabled={isPending}>
+                  <div className="flex justify-between items-center gap-3 mt-6 pt-5 border-t border-dark-200">
+                    <Button href="/seasons" variant="secondary" className="text-red-500 hover:bg-red-500 hover:text-white bg-transparent border-red-500">
+                      İptal
+                    </Button>
+                    <Button type="submit" disabled={isPending} className="!text-brand hover:!bg-brand hover:!text-white !bg-transparent border-brand">
                     {isPending ? 'Güncelleniyor...' : 'Güncelle'}
-                  </Button>
-                  <Button href="/seasons" variant="secondary">
-                    İptal
                   </Button>
                 </div>
               </>
             );
           }}
         </Form>
+        </div>
+        </div>
       </div>
     </AppShell>
   );

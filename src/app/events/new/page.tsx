@@ -3,6 +3,7 @@
 import { useState, useTransition, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/layout/AppShell';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Form } from '@/components/forms/Form';
 import { TextField } from '@/components/forms/TextField';
 import { Textarea } from '@/components/forms/Textarea';
@@ -15,6 +16,7 @@ import { Modal } from '@/components/ui/Modal';
 import { z } from 'zod';
 import { eventsApi } from '@/lib/api/events';
 import { eventTypesApi } from '@/lib/api/event-types';
+import { convertGMT3ToGMT0, getCurrentDateTimeGMT3 } from '@/lib/utils/date';
 
 const eventSchema = z.object({
   name: z.string().min(2, 'En az 2 karakter olmalı'),
@@ -66,10 +68,10 @@ export default function NewEventPage() {
           location: data.location ?? '',
           eventTypeId: data.eventTypeId,
           formUrl: data.formUrl || undefined,
-          startDate: new Date(data.startDate).toISOString(),
-          endDate: data.endDate ? new Date(data.endDate).toISOString() : undefined,
+          startDate: convertGMT3ToGMT0(data.startDate),
+          endDate: data.endDate ? convertGMT3ToGMT0(data.endDate) : undefined,
           linkedin: data.linkedin || undefined,
-          active: data.active || undefined,
+          active: true,
           competitionId: data.competitionId || undefined,
         };
         await eventsApi.create(eventData, coverImage);
@@ -101,9 +103,19 @@ export default function NewEventPage() {
 
   return (
     <AppShell>
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6">Yeni Etkinlik</h1>
-        <Form schema={eventSchema} onSubmit={handleSubmit} defaultValues={{ coverImage: undefined, eventTypeId: '' }}>
+      <div className="space-y-6">
+        <PageHeader
+          title="Yeni Etkinlik"
+          description="Sisteme yeni etkinlik ekleyin"
+        />
+
+        <div className="max-w-3xl mx-auto">
+        <div className="bg-light p-4 rounded-lg shadow border border-dark-200">
+          <Form schema={eventSchema} onSubmit={handleSubmit} defaultValues={{ 
+          coverImage: undefined, 
+          eventTypeId: '',
+          startDate: getCurrentDateTimeGMT3(),
+        }}>
           {(methods) => {
             // Form method'larını ref'te sakla (state set etme, render sırasında setState hatasına yol açar)
             eventFormMethodsRef.current = methods;
@@ -122,35 +134,55 @@ export default function NewEventPage() {
                     </ul>
                   </div>
                 )}
-                <div className="space-y-4">
+                  <div className="space-y-5">
+                    <div>
+                      <h3 className="text-sm font-semibold text-dark-800 mb-3">Temel Bilgiler</h3>
+                      <div className="grid grid-cols-2 gap-4">
                   <TextField name="name" label="Ad" required placeholder="Yazılım Geliştirme Workshop'u" />
-                  <Textarea name="description" label="Açıklama" rows={4} placeholder="Etkinlik hakkında detaylı bilgi..." />
-                  <TextField name="location" label="Konum" placeholder="YTÜ Davutpaşa Kampüsü" />
                   <Select 
                     name="eventTypeId" 
                     label="Etkinlik Tipi" 
                     options={eventTypes}
                     required 
                   />
+                        <TextField name="location" label="Konum" placeholder="YTÜ Davutpaşa Kampüsü" />
                   <TextField name="formUrl" label="Form URL" type="url" placeholder="https://forms.google.com/..." />
+                      </div>
+                      <div className="mt-4">
+                        <Textarea name="description" label="Açıklama" rows={4} placeholder="Etkinlik hakkında detaylı bilgi..." />
+                      </div>
+                    </div>
+
+                    <div className="border-t border-dark-200 pt-5">
+                      <h3 className="text-sm font-semibold text-dark-800 mb-3">Tarih ve Zaman</h3>
+                      <div className="grid grid-cols-2 gap-4">
                   <DatePicker name="startDate" label="Başlangıç Tarihi" required />
                   <DatePicker name="endDate" label="Bitiş Tarihi" />
+                      </div>
+                    </div>
+
+                    <div className="border-t border-dark-200 pt-5">
+                      <h3 className="text-sm font-semibold text-dark-800 mb-3">Ek Bilgiler</h3>
+                      <div className="space-y-4">
                   <TextField name="linkedin" label="LinkedIn URL" type="url" placeholder="https://www.linkedin.com/events/..." />
                   <FileUpload name="coverImage" label="Kapak Resmi" accept="image/*" />
-                <Checkbox name="active" label="Aktif" />
+                      </div>
+                    </div>
                 </div>
-                <div className="mt-6 flex gap-4">
-                  <Button type="submit" disabled={isPending}>
+                  <div className="flex justify-between items-center gap-3 mt-6 pt-5 border-t border-dark-200">
+                    <Button href="/events" variant="secondary" className="text-red-500 hover:bg-red-500 hover:text-white bg-transparent border-red-500">
+                      İptal
+                    </Button>
+                    <Button type="submit" disabled={isPending} className="!text-brand hover:!bg-brand hover:!text-white !bg-transparent border-brand">
                     {isPending ? 'Kaydediliyor...' : 'Kaydet'}
-                  </Button>
-                  <Button href="/events" variant="secondary">
-                    İptal
                   </Button>
                 </div>
               </>
             );
           }}
         </Form>
+        </div>
+        </div>
 
         <Modal
           isOpen={isModalOpen}
@@ -163,12 +195,12 @@ export default function NewEventPage() {
                 <div className="space-y-4">
                   <TextField name="name" label="Ad" required placeholder="Workshop, Seminer, vb." />
                 </div>
-                <div className="mt-6 flex gap-4">
-                  <Button type="submit" disabled={isCreatingEventType}>
-                    {isCreatingEventType ? 'Kaydediliyor...' : 'Kaydet'}
-                  </Button>
-                  <Button type="button" variant="secondary" onClick={() => setIsModalOpen(false)}>
+                <div className="mt-6 flex justify-between items-center gap-3 pt-5 border-t border-dark-200">
+                  <Button type="button" variant="secondary" onClick={() => setIsModalOpen(false)} className="text-red-500 hover:bg-red-500 hover:text-white bg-transparent border-red-500">
                     İptal
+                  </Button>
+                  <Button type="submit" disabled={isCreatingEventType} className="!text-brand hover:!bg-brand hover:!text-white !bg-transparent border-brand">
+                    {isCreatingEventType ? 'Kaydediliyor...' : 'Kaydet'}
                   </Button>
                 </div>
               </>

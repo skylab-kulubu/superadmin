@@ -18,7 +18,7 @@ export function Button({ children, onClick, href, variant = 'primary', type = 'b
   const baseClasses = 'px-4 py-2 rounded-md font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed';
   const variantClasses = {
     primary: 'bg-brand text-light hover:bg-brand-600 border border-brand',
-    secondary: 'bg-dark-200 text-light hover:bg-dark-300',
+    secondary: 'bg-light-300 text-dark hover:bg-light-400 border border-dark-200',
     danger: 'bg-red-500 text-light hover:bg-red-600',
   };
 

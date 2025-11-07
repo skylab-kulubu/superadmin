@@ -3,6 +3,7 @@
 import { useState, useTransition, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { AppShell } from '@/components/layout/AppShell';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Form } from '@/components/forms/Form';
 import { TextField } from '@/components/forms/TextField';
 import { Textarea } from '@/components/forms/Textarea';
@@ -10,11 +11,12 @@ import { DatePicker } from '@/components/forms/DatePicker';
 import { Select } from '@/components/forms/Select';
 import { FileUpload } from '@/components/forms/FileUpload';
 import { Button } from '@/components/ui/Button';
-import { Checkbox } from '@/components/forms/Checkbox';
+import { Toggle } from '@/components/ui/Toggle';
 import { z } from 'zod';
 import { eventsApi } from '@/lib/api/events';
 import { eventTypesApi } from '@/lib/api/event-types';
 import type { EventDto } from '@/types/api';
+import { formatGMT0ToLocalInput, convertGMT3ToGMT0 } from '@/lib/utils/date';
 
 const eventSchema = z.object({
   name: z.string().min(2, 'En az 2 karakter olmalı'),
@@ -39,6 +41,7 @@ export default function EditEventPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [eventTypes, setEventTypes] = useState<{ value: string; label: string }[]>([]);
+  const [isActive, setIsActive] = useState(true);
 
   useEffect(() => {
     if (id) {
@@ -48,6 +51,7 @@ export default function EditEventPage() {
       ]).then(([eventResponse, eventTypesResponse]) => {
         if (eventResponse.success && eventResponse.data) {
           setEvent(eventResponse.data);
+          setIsActive(eventResponse.data.active ?? true);
         } else {
           setError('Etkinlik bulunamadı');
         }
@@ -73,10 +77,10 @@ export default function EditEventPage() {
           location: data.location || undefined,
           eventTypeId: data.eventTypeId,
           formUrl: data.formUrl || undefined,
-          startDate: new Date(data.startDate).toISOString(),
-          endDate: data.endDate ? new Date(data.endDate).toISOString() : undefined,
+          startDate: convertGMT3ToGMT0(data.startDate),
+          endDate: data.endDate ? convertGMT3ToGMT0(data.endDate) : undefined,
           linkedin: data.linkedin || undefined,
-          active: data.active || undefined,
+          active: isActive,
           competitionId: data.competitionId || undefined,
         };
 
@@ -120,22 +124,18 @@ export default function EditEventPage() {
     );
   }
 
-  // Tarih formatını düzenle (datetime-local için YYYY-MM-DDTHH:mm)
-  const formatDateForInput = (dateString: string) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
-  };
 
   return (
     <AppShell>
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6">Etkinlik Düzenle</h1>
+      <div className="space-y-6">
+        <PageHeader
+          title="Etkinlik Düzenle"
+          description={event.name}
+          actions={<Toggle checked={isActive} onChange={setIsActive} />}
+        />
+
+        <div className="max-w-3xl mx-auto">
+        <div className="bg-light p-4 rounded-lg shadow border border-dark-200">
         <Form 
           schema={eventSchema} 
           onSubmit={handleSubmit} 
@@ -145,10 +145,9 @@ export default function EditEventPage() {
             location: event.location || '',
             eventTypeId: event.type?.id || '',
             formUrl: event.formUrl || '',
-            startDate: formatDateForInput(event.startDate),
-            endDate: event.endDate ? formatDateForInput(event.endDate) : '',
+            startDate: formatGMT0ToLocalInput(event.startDate),
+            endDate: event.endDate ? formatGMT0ToLocalInput(event.endDate) : '',
             linkedin: event.linkedin || '',
-            active: event.active,
             competitionId: event.competition?.id || '',
             coverImage: undefined,
           }}
@@ -169,19 +168,36 @@ export default function EditEventPage() {
                     </ul>
                   </div>
                 )}
-                <div className="space-y-4">
+                  <div className="space-y-5">
+                    <div>
+                      <h3 className="text-sm font-semibold text-dark-800 mb-3">Temel Bilgiler</h3>
+                      <div className="grid grid-cols-2 gap-4">
                   <TextField name="name" label="Ad" required placeholder="Yazılım Geliştirme Workshop'u" />
-                  <Textarea name="description" label="Açıklama" rows={4} placeholder="Etkinlik hakkında detaylı bilgi..." />
-                  <TextField name="location" label="Konum" placeholder="YTÜ Davutpaşa Kampüsü" />
                   <Select 
                     name="eventTypeId" 
                     label="Etkinlik Tipi" 
                     options={eventTypes}
                     required 
                   />
+                        <TextField name="location" label="Konum" placeholder="YTÜ Davutpaşa Kampüsü" />
                   <TextField name="formUrl" label="Form URL" type="url" placeholder="https://forms.google.com/..." />
+                      </div>
+                      <div className="mt-4">
+                        <Textarea name="description" label="Açıklama" rows={4} placeholder="Etkinlik hakkında detaylı bilgi..." />
+                      </div>
+                    </div>
+
+                    <div className="border-t border-dark-200 pt-5">
+                      <h3 className="text-sm font-semibold text-dark-800 mb-3">Tarih ve Zaman</h3>
+                      <div className="grid grid-cols-2 gap-4">
                   <DatePicker name="startDate" label="Başlangıç Tarihi" required />
                   <DatePicker name="endDate" label="Bitiş Tarihi" />
+                      </div>
+                    </div>
+
+                    <div className="border-t border-dark-200 pt-5">
+                      <h3 className="text-sm font-semibold text-dark-800 mb-3">Ek Bilgiler</h3>
+                      <div className="space-y-4">
                   <TextField name="linkedin" label="LinkedIn URL" type="url" placeholder="https://www.linkedin.com/events/..." />
                   {event.coverImageUrl && (
                     <div>
@@ -190,20 +206,23 @@ export default function EditEventPage() {
                     </div>
                   )}
                   <FileUpload name="coverImage" label="Kapak Resmi" accept="image/*" />
-                  <Checkbox name="active" label="Aktif" />
+                      </div>
+                    </div>
                 </div>
-                <div className="mt-6 flex gap-4">
-                  <Button type="submit" disabled={isPending}>
+                  <div className="flex justify-between items-center gap-3 mt-6 pt-5 border-t border-dark-200">
+                    <Button href="/events" variant="secondary" className="text-red-500 hover:bg-red-500 hover:text-white bg-transparent border-red-500">
+                      İptal
+                    </Button>
+                    <Button type="submit" disabled={isPending} className="!text-brand hover:!bg-brand hover:!text-white !bg-transparent border-brand">
                     {isPending ? 'Güncelleniyor...' : 'Güncelle'}
-                  </Button>
-                  <Button href="/events" variant="secondary">
-                    İptal
                   </Button>
                 </div>
               </>
             );
           }}
         </Form>
+        </div>
+        </div>
       </div>
     </AppShell>
   );

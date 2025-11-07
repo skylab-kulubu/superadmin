@@ -3,6 +3,7 @@
 import { useState, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/layout/AppShell';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Form } from '@/components/forms/Form';
 import { TextField } from '@/components/forms/TextField';
 import { Button } from '@/components/ui/Button';
@@ -92,29 +93,78 @@ export default function NewUserPage() {
 
   return (
     <AppShell>
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6 text-brand">Yeni Kullanıcı</h1>
-        <Form schema={registerSchema} onSubmit={handleSubmit}>
+      <div className="space-y-6">
+        <PageHeader
+          title="Yeni Kullanıcı"
+          description="Sisteme yeni kullanıcı ekleyin"
+        />
+
+        <div className="max-w-3xl mx-auto">
+        <div className="bg-light p-4 rounded-lg shadow border border-dark-200">
+        <Form
+          schema={registerSchema}
+          onSubmit={handleSubmit}
+          defaultValues={{
+            university: 'Yıldız Teknik Üniversitesi',
+          }}
+        >
           {(methods) => (
             <>
-              <div className="space-y-4">
+                <div className="space-y-5">
+                  {/* Temel Bilgiler */}
+                  <div>
+                    <h3 className="text-sm font-semibold text-dark-800 mb-3">Temel Bilgiler</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <TextField name="firstName" label="Ad" required placeholder="Ahmet" />
+                      <TextField name="lastName" label="Soyad" required placeholder="Yılmaz" />
                 <TextField name="username" label="Kullanıcı Adı" required placeholder="johndoe" />
                 <TextField name="email" label="Email" type="email" required placeholder="ornek@email.com" />
-                <TextField name="firstName" label="Ad" required placeholder="Ahmet" />
-                <TextField name="lastName" label="Soyad" required placeholder="Yılmaz" />
                 <TextField name="password" label="Şifre" type="password" required placeholder="••••••" />
+                    </div>
+                  </div>
+
+                  {/* Ek Bilgiler */}
+                  <div className="border-t border-dark-200 pt-5">
+                    <h3 className="text-sm font-semibold text-dark-800 mb-3">Ek Bilgiler (Opsiyonel)</h3>
+                    <div className="grid grid-cols-2 gap-4">
                 <TextField name="linkedin" label="LinkedIn" placeholder="https://www.linkedin.com/in/..." />
                 <TextField name="university" label="Üniversite" placeholder="Yıldız Teknik Üniversitesi" />
                 <TextField name="faculty" label="Fakülte" placeholder="Bilgisayar ve Bilişim Fakültesi" />
                 <TextField name="department" label="Bölüm" placeholder="Bilgisayar Mühendisliği" />
-                <div>
-                  <label className="block text-sm font-medium text-dark mb-2">Roller</label>
-                  <div className="grid grid-cols-2 gap-2">
+                    </div>
+                  </div>
+
+                  {/* Roller */}
+                  <div className="border-t border-dark-200 pt-5">
+                    <h3 className="text-sm font-semibold text-dark-800 mb-3">Roller</h3>
+                    <div className="grid grid-cols-3 gap-2">
                     {(availableRoles || []).map((role) => (
-                      <label key={role} className="flex items-center gap-2 text-dark">
+                        <label
+                          key={role}
+                          style={{
+                            backgroundColor: selectedRoles.includes(role) ? '#e6f5f2' : undefined,
+                            borderColor: selectedRoles.includes(role) ? '#27a68e' : undefined,
+                          }}
+                          className={`flex items-center gap-2 p-2 rounded-md border cursor-pointer transition-all ${
+                            selectedRoles.includes(role)
+                              ? ''
+                              : 'bg-light border-dark-200'
+                          }`}
+                          onMouseEnter={(e) => {
+                            if (!selectedRoles.includes(role)) {
+                              e.currentTarget.style.backgroundColor = '#e6f5f2';
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!selectedRoles.includes(role)) {
+                              e.currentTarget.style.backgroundColor = '';
+                            }
+                          }}
+                        >
                         <input
                           type="checkbox"
-                          className="h-4 w-4"
+                            style={{ accentColor: '#27a68e' }}
+                            className="h-4 w-4 rounded"
                           checked={selectedRoles.includes(role)}
                           onChange={(e) => {
                             setSelectedRoles((prev) =>
@@ -122,23 +172,30 @@ export default function NewUserPage() {
                             );
                           }}
                         />
-                        <span>{role}</span>
+                          <span 
+                            style={{ color: selectedRoles.includes(role) ? '#27a68e' : undefined }}
+                            className={`text-sm ${selectedRoles.includes(role) ? 'font-medium' : 'text-dark-700'}`}
+                          >
+                            {role}
+                          </span>
                       </label>
                     ))}
                   </div>
                 </div>
               </div>
-              <div className="mt-6 flex gap-4">
-                <Button type="submit" disabled={isPending}>
+                <div className="flex justify-between items-center gap-3 mt-6 pt-5 border-t border-dark-200">
+                  <Button href="/users" variant="secondary" className="text-red-500 hover:bg-red-500 hover:text-white bg-transparent border-red-500">
+                    İptal
+                  </Button>
+                  <Button type="submit" disabled={isPending} className="!text-brand hover:!bg-brand hover:!text-white !bg-transparent border-brand">
                   {isPending ? 'Kaydediliyor...' : 'Kaydet'}
-                </Button>
-                <Button href="/users" variant="secondary">
-                  İptal
                 </Button>
               </div>
             </>
           )}
         </Form>
+        </div>
+        </div>
       </div>
     </AppShell>
   );

@@ -3,6 +3,7 @@
 import { useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/layout/AppShell';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Form } from '@/components/forms/Form';
 import { TextField } from '@/components/forms/TextField';
 import { Button } from '@/components/ui/Button';
@@ -31,8 +32,14 @@ export default function NewEventTypePage() {
 
   return (
     <AppShell>
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6">Yeni Etkinlik Tipi</h1>
+      <div className="space-y-6">
+        <PageHeader
+          title="Yeni Etkinlik Tipi"
+          description="Sisteme yeni etkinlik tipi ekleyin"
+        />
+
+        <div className="max-w-3xl mx-auto">
+        <div className="bg-light p-4 rounded-lg shadow border border-dark-200">
         <Form schema={eventTypeSchema} onSubmit={handleSubmit}>
           {(methods) => {
             const formErrors = methods.formState.errors;
@@ -50,21 +57,25 @@ export default function NewEventTypePage() {
                     </ul>
                   </div>
                 )}
-                <div className="space-y-4">
+                  <div className="space-y-5">
+                    <div>
                   <TextField name="name" label="Ad" required placeholder="Workshop, Seminer, vb." />
                 </div>
-                <div className="mt-6 flex gap-4">
-                  <Button type="submit" disabled={isPending}>
+                  </div>
+                  <div className="flex justify-between items-center gap-3 mt-6 pt-5 border-t border-dark-200">
+                    <Button href="/event-types" variant="secondary" className="text-red-500 hover:bg-red-500 hover:text-white bg-transparent border-red-500">
+                      İptal
+                    </Button>
+                    <Button type="submit" disabled={isPending} className="!text-brand hover:!bg-brand hover:!text-white !bg-transparent border-brand">
                     {isPending ? 'Kaydediliyor...' : 'Kaydet'}
-                  </Button>
-                  <Button href="/event-types" variant="secondary">
-                    İptal
                   </Button>
                 </div>
               </>
             );
           }}
         </Form>
+        </div>
+        </div>
       </div>
     </AppShell>
   );

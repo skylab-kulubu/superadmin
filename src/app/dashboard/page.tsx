@@ -1,4 +1,5 @@
 import { AppShell } from '@/components/layout/AppShell';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { getUsers } from '@/app/users/actions';
 import { getCompetitions } from '@/app/competitions/actions';
 import { getEvents } from '@/app/events/actions';
@@ -39,8 +40,11 @@ export default async function DashboardPage() {
 
   return (
     <AppShell>
-      <div>
-        <h1 className="text-2xl font-bold mb-6 text-brand">Dashboard</h1>
+      <div className="space-y-6">
+        <PageHeader
+          title="Dashboard"
+          description="Genel durumu ve temel metrikleri görüntüleyin"
+        />
         
         {backendError && (
           <div className="mb-6 bg-light border border-dark-200 rounded-lg p-4">

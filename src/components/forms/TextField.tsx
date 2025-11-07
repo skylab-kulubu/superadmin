@@ -9,9 +9,11 @@ interface TextFieldProps {
   placeholder?: string;
   required?: boolean;
   hint?: string;
+  max?: string;
+  defaultValue?: string;
 }
 
-export function TextField({ name, label, type = 'text', placeholder, required, hint }: TextFieldProps) {
+export function TextField({ name, label, type = 'text', placeholder, required, hint, max, defaultValue }: TextFieldProps) {
   const { register, formState: { errors } } = useFormContext();
 
   return (
@@ -26,6 +28,8 @@ export function TextField({ name, label, type = 'text', placeholder, required, h
         {...register(name)}
         type={type}
         placeholder={placeholder}
+        max={max}
+        defaultValue={defaultValue}
         className="w-full px-3 py-2 bg-light border border-dark-200 rounded-md focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent text-dark placeholder:text-dark placeholder:opacity-60"
       />
       {errors[name] && (

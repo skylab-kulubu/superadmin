@@ -3,16 +3,18 @@
 import { useState, useTransition, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { AppShell } from '@/components/layout/AppShell';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Form } from '@/components/forms/Form';
 import { TextField } from '@/components/forms/TextField';
 import { DatePicker } from '@/components/forms/DatePicker';
 import { Select } from '@/components/forms/Select';
-import { Checkbox } from '@/components/forms/Checkbox';
 import { Button } from '@/components/ui/Button';
+import { Toggle } from '@/components/ui/Toggle';
 import { z } from 'zod';
 import { competitionsApi } from '@/lib/api/competitions';
 import { eventTypesApi } from '@/lib/api/event-types';
 import type { CompetitionDto } from '@/types/api';
+import { formatGMT0ToLocalInput, convertGMT3ToGMT0 } from '@/lib/utils/date';
 
 const competitionSchema = z.object({
   name: z.string().min(2, 'En az 2 karakter olmalı'),
@@ -31,6 +33,7 @@ export default function EditCompetitionPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [eventTypes, setEventTypes] = useState<{ value: string; label: string }[]>([]);
+  const [isActive, setIsActive] = useState(true);
 
   useEffect(() => {
     if (id) {
@@ -40,6 +43,7 @@ export default function EditCompetitionPage() {
       ]).then(([competitionResponse, eventTypesResponse]) => {
         if (competitionResponse.success && competitionResponse.data) {
           setCompetition(competitionResponse.data);
+          setIsActive(competitionResponse.data.active ?? true);
         } else {
           setError('Yarışma bulunamadı');
         }
@@ -60,9 +64,10 @@ export default function EditCompetitionPage() {
       try {
         await competitionsApi.update(id, {
           name: data.name,
-          startDate: new Date(data.startDate).toISOString(),
-          endDate: new Date(data.endDate).toISOString(),
-          active: data.active,
+          startDate: convertGMT3ToGMT0(data.startDate),
+          endDate: convertGMT3ToGMT0(data.endDate),
+          active: isActive,
+          eventTypeId: data.eventTypeId || undefined,
         });
         router.push('/competitions');
       } catch (error) {
@@ -98,28 +103,25 @@ export default function EditCompetitionPage() {
     );
   }
 
-  // Tarih formatını düzenle (datetime-local için)
-  const formatDateForInput = (dateString: string) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
 
   return (
     <AppShell>
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6">Yarışma Düzenle</h1>
+      <div className="space-y-6">
+        <PageHeader
+          title="Yarışma Düzenle"
+          description={competition.name}
+          actions={<Toggle checked={isActive} onChange={setIsActive} />}
+        />
+
+        <div className="max-w-3xl mx-auto">
+        <div className="bg-light p-4 rounded-lg shadow border border-dark-200">
         <Form 
           schema={competitionSchema} 
           onSubmit={handleSubmit} 
           defaultValues={{ 
             name: competition.name,
-            startDate: formatDateForInput(competition.startDate),
-            endDate: formatDateForInput(competition.endDate),
-            active: competition.active,
+            startDate: formatGMT0ToLocalInput(competition.startDate),
+            endDate: formatGMT0ToLocalInput(competition.endDate),
             eventTypeId: competition.eventType?.id || '',
           }}
         >
@@ -139,27 +141,33 @@ export default function EditCompetitionPage() {
                     </ul>
                   </div>
                 )}
-                <div className="space-y-4">
+                  <div className="space-y-5">
+                    <div>
+                      <h3 className="text-sm font-semibold text-dark-800 mb-3">Temel Bilgiler</h3>
+                      <div className="grid grid-cols-2 gap-4">
                   <TextField name="name" label="Ad" required placeholder="Hackathon 2024" />
-                  <DatePicker name="startDate" label="Başlangıç Tarihi" required />
-                  <DatePicker name="endDate" label="Bitiş Tarihi" required />
                   {eventTypes.length > 0 && (
                     <Select name="eventTypeId" label="Etkinlik Tipi" options={eventTypes} />
                   )}
-                  <Checkbox name="active" label="Aktif" />
+                        <DatePicker name="startDate" label="Başlangıç Tarihi" required />
+                        <DatePicker name="endDate" label="Bitiş Tarihi" required />
+                      </div>
+                    </div>
                 </div>
-                <div className="mt-6 flex gap-4">
-                  <Button type="submit" disabled={isPending}>
+                  <div className="flex justify-between items-center gap-3 mt-6 pt-5 border-t border-dark-200">
+                    <Button href="/competitions" variant="secondary" className="text-red-500 hover:bg-red-500 hover:text-white bg-transparent border-red-500">
+                      İptal
+                    </Button>
+                    <Button type="submit" disabled={isPending} className="!text-brand hover:!bg-brand hover:!text-white !bg-transparent border-brand">
                     {isPending ? 'Güncelleniyor...' : 'Güncelle'}
-                  </Button>
-                  <Button href="/competitions" variant="secondary">
-                    İptal
                   </Button>
                 </div>
               </>
             );
           }}
         </Form>
+        </div>
+        </div>
       </div>
     </AppShell>
   );

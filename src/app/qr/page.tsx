@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { AppShell } from '@/components/layout/AppShell';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { qrCodesApi } from '@/lib/api/qr-codes';
 import { Button } from '@/components/ui/Button';
 import { TextField } from '@/components/forms/TextField';
@@ -52,8 +53,13 @@ export default function QRPage() {
   return (
     <AppShell>
       <ErrorBoundary>
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6">QR Kod Oluştur</h1>
+      <div className="space-y-6">
+        <PageHeader
+          title="QR Kodlar"
+          description="Bağlantılarınız için hızlıca QR kod oluşturun"
+        />
+        <div className="max-w-2xl mx-auto space-y-6">
+        <div className="bg-light p-4 rounded-lg shadow border border-dark-200">
         <Form
           schema={qrSchema}
           onSubmit={handleGenerate}
@@ -89,12 +95,13 @@ export default function QRPage() {
             );
           }}
         </Form>
+        </div>
         {error && (
-          <div className="mt-4 p-3 rounded-md border border-red-300 bg-red-50 text-red-700 text-sm">{error}</div>
+          <div className="p-3 rounded-md border border-red-300 bg-red-50 text-red-700 text-sm">{error}</div>
         )}
         
         {qrCode && (
-          <div className="mt-6">
+          <div>
             <img
               src={qrCode}
               alt="QR Code"
@@ -103,6 +110,7 @@ export default function QRPage() {
             />
           </div>
         )}
+        </div>
       </div>
       </ErrorBoundary>
     </AppShell>

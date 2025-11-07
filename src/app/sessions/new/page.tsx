@@ -3,6 +3,7 @@
 import { useState, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/layout/AppShell';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Form } from '@/components/forms/Form';
 import { TextField } from '@/components/forms/TextField';
 import { Textarea } from '@/components/forms/Textarea';
@@ -11,6 +12,7 @@ import { Button } from '@/components/ui/Button';
 import { z } from 'zod';
 import { sessionsApi } from '@/lib/api/sessions';
 import { eventsApi } from '@/lib/api/events';
+import { convertGMT3ToGMT0, getCurrentDateTimeGMT3 } from '@/lib/utils/date';
 
 const sessionSchema = z.object({
   eventId: z.string().min(1, 'Etkinlik seçiniz'),
@@ -48,8 +50,8 @@ export default function NewSessionPage() {
           speakerName: data.speakerName || undefined,
           speakerLinkedin: data.speakerLinkedin || undefined,
           description: data.description || undefined,
-          startTime: new Date(data.startTime).toISOString(),
-          endTime: data.endTime ? new Date(data.endTime).toISOString() : undefined,
+          startTime: convertGMT3ToGMT0(data.startTime),
+          endTime: data.endTime ? convertGMT3ToGMT0(data.endTime) : undefined,
           orderIndex: data.orderIndex,
           sessionType: data.sessionType,
         });
@@ -63,9 +65,18 @@ export default function NewSessionPage() {
 
   return (
     <AppShell>
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6">Yeni Oturum</h1>
-        <Form schema={sessionSchema} onSubmit={handleSubmit} defaultValues={{ eventId: '' }}>
+      <div className="space-y-6">
+        <PageHeader
+          title="Yeni Oturum"
+          description="Sisteme yeni oturum ekleyin"
+        />
+
+        <div className="max-w-3xl mx-auto">
+        <div className="bg-light p-4 rounded-lg shadow border border-dark-200">
+          <Form schema={sessionSchema} onSubmit={handleSubmit} defaultValues={{ 
+          eventId: '',
+          startTime: getCurrentDateTimeGMT3(),
+        }}>
           {(methods) => {
             const formErrors = methods.formState.errors;
             return (
@@ -82,7 +93,10 @@ export default function NewSessionPage() {
                     </ul>
                   </div>
                 )}
-                <div className="space-y-4">
+                  <div className="space-y-5">
+                    <div>
+                      <h3 className="text-sm font-semibold text-dark-800 mb-3">Temel Bilgiler</h3>
+                      <div className="grid grid-cols-2 gap-4">
                   <Select 
                     name="eventId" 
                     label="Etkinlik" 
@@ -92,10 +106,6 @@ export default function NewSessionPage() {
                   <TextField name="title" label="Başlık" required placeholder="React ile Modern Web Geliştirme" />
                   <TextField name="speakerName" label="Konuşmacı Adı" placeholder="Ahmet Yılmaz" />
                   <TextField name="speakerLinkedin" label="Konuşmacı LinkedIn" type="url" placeholder="https://www.linkedin.com/in/..." />
-                  <Textarea name="description" label="Açıklama" rows={4} placeholder="Oturum hakkında detaylı bilgi..." />
-                  <TextField name="startTime" label="Başlangıç Zamanı" type="datetime-local" required />
-                  <TextField name="endTime" label="Bitiş Zamanı" type="datetime-local" />
-                  <TextField name="orderIndex" label="Sıra" type="number" placeholder="1" />
                   <Select 
                     name="sessionType" 
                     label="Oturum Tipi" 
@@ -111,19 +121,35 @@ export default function NewSessionPage() {
                       { value: 'OTHER', label: 'Diğer' },
                     ]}
                   />
+                        <TextField name="orderIndex" label="Sıra" type="number" placeholder="1" />
+                      </div>
+                      <div className="mt-4">
+                        <Textarea name="description" label="Açıklama" rows={4} placeholder="Oturum hakkında detaylı bilgi..." />
+                      </div>
+                    </div>
+
+                    <div className="border-t border-dark-200 pt-5">
+                      <h3 className="text-sm font-semibold text-dark-800 mb-3">Tarih ve Zaman</h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <TextField name="startTime" label="Başlangıç Zamanı" type="datetime-local" required max="9999-12-31T23:59" />
+                        <TextField name="endTime" label="Bitiş Zamanı" type="datetime-local" max="9999-12-31T23:59" />
+                      </div>
+                    </div>
                 </div>
-                <div className="mt-6 flex gap-4">
-                  <Button type="submit" disabled={isPending}>
+                  <div className="flex justify-between items-center gap-3 mt-6 pt-5 border-t border-dark-200">
+                    <Button href="/sessions" variant="secondary" className="text-red-500 hover:bg-red-500 hover:text-white bg-transparent border-red-500">
+                      İptal
+                    </Button>
+                    <Button type="submit" disabled={isPending} className="!text-brand hover:!bg-brand hover:!text-white !bg-transparent border-brand">
                     {isPending ? 'Kaydediliyor...' : 'Kaydet'}
-                  </Button>
-                  <Button href="/sessions" variant="secondary">
-                    İptal
                   </Button>
                 </div>
               </>
             );
           }}
         </Form>
+        </div>
+        </div>
       </div>
     </AppShell>
   );
