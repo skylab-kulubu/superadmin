@@ -105,6 +105,7 @@ export interface UpdateCompetitionRequest {
   startDate?: string;
   endDate?: string;
   active?: boolean;
+  eventTypeId?: string;
 }
 
 export interface CompetitorDto {
@@ -270,6 +271,7 @@ export type DataResultListSessionDto = DataResultList<SessionDto>;
 export type DataResultAnnouncementDto = DataResult<AnnouncementDto>;
 export type DataResultListAnnouncementDto = DataResultList<AnnouncementDto>;
 export type SuccessDataResultUploadImageResponseDto = DataResult<UploadImageResponseDto>;
+
 
 
 
