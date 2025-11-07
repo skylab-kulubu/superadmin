@@ -19,10 +19,13 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   }
 
   static getDerivedStateFromError(error: unknown): ErrorBoundaryState {
-    return { hasError: true, errorMessage: error instanceof Error ? error.message : 'Bilinmeyen bir hata oluştu' };
+    return {
+      hasError: true,
+      errorMessage: error instanceof Error ? error.message : 'Bilinmeyen bir hata oluştu',
+    };
   }
 
-  componentDidCatch(error: unknown, errorInfo: unknown) {
+  componentDidCatch(error: unknown, _errorInfo: unknown) {
     // İleriye dönük: burada bir log servisine gönderebiliriz
     if (typeof window !== 'undefined') {
       const message = error instanceof Error ? error.message : 'Bilinmeyen bir hata';
@@ -32,17 +35,15 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
 
   render() {
     if (this.state.hasError) {
-      return this.props.fallback ?? (
-        <div className="p-4 rounded-md border border-dark-300 bg-light-300 text-dark-700">
-          <div className="font-semibold mb-1">Beklenmeyen bir hata oluştu</div>
-          <div className="text-sm opacity-80">{this.state.errorMessage}</div>
-        </div>
+      return (
+        this.props.fallback ?? (
+          <div className="border-dark-300 bg-light-300 text-dark-700 rounded-md border p-4">
+            <div className="mb-1 font-semibold">Beklenmeyen bir hata oluştu</div>
+            <div className="text-sm opacity-80">{this.state.errorMessage}</div>
+          </div>
+        )
       );
     }
     return this.props.children;
   }
 }
-
-
-
-

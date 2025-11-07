@@ -44,8 +44,7 @@ const ERROR_CONTACTS: Record<ErrorKind, ContactInfo> = {
   frontend: {
     icon: '🐞',
     title: 'Frontend sorunu tespit edildi.',
-    instruction:
-      'Lütfen 15.00-23.00 arasında frontend developera WhatsApp üzerinden haber verin.',
+    instruction: 'Lütfen 15.00-23.00 arasında frontend developera WhatsApp üzerinden haber verin.',
     name: 'Yusuf Ersel Kara',
     phone: '+90 505 006 71 11',
   },
@@ -202,5 +201,3 @@ export function GlobalErrorMessenger() {
     </div>
   );
 }
-
-

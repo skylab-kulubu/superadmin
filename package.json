@@ -5,7 +5,29 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "lint": "eslint .",
+    "lint:styles": "stylelint \"**/*.{css,scss,pcss}\"",
+    "format": "prettier --write .",
+    "format:check": "prettier --check \"{docs,tests,src/components/common,src/test}/**/*.{ts,tsx,js,jsx,json,md,css}\"",
+    "typecheck": "tsc --noEmit",
+    "test": "jest --passWithNoTests",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --max-warnings=0"
+    ],
+    "*.{cjs,mjs,cts,mts,js,jsx,ts,tsx,json,md,css,scss,pcss}": [
+      "prettier --write"
+    ],
+    "*.{css,scss,pcss}": [
+      "stylelint --allow-empty-input"
+    ]
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -17,12 +39,39 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@commitlint/cli": "^20.1.0",
+    "@commitlint/config-conventional": "^20.0.0",
+    "@next/eslint-plugin-next": "^16.0.1",
+    "@playwright/test": "^1.56.1",
     "@tailwindcss/postcss": "^4",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/jest": "^29.5.12",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@typescript-eslint/eslint-plugin": "^8.46.3",
+    "@typescript-eslint/parser": "^8.46.3",
     "babel-plugin-react-compiler": "1.0.0",
+    "eslint": "^9.39.1",
+    "eslint-config-next": "^16.0.1",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^16.5.0",
+    "husky": "^9.1.7",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "lint-staged": "^16.2.6",
+    "msw": "^2.12.0",
+    "prettier": "^3.6.2",
+    "prettier-plugin-tailwindcss": "^0.7.1",
+    "stylelint": "^16.25.0",
+    "stylelint-config-standard": "^39.0.1",
+    "stylelint-config-tailwindcss": "^1.0.0",
+    "stylelint-order": "^7.0.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "ts-jest": "^29.2.5",
+    "typescript": "^5",
+    "typescript-eslint": "^8.46.3"
   }
 }

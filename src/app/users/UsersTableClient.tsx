@@ -18,7 +18,6 @@ export function UsersTableClient({ data }: { data: UserRow[] }) {
       router.refresh();
     } catch (err) {
       alert('Kullanıcı silinirken hata oluştu');
-      // eslint-disable-next-line no-console
       console.error(err);
     }
   };
@@ -31,8 +30,8 @@ export function UsersTableClient({ data }: { data: UserRow[] }) {
         { key: 'lastName', header: 'Soyad' },
         { key: 'email', header: 'Email' },
         { key: 'username', header: 'Kullanıcı Adı' },
-        { 
-          key: 'rolesString', 
+        {
+          key: 'rolesString',
           header: 'Roller',
           render: (value, row) => {
             const roles = row.roles || [];
@@ -44,7 +43,7 @@ export function UsersTableClient({ data }: { data: UserRow[] }) {
                 {roles.map((role: string, idx: number) => (
                   <span
                     key={idx}
-                    className="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-700 border border-purple-200/50"
+                    className="rounded-full border border-purple-200/50 bg-purple-100 px-2 py-1 text-xs font-medium text-purple-700"
                   >
                     {role}
                   </span>
@@ -58,15 +57,15 @@ export function UsersTableClient({ data }: { data: UserRow[] }) {
           header: 'İşlemler',
           render: (_value, row) => (
             <div className="flex items-center gap-3">
-              <Link 
+              <Link
                 href={`/users/${row.id}`}
-                className="text-dark hover:text-brand underline cursor-pointer"
+                className="text-dark hover:text-brand cursor-pointer underline"
               >
                 Düzenle
               </Link>
-              <button 
-                onClick={() => handleDelete(row)} 
-                className="text-dark-600 hover:text-dark-700 underline cursor-pointer"
+              <button
+                onClick={() => handleDelete(row)}
+                className="text-dark-600 hover:text-dark-700 cursor-pointer underline"
               >
                 Sil
               </button>
@@ -78,5 +77,3 @@ export function UsersTableClient({ data }: { data: UserRow[] }) {
     />
   );
 }
-
-
