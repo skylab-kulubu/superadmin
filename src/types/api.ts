@@ -82,32 +82,6 @@ export interface UpdateEventTypeRequest {
   competitive?: boolean;
 }
 
-export interface CompetitionDto {
-  id: string;
-  name: string;
-  startDate: string;
-  endDate: string;
-  active: boolean;
-  events?: EventDto[];
-  eventType?: EventTypeDto;
-}
-
-export interface CreateCompetitionRequest {
-  name: string;
-  startDate: string;
-  endDate: string;
-  active?: boolean;
-  eventTypeId?: string;
-}
-
-export interface UpdateCompetitionRequest {
-  name?: string;
-  startDate?: string;
-  endDate?: string;
-  active?: boolean;
-  eventTypeId?: string;
-}
-
 export interface CompetitorDto {
   id: string;
   user?: UserDto;
@@ -142,7 +116,7 @@ export interface EventDto {
   endDate?: string;
   linkedin?: string;
   active?: boolean;
-  competition?: CompetitionDto;
+
   sessions?: SessionDto[];
   imageUrls?: string[];
   competitors?: CompetitorDto[];
@@ -159,7 +133,6 @@ export interface CreateEventRequest {
   endDate?: string;
   linkedin?: string;
   active?: boolean;
-  competitionId?: string;
 }
 
 export interface SeasonDto {
@@ -189,7 +162,16 @@ export interface SessionDto {
   endTime?: string;
   orderIndex?: number;
   event?: EventDto;
-  sessionType?: 'WORKSHOP' | 'PRESENTATION' | 'PANEL' | 'KEYNOTE' | 'NETWORKING' | 'OTHER' | 'CTF' | 'HACKATHON' | 'JAM';
+  sessionType?:
+    | 'WORKSHOP'
+    | 'PRESENTATION'
+    | 'PANEL'
+    | 'KEYNOTE'
+    | 'NETWORKING'
+    | 'OTHER'
+    | 'CTF'
+    | 'HACKATHON'
+    | 'JAM';
 }
 
 export interface CreateSessionRequest {
@@ -201,7 +183,16 @@ export interface CreateSessionRequest {
   startTime: string;
   endTime?: string;
   orderIndex?: number;
-  sessionType?: 'WORKSHOP' | 'PRESENTATION' | 'PANEL' | 'KEYNOTE' | 'NETWORKING' | 'OTHER' | 'CTF' | 'HACKATHON' | 'JAM';
+  sessionType?:
+    | 'WORKSHOP'
+    | 'PRESENTATION'
+    | 'PANEL'
+    | 'KEYNOTE'
+    | 'NETWORKING'
+    | 'OTHER'
+    | 'CTF'
+    | 'HACKATHON'
+    | 'JAM';
 }
 
 export interface UploadImageResponseDto {
@@ -258,8 +249,7 @@ export type DataResultUserDto = DataResult<UserDto>;
 export type DataResultListUserDto = DataResultList<UserDto>;
 export type DataResultEventTypeDto = DataResult<EventTypeDto>;
 export type DataResultListEventTypeDto = DataResultList<EventTypeDto>;
-export type DataResultCompetitionDto = DataResult<CompetitionDto>;
-export type DataResultListCompetitionDto = DataResultList<CompetitionDto>;
+
 export type DataResultCompetitorDto = DataResult<CompetitorDto>;
 export type DataResultListCompetitorDto = DataResultList<CompetitorDto>;
 export type DataResultEventDto = DataResult<EventDto>;
@@ -271,9 +261,3 @@ export type DataResultListSessionDto = DataResultList<SessionDto>;
 export type DataResultAnnouncementDto = DataResult<AnnouncementDto>;
 export type DataResultListAnnouncementDto = DataResultList<AnnouncementDto>;
 export type SuccessDataResultUploadImageResponseDto = DataResult<UploadImageResponseDto>;
-
-
-
-
-
-

@@ -25,11 +25,11 @@ const eventSchema = z.object({
   eventTypeId: z.string().min(1, 'Etkinlik tipi seçiniz'),
   formUrl: z.string().url().optional().or(z.literal('')),
   startDate: z.string(),
-  endDate: z.string().optional(),
+  endDate: z.string().min(1, 'Bitiş tarihi zorunludur'),
   linkedin: z.string().url().optional().or(z.literal('')),
   active: z.boolean().optional(),
   competitionId: z.string().optional(),
-  coverImage: z.custom<File | undefined>((val) => val === undefined || val instanceof File).optional(),
+  coverImage: z.custom<File>((val) => val instanceof File, 'Kapak resmi zorunludur'),
 });
 
 const eventTypeSchema = z.object({
@@ -45,13 +45,16 @@ export default function NewEventPage() {
   const eventFormMethodsRef = useRef<any>(null);
 
   const loadEventTypes = () => {
-    eventTypesApi.getAll().then((response) => {
-      if (response.success && response.data) {
-        setEventTypes(response.data.map((et) => ({ value: et.id, label: et.name })));
-      }
-    }).catch((error) => {
-      console.error('Event types fetch error:', error);
-    });
+    eventTypesApi
+      .getAll()
+      .then((response) => {
+        if (response.success && response.data) {
+          setEventTypes(response.data.map((et) => ({ value: et.id, label: et.name })));
+        }
+      })
+      .catch((error) => {
+        console.error('Event types fetch error:', error);
+      });
   };
 
   useEffect(() => {
@@ -67,19 +70,23 @@ export default function NewEventPage() {
           description: data.description || undefined,
           location: data.location ?? '',
           eventTypeId: data.eventTypeId,
-          formUrl: data.formUrl || undefined,
+          // Eğer görsel yüklenmediyse formUrl gönderilmesin (gerçi şema zorunlu kılıyor ama yine de kontrol)
+          formUrl: coverImage ? data.formUrl || undefined : undefined,
           startDate: convertGMT3ToGMT0(data.startDate),
-          endDate: data.endDate ? convertGMT3ToGMT0(data.endDate) : undefined,
+          endDate: convertGMT3ToGMT0(data.endDate),
           linkedin: data.linkedin || undefined,
           active: true,
           competitionId: data.competitionId || undefined,
         };
         await eventsApi.create(eventData, coverImage);
-        
+
         router.push('/events');
       } catch (error) {
         console.error('Event creation error:', error);
-        alert('Etkinlik oluşturulurken hata oluştu: ' + (error instanceof Error ? error.message : 'Bilinmeyen hata'));
+        alert(
+          'Etkinlik oluşturulurken hata oluştu: ' +
+            (error instanceof Error ? error.message : 'Bilinmeyen hata'),
+        );
       }
     });
   };
@@ -95,7 +102,10 @@ export default function NewEventPage() {
       }
     } catch (error) {
       console.error('Event type creation error:', error);
-      alert('Etkinlik tipi oluşturulurken hata oluştu: ' + (error instanceof Error ? error.message : 'Bilinmeyen hata'));
+      alert(
+        'Etkinlik tipi oluşturulurken hata oluştu: ' +
+          (error instanceof Error ? error.message : 'Bilinmeyen hata'),
+      );
     } finally {
       setIsCreatingEventType(false);
     }
@@ -104,84 +114,118 @@ export default function NewEventPage() {
   return (
     <AppShell>
       <div className="space-y-6">
-        <PageHeader
-          title="Yeni Etkinlik"
-          description="Sisteme yeni etkinlik ekleyin"
-        />
+        <PageHeader title="Yeni Etkinlik" description="Sisteme yeni etkinlik ekleyin" />
 
-        <div className="max-w-3xl mx-auto">
-        <div className="bg-light p-4 rounded-lg shadow border border-dark-200">
-          <Form schema={eventSchema} onSubmit={handleSubmit} defaultValues={{ 
-          coverImage: undefined, 
-          eventTypeId: '',
-          startDate: getCurrentDateTimeGMT3(),
-        }}>
-          {(methods) => {
-            // Form method'larını ref'te sakla (state set etme, render sırasında setState hatasına yol açar)
-            eventFormMethodsRef.current = methods;
-            const formErrors = methods.formState.errors;
-            return (
-              <>
-                {Object.keys(formErrors).length > 0 && (
-                  <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
-                    <p className="text-sm font-medium text-red-800 mb-2">Form hataları:</p>
-                    <ul className="list-disc list-inside text-sm text-red-600">
-                      {Object.entries(formErrors).map(([key, error]) => (
-                        <li key={key}>
-                          {key}: {error?.message as string}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                  <div className="space-y-5">
-                    <div>
-                      <h3 className="text-sm font-semibold text-dark-800 mb-3">Temel Bilgiler</h3>
-                      <div className="grid grid-cols-2 gap-4">
-                  <TextField name="name" label="Ad" required placeholder="Yazılım Geliştirme Workshop'u" />
-                  <Select 
-                    name="eventTypeId" 
-                    label="Etkinlik Tipi" 
-                    options={eventTypes}
-                    required 
-                  />
-                        <TextField name="location" label="Konum" placeholder="YTÜ Davutpaşa Kampüsü" />
-                  <TextField name="formUrl" label="Form URL" type="url" placeholder="https://forms.google.com/..." />
+        <div className="mx-auto max-w-3xl">
+          <div className="bg-light border-dark-200 rounded-lg border p-4 shadow">
+            <Form
+              schema={eventSchema}
+              onSubmit={handleSubmit}
+              defaultValues={{
+                coverImage: undefined,
+                eventTypeId: '',
+                startDate: getCurrentDateTimeGMT3(),
+                endDate: getCurrentDateTimeGMT3(),
+              }}
+            >
+              {(methods) => {
+                // Form method'larını ref'te sakla (state set etme, render sırasında setState hatasına yol açar)
+                eventFormMethodsRef.current = methods;
+                const formErrors = methods.formState.errors;
+                return (
+                  <>
+                    {Object.keys(formErrors).length > 0 && (
+                      <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-4">
+                        <p className="mb-2 text-sm font-medium text-red-800">Form hataları:</p>
+                        <ul className="list-inside list-disc text-sm text-red-600">
+                          {Object.entries(formErrors).map(([key, error]) => (
+                            <li key={key}>
+                              {key}: {error?.message as string}
+                            </li>
+                          ))}
+                        </ul>
                       </div>
-                      <div className="mt-4">
-                        <Textarea name="description" label="Açıklama" rows={4} placeholder="Etkinlik hakkında detaylı bilgi..." />
+                    )}
+                    <div className="space-y-5">
+                      <div>
+                        <h3 className="text-dark-800 mb-3 text-sm font-semibold">Temel Bilgiler</h3>
+                        <div className="grid grid-cols-2 gap-4">
+                          <TextField
+                            name="name"
+                            label="Ad"
+                            required
+                            placeholder="Yazılım Geliştirme Workshop'u"
+                          />
+                          <Select
+                            name="eventTypeId"
+                            label="Etkinlik Tipi"
+                            options={eventTypes}
+                            required
+                          />
+                          <TextField
+                            name="location"
+                            label="Konum"
+                            placeholder="YTÜ Davutpaşa Kampüsü"
+                          />
+                          <TextField
+                            name="formUrl"
+                            label="Form URL"
+                            type="url"
+                            placeholder="https://forms.google.com/..."
+                          />
+                        </div>
+                        <div className="mt-4">
+                          <Textarea
+                            name="description"
+                            label="Açıklama"
+                            rows={4}
+                            placeholder="Etkinlik hakkında detaylı bilgi..."
+                          />
+                        </div>
+                      </div>
+
+                      <div className="border-dark-200 border-t pt-5">
+                        <h3 className="text-dark-800 mb-3 text-sm font-semibold">Tarih ve Zaman</h3>
+                        <div className="grid grid-cols-2 gap-4">
+                          <DatePicker name="startDate" label="Başlangıç Tarihi" required />
+                          <DatePicker name="endDate" label="Bitiş Tarihi" required />
+                        </div>
+                      </div>
+
+                      <div className="border-dark-200 border-t pt-5">
+                        <h3 className="text-dark-800 mb-3 text-sm font-semibold">Ek Bilgiler</h3>
+                        <div className="space-y-4">
+                          <TextField
+                            name="linkedin"
+                            label="LinkedIn URL"
+                            type="url"
+                            placeholder="https://www.linkedin.com/events/..."
+                          />
+                          <FileUpload name="coverImage" label="Kapak Resmi" accept="image/*" />
+                        </div>
                       </div>
                     </div>
-
-                    <div className="border-t border-dark-200 pt-5">
-                      <h3 className="text-sm font-semibold text-dark-800 mb-3">Tarih ve Zaman</h3>
-                      <div className="grid grid-cols-2 gap-4">
-                  <DatePicker name="startDate" label="Başlangıç Tarihi" required />
-                  <DatePicker name="endDate" label="Bitiş Tarihi" />
-                      </div>
+                    <div className="border-dark-200 mt-6 flex items-center justify-between gap-3 border-t pt-5">
+                      <Button
+                        href="/events"
+                        variant="secondary"
+                        className="border-red-500 bg-transparent text-red-500 hover:bg-red-500 hover:text-white"
+                      >
+                        İptal
+                      </Button>
+                      <Button
+                        type="submit"
+                        disabled={isPending}
+                        className="!text-brand hover:!bg-brand border-brand !bg-transparent hover:!text-white"
+                      >
+                        {isPending ? 'Kaydediliyor...' : 'Kaydet'}
+                      </Button>
                     </div>
-
-                    <div className="border-t border-dark-200 pt-5">
-                      <h3 className="text-sm font-semibold text-dark-800 mb-3">Ek Bilgiler</h3>
-                      <div className="space-y-4">
-                  <TextField name="linkedin" label="LinkedIn URL" type="url" placeholder="https://www.linkedin.com/events/..." />
-                  <FileUpload name="coverImage" label="Kapak Resmi" accept="image/*" />
-                      </div>
-                    </div>
-                </div>
-                  <div className="flex justify-between items-center gap-3 mt-6 pt-5 border-t border-dark-200">
-                    <Button href="/events" variant="secondary" className="text-red-500 hover:bg-red-500 hover:text-white bg-transparent border-red-500">
-                      İptal
-                    </Button>
-                    <Button type="submit" disabled={isPending} className="!text-brand hover:!bg-brand hover:!text-white !bg-transparent border-brand">
-                    {isPending ? 'Kaydediliyor...' : 'Kaydet'}
-                  </Button>
-                </div>
-              </>
-            );
-          }}
-        </Form>
-        </div>
+                  </>
+                );
+              }}
+            </Form>
+          </div>
         </div>
 
         <Modal
@@ -195,11 +239,20 @@ export default function NewEventPage() {
                 <div className="space-y-4">
                   <TextField name="name" label="Ad" required placeholder="Workshop, Seminer, vb." />
                 </div>
-                <div className="mt-6 flex justify-between items-center gap-3 pt-5 border-t border-dark-200">
-                  <Button type="button" variant="secondary" onClick={() => setIsModalOpen(false)} className="text-red-500 hover:bg-red-500 hover:text-white bg-transparent border-red-500">
+                <div className="border-dark-200 mt-6 flex items-center justify-between gap-3 border-t pt-5">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => setIsModalOpen(false)}
+                    className="border-red-500 bg-transparent text-red-500 hover:bg-red-500 hover:text-white"
+                  >
                     İptal
                   </Button>
-                  <Button type="submit" disabled={isCreatingEventType} className="!text-brand hover:!bg-brand hover:!text-white !bg-transparent border-brand">
+                  <Button
+                    type="submit"
+                    disabled={isCreatingEventType}
+                    className="!text-brand hover:!bg-brand border-brand !bg-transparent hover:!text-white"
+                  >
                     {isCreatingEventType ? 'Kaydediliyor...' : 'Kaydet'}
                   </Button>
                 </div>
@@ -211,4 +264,3 @@ export default function NewEventPage() {
     </AppShell>
   );
 }
-

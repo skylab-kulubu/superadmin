@@ -1,14 +1,14 @@
 import { AppShell } from '@/components/layout/AppShell';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { getUsers } from '@/app/users/actions';
-import { getCompetitions } from '@/app/competitions/actions';
+
 import { getEvents } from '@/app/events/actions';
 import { getAnnouncements } from '@/app/announcements/actions';
 import { getSessions } from '@/app/sessions/actions';
 import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
-import type { AnnouncementDto, CompetitionDto, EventDto, SessionDto, UserDto } from '@/types/api';
+import type { AnnouncementDto, EventDto, SessionDto, UserDto } from '@/types/api';
 
 const ROLE_PRIORITY = [
   'ADMIN',
@@ -42,7 +42,7 @@ const getPrimaryRole = (roles: string[] = []) => {
 
 export default async function DashboardPage() {
   let usersCount = 0;
-  let competitionsCount = 0;
+
   let eventsCount = 0;
   let announcementsCount = 0;
   let sessionsCount = 0;
@@ -53,9 +53,8 @@ export default async function DashboardPage() {
   let sessionsList: SessionDto[] = [];
 
   try {
-    const [users, competitions, events, announcements, sessions] = await Promise.allSettled([
+    const [users, events, announcements, sessions] = await Promise.allSettled([
       getUsers(),
-      getCompetitions({ includeEventType: true }),
       getEvents({ includeEventType: true }),
       getAnnouncements({ includeUser: true }),
       getSessions({ includeEvent: true }),
@@ -67,14 +66,6 @@ export default async function DashboardPage() {
     } else if (
       users.reason?.message?.includes('502') ||
       users.reason?.message?.includes('Backend servisi')
-    )
-      backendError = true;
-
-    if (competitions.status === 'fulfilled') {
-      competitionsCount = competitions.value.length;
-    } else if (
-      competitions.reason?.message?.includes('502') ||
-      competitions.reason?.message?.includes('Backend servisi')
     )
       backendError = true;
 
@@ -152,26 +143,7 @@ export default async function DashboardPage() {
         </svg>
       ),
     },
-    {
-      title: 'Yarışmalar',
-      value: competitionsCount,
-      href: '/competitions',
-      icon: (
-        <svg
-          className="h-5 w-5 text-emerald-500"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={1.8}
-            d="M9 3h6l1 7-4 2-4-2 1-7zm0 13l-3 5h12l-3-5"
-          />
-        </svg>
-      ),
-    },
+
     {
       title: 'Etkinlikler',
       value: eventsCount,

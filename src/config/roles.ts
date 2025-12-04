@@ -3,27 +3,27 @@ export const ALLOWED_ROLES = [
   'ADMIN',
   'YK',
   'DK',
-  'AGC_ADMIN',
-  'GECEKODU_ADMIN',
-  'BIZBIZE_ADMIN',
-  'AGC_LEADER',
+  'GECEKODU',
   'GECEKODU_LEADER',
+  'AGC',
+  'AGC_LEADER',
+  'BIZBIZE',
   'BIZBIZE_LEADER',
   'USER',
 ] as const;
 
-export type AllowedRole = typeof ALLOWED_ROLES[number];
+export type AllowedRole = (typeof ALLOWED_ROLES)[number];
 
 // Hangi rolün hangi rolleri atayabileceği
 export const ASSIGNABLE_ROLES_BY_ROLE: Record<AllowedRole, AllowedRole[]> = {
   ADMIN: [...ALLOWED_ROLES],
   YK: ['USER'],
   DK: ['USER'],
-  AGC_ADMIN: ['AGC_LEADER', 'USER'],
-  GECEKODU_ADMIN: ['GECEKODU_LEADER', 'USER'],
-  BIZBIZE_ADMIN: ['BIZBIZE_LEADER', 'USER'],
-  AGC_LEADER: ['USER'],
+  GECEKODU: ['GECEKODU_LEADER', 'USER'],
+  AGC: ['AGC_LEADER', 'USER'],
+  BIZBIZE: ['BIZBIZE_LEADER', 'USER'],
   GECEKODU_LEADER: ['USER'],
+  AGC_LEADER: ['USER'],
   BIZBIZE_LEADER: ['USER'],
   USER: [],
 };
@@ -52,5 +52,3 @@ export function normalizeRoleForBackend(role: string): string {
   }
   return role;
 }
-
-

@@ -32,24 +32,18 @@ export const usersApi = {
     return apiClient.delete<Result>(`/api/users/${id}`);
   },
 
-  async addRole(username: string, role: string) {
+  async assignRole(username: string, role: string) {
     const normalized = normalizeRoleForBackend(role);
-    return apiClient.put<Result>(`/api/users/add-role/${encodeURIComponent(username)}?role=${encodeURIComponent(normalized)}`);
+    return apiClient.put<Result>(
+      `/api/users/assign-role/${encodeURIComponent(username)}?role=${encodeURIComponent(normalized)}`,
+    );
   },
 
   async removeRole(username: string, role: string) {
-    // Local proxy'ye gönder (serverFetch cookie ile yetkilenecek)
-    const res = await fetch('/api/users/remove-role', {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, role }),
-    });
-    if (!res.ok) {
-      const text = await res.text().catch(() => '');
-      throw new Error(`removeRole failed: ${res.status} ${res.statusText} ${text}`);
-    }
-    return (await res.json()) as Result;
+    const normalized = normalizeRoleForBackend(role);
+    return apiClient.put<Result>(
+      `/api/users/remove-role/${encodeURIComponent(username)}?role=${encodeURIComponent(normalized)}`,
+    );
   },
 
   async updateProfilePicture(image: File) {
@@ -58,4 +52,3 @@ export const usersApi = {
     return apiClient.postFormData<Result>('/api/users/me/profile-picture', formData);
   },
 };
-

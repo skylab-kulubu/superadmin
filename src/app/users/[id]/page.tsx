@@ -86,13 +86,17 @@ export default function UserDetailPage() {
       const selected = new Set(selectedRoles);
       const toAdd: string[] = [];
       const toRemove: string[] = [];
-      selected.forEach((r) => { if (!current.has(r)) toAdd.push(r); });
-      current.forEach((r) => { if (!selected.has(r)) toRemove.push(r); });
+      selected.forEach((r) => {
+        if (!current.has(r)) toAdd.push(r);
+      });
+      current.forEach((r) => {
+        if (!selected.has(r)) toRemove.push(r);
+      });
 
       const failures: string[] = [];
       for (const r of toAdd) {
         try {
-          await usersApi.addRole(user.username, r);
+          await usersApi.assignRole(user.username, r);
         } catch (e: any) {
           failures.push(`Rol eklenemedi (${r}): ${e?.message || 'bilinmeyen hata'}`);
         }
@@ -114,20 +118,22 @@ export default function UserDetailPage() {
       // Başarılı ise önceki sayfaya dön
       router.back();
     } catch (err) {
-      alert('Kullanıcı güncellenirken hata oluştu: ' + (err instanceof Error ? err.message : 'Bilinmeyen hata'));
+      alert(
+        'Kullanıcı güncellenirken hata oluştu: ' +
+          (err instanceof Error ? err.message : 'Bilinmeyen hata'),
+      );
     } finally {
       setIsSaving(false);
     }
   };
 
-  
   if (loading) {
     return (
       <AppShell>
-        <div className="max-w-4xl mx-auto">
+        <div className="mx-auto max-w-4xl">
           <div className="flex items-center justify-center py-20">
             <div className="text-center">
-              <div className="w-16 h-16 border-4 border-brand-200 border-t-brand rounded-full animate-spin mx-auto mb-4"></div>
+              <div className="border-brand-200 border-t-brand mx-auto mb-4 h-16 w-16 animate-spin rounded-full border-4"></div>
               <p className="text-dark-600 font-medium">Yükleniyor...</p>
             </div>
           </div>
@@ -139,22 +145,32 @@ export default function UserDetailPage() {
   if (error || !user) {
     return (
       <AppShell>
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-light border-l-4 border-danger rounded-xl shadow-lg p-6">
+        <div className="mx-auto max-w-4xl">
+          <div className="bg-light border-danger rounded-xl border-l-4 p-6 shadow-lg">
             <div className="flex items-start gap-4">
               <div className="flex-shrink-0">
-                <div className="w-12 h-12 rounded-full bg-danger-100 flex items-center justify-center">
-                  <svg className="w-6 h-6 text-danger-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <div className="bg-danger-100 flex h-12 w-12 items-center justify-center rounded-full">
+                  <svg
+                    className="text-danger-700 h-6 w-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
                   </svg>
                 </div>
               </div>
               <div className="flex-1">
-                <h2 className="text-lg font-semibold text-danger-800 mb-2">Hata</h2>
+                <h2 className="text-danger-800 mb-2 text-lg font-semibold">Hata</h2>
                 <p className="text-dark-700 mb-4">{error || 'Kullanıcı bulunamadı'}</p>
-            <Button href="/users" variant="secondary" className="mt-4">
-              Geri Dön
-            </Button>
+                <Button href="/users" variant="secondary" className="mt-4">
+                  Geri Dön
+                </Button>
               </div>
             </div>
           </div>
@@ -171,7 +187,7 @@ export default function UserDetailPage() {
         <PageHeader
           title="Kullanıcı Düzenle"
           description={`${user.firstName} ${user.lastName} - ${user.email}`}
-          actions={(
+          actions={
             <button
               onClick={async () => {
                 if (!user) return;
@@ -186,162 +202,172 @@ export default function UserDetailPage() {
                   setIsProcessing(false);
                 }
               }}
-              className="px-4 py-2 rounded-md font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed bg-red-500 text-light hover:bg-red-600"
+              className="text-light cursor-pointer rounded-md bg-red-500 px-4 py-2 font-medium transition-colors hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50"
               disabled={isProcessing}
             >
               Sil
             </button>
-          )}
+          }
         />
-        
-        <div className="max-w-3xl mx-auto">
-        <div className="bg-light p-4 rounded-lg shadow border border-dark-200">
-          <div className="space-y-5">
-            {/* Temel Bilgiler */}
-            <div>
-              <h3 className="text-sm font-semibold text-dark-800 mb-3">Temel Bilgiler</h3>
-              <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-dark mb-1">Ad</label>
-              <input
-                className="w-full px-3 py-2 border border-dark-200 rounded-md focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent text-dark bg-light-50"
-                value={editData.firstName || ''}
-                onChange={(e) => setEditData((d) => ({ ...d, firstName: e.target.value }))}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-dark mb-1">Soyad</label>
-              <input
-                className="w-full px-3 py-2 border border-dark-200 rounded-md focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent text-dark bg-light-50"
-                value={editData.lastName || ''}
-                onChange={(e) => setEditData((d) => ({ ...d, lastName: e.target.value }))}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-dark mb-1">Email</label>
-              <input
-                disabled
-                    className="w-full px-3 py-2 border border-dark-200 bg-dark-50 rounded-md text-dark-500 cursor-not-allowed"
-                value={user.email}
-                readOnly
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-dark mb-1">Kullanıcı Adı</label>
-              <input
-                disabled
-                    className="w-full px-3 py-2 border border-dark-200 bg-dark-50 rounded-md text-dark-500 cursor-not-allowed"
-                value={user.username}
-                readOnly
-              />
-            </div>
+
+        <div className="mx-auto max-w-3xl">
+          <div className="bg-light border-dark-200 rounded-lg border p-4 shadow">
+            <div className="space-y-5">
+              {/* Temel Bilgiler */}
+              <div>
+                <h3 className="text-dark-800 mb-3 text-sm font-semibold">Temel Bilgiler</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-dark mb-1 block text-sm font-medium">Ad</label>
+                    <input
+                      className="border-dark-200 focus:ring-brand text-dark bg-light-50 w-full rounded-md border px-3 py-2 focus:border-transparent focus:ring-2 focus:outline-none"
+                      value={editData.firstName || ''}
+                      onChange={(e) => setEditData((d) => ({ ...d, firstName: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-dark mb-1 block text-sm font-medium">Soyad</label>
+                    <input
+                      className="border-dark-200 focus:ring-brand text-dark bg-light-50 w-full rounded-md border px-3 py-2 focus:border-transparent focus:ring-2 focus:outline-none"
+                      value={editData.lastName || ''}
+                      onChange={(e) => setEditData((d) => ({ ...d, lastName: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-dark mb-1 block text-sm font-medium">Email</label>
+                    <input
+                      disabled
+                      className="border-dark-200 bg-dark-50 text-dark-500 w-full cursor-not-allowed rounded-md border px-3 py-2"
+                      value={user.email}
+                      readOnly
+                    />
+                  </div>
+                  <div>
+                    <label className="text-dark mb-1 block text-sm font-medium">
+                      Kullanıcı Adı
+                    </label>
+                    <input
+                      disabled
+                      className="border-dark-200 bg-dark-50 text-dark-500 w-full cursor-not-allowed rounded-md border px-3 py-2"
+                      value={user.username}
+                      readOnly
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Ek Bilgiler */}
+              <div className="border-dark-200 border-t pt-5">
+                <h3 className="text-dark-800 mb-3 text-sm font-semibold">Ek Bilgiler</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-dark mb-1 block text-sm font-medium">LinkedIn</label>
+                    <input
+                      className="border-dark-200 focus:ring-brand text-dark bg-light-50 w-full rounded-md border px-3 py-2 focus:border-transparent focus:ring-2 focus:outline-none"
+                      value={editData.linkedin || ''}
+                      onChange={(e) => setEditData((d) => ({ ...d, linkedin: e.target.value }))}
+                      placeholder="https://www.linkedin.com/in/..."
+                    />
+                  </div>
+                  <div>
+                    <label className="text-dark mb-1 block text-sm font-medium">Üniversite</label>
+                    <input
+                      className="border-dark-200 focus:ring-brand text-dark bg-light-50 w-full rounded-md border px-3 py-2 focus:border-transparent focus:ring-2 focus:outline-none"
+                      value={editData.university || ''}
+                      onChange={(e) => setEditData((d) => ({ ...d, university: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-dark mb-1 block text-sm font-medium">Fakülte</label>
+                    <input
+                      className="border-dark-200 focus:ring-brand text-dark bg-light-50 w-full rounded-md border px-3 py-2 focus:border-transparent focus:ring-2 focus:outline-none"
+                      value={editData.faculty || ''}
+                      onChange={(e) => setEditData((d) => ({ ...d, faculty: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-dark mb-1 block text-sm font-medium">Bölüm</label>
+                    <input
+                      className="border-dark-200 focus:ring-brand text-dark bg-light-50 w-full rounded-md border px-3 py-2 focus:border-transparent focus:ring-2 focus:outline-none"
+                      value={editData.department || ''}
+                      onChange={(e) => setEditData((d) => ({ ...d, department: e.target.value }))}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Roller */}
+              <div className="border-dark-200 border-t pt-5">
+                <h3 className="text-dark-800 mb-3 text-sm font-semibold">Roller</h3>
+                <div className="grid grid-cols-3 gap-2">
+                  {(availableRoles || []).map((role) => {
+                    const isSelected = selectedRoles.includes(role);
+                    return (
+                      <label
+                        key={role}
+                        style={{
+                          backgroundColor: isSelected ? '#e6f5f2' : undefined,
+                          borderColor: isSelected ? '#27a68e' : undefined,
+                        }}
+                        className={`flex cursor-pointer items-center gap-2 rounded-md border p-2 transition-all ${
+                          isSelected ? '' : 'bg-light border-dark-200'
+                        }`}
+                        onMouseEnter={(e) => {
+                          if (!isSelected) {
+                            e.currentTarget.style.backgroundColor = '#e6f5f2';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isSelected) {
+                            e.currentTarget.style.backgroundColor = '';
+                          }
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          style={{ accentColor: '#27a68e' }}
+                          className="h-4 w-4 rounded"
+                          checked={isSelected}
+                          onChange={(e) => {
+                            setSelectedRoles((prev) =>
+                              e.target.checked ? [...prev, role] : prev.filter((r) => r !== role),
+                            );
+                          }}
+                        />
+                        <span
+                          style={{ color: isSelected ? '#27a68e' : undefined }}
+                          className={`text-sm ${isSelected ? 'font-medium' : 'text-dark-700'}`}
+                        >
+                          {role}
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+                <p className="text-dark-500 mt-3 text-xs">
+                  Değişiklikleri kaydetmek için Kaydet butonuna basın.
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="border-dark-200 flex items-center justify-between gap-3 border-t pt-5">
+                <Button
+                  href="/users"
+                  variant="secondary"
+                  className="border-red-500 bg-transparent text-red-500 hover:bg-red-500 hover:text-white"
+                >
+                  İptal
+                </Button>
+                <Button
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  className="!text-brand hover:!bg-brand border-brand !bg-transparent hover:!text-white"
+                >
+                  {isSaving ? 'Kaydediliyor...' : 'Kaydet'}
+                </Button>
               </div>
             </div>
-
-            {/* Ek Bilgiler */}
-            <div className="border-t border-dark-200 pt-5">
-              <h3 className="text-sm font-semibold text-dark-800 mb-3">Ek Bilgiler</h3>
-              <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-dark mb-1">LinkedIn</label>
-              <input
-                className="w-full px-3 py-2 border border-dark-200 rounded-md focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent text-dark bg-light-50"
-                value={editData.linkedin || ''}
-                onChange={(e) => setEditData((d) => ({ ...d, linkedin: e.target.value }))}
-                placeholder="https://www.linkedin.com/in/..."
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-dark mb-1">Üniversite</label>
-              <input
-                className="w-full px-3 py-2 border border-dark-200 rounded-md focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent text-dark bg-light-50"
-                value={editData.university || ''}
-                onChange={(e) => setEditData((d) => ({ ...d, university: e.target.value }))}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-dark mb-1">Fakülte</label>
-              <input
-                className="w-full px-3 py-2 border border-dark-200 rounded-md focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent text-dark bg-light-50"
-                value={editData.faculty || ''}
-                onChange={(e) => setEditData((d) => ({ ...d, faculty: e.target.value }))}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-dark mb-1">Bölüm</label>
-              <input
-                className="w-full px-3 py-2 border border-dark-200 rounded-md focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent text-dark bg-light-50"
-                value={editData.department || ''}
-                onChange={(e) => setEditData((d) => ({ ...d, department: e.target.value }))}
-              />
-            </div>
           </div>
-            </div>
-
-            {/* Roller */}
-            <div className="border-t border-dark-200 pt-5">
-              <h3 className="text-sm font-semibold text-dark-800 mb-3">Roller</h3>
-              <div className="grid grid-cols-3 gap-2">
-                {(availableRoles || []).map((role) => {
-                  const isSelected = selectedRoles.includes(role);
-                  return (
-                    <label
-                      key={role}
-                      style={{
-                        backgroundColor: isSelected ? '#e6f5f2' : undefined,
-                        borderColor: isSelected ? '#27a68e' : undefined,
-                      }}
-                      className={`flex items-center gap-2 p-2 rounded-md border cursor-pointer transition-all ${
-                        isSelected
-                          ? ''
-                          : 'bg-light border-dark-200'
-                      }`}
-                      onMouseEnter={(e) => {
-                        if (!isSelected) {
-                          e.currentTarget.style.backgroundColor = '#e6f5f2';
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!isSelected) {
-                          e.currentTarget.style.backgroundColor = '';
-                        }
-                      }}
-                    >
-                  <input
-                    type="checkbox"
-                        style={{ accentColor: '#27a68e' }}
-                        className="h-4 w-4 rounded"
-                        checked={isSelected}
-                    onChange={(e) => {
-                      setSelectedRoles((prev) =>
-                        e.target.checked ? [...prev, role] : prev.filter((r) => r !== role)
-                      );
-                    }}
-                  />
-                      <span 
-                        style={{ color: isSelected ? '#27a68e' : undefined }}
-                        className={`text-sm ${isSelected ? 'font-medium' : 'text-dark-700'}`}
-                      >
-                        {role}
-                      </span>
-                </label>
-                  );
-                })}
-            </div>
-              <p className="mt-3 text-xs text-dark-500">Değişiklikleri kaydetmek için Kaydet butonuna basın.</p>
-          </div>
-
-            {/* Action Buttons */}
-            <div className="flex justify-between items-center gap-3 pt-5 border-t border-dark-200">
-              <Button href="/users" variant="secondary" className="text-red-500 hover:bg-red-500 hover:text-white bg-transparent border-red-500">
-                İptal
-              </Button>
-              <Button onClick={handleSave} disabled={isSaving} className="!text-brand hover:!bg-brand hover:!text-white !bg-transparent border-brand">
-              {isSaving ? 'Kaydediliyor...' : 'Kaydet'}
-            </Button>
-            </div>
-          </div>
-        </div>
         </div>
       </div>
     </AppShell>

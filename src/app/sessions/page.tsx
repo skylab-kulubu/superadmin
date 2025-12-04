@@ -31,7 +31,12 @@ export default function SessionsPage() {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Oturumlar yüklenirken hata oluştu');
-      console.error('Sessions page fetch error:', err);
+      setError(err instanceof Error ? err.message : 'Oturumlar yüklenirken hata oluştu');
+      console.error('Sessions page fetch error details:', {
+        error: err,
+        message: err instanceof Error ? err.message : 'Unknown error',
+        stack: err instanceof Error ? err.stack : undefined,
+      });
     } finally {
       setLoading(false);
     }
@@ -58,24 +63,29 @@ export default function SessionsPage() {
         setShowDeleteModal(false);
         setSelectedSessionId(null);
       } catch (err) {
-        alert('Silme işlemi başarısız oldu: ' + (err instanceof Error ? err.message : 'Bilinmeyen hata'));
+        alert(
+          'Silme işlemi başarısız oldu: ' +
+            (err instanceof Error ? err.message : 'Bilinmeyen hata'),
+        );
         console.error('Delete session error:', err);
       }
     }
   };
 
   // Format data for display
-  const formattedSessions = sessions.map(session => ({
+  const formattedSessions = sessions.map((session) => ({
     ...session,
-    startTimeFormatted: session.startTime ? new Date(session.startTime).toLocaleString('tr-TR') : '',
+    startTimeFormatted: session.startTime
+      ? new Date(session.startTime).toLocaleString('tr-TR')
+      : '',
     endTimeFormatted: session.endTime ? new Date(session.endTime).toLocaleString('tr-TR') : '-',
   }));
 
   if (loading) {
     return (
       <AppShell>
-        <div className="max-w-2xl mx-auto">
-          <h1 className="text-2xl font-bold mb-6">Oturumlar</h1>
+        <div className="mx-auto max-w-2xl">
+          <h1 className="mb-6 text-2xl font-bold">Oturumlar</h1>
           <p>Yükleniyor...</p>
         </div>
       </AppShell>
@@ -88,26 +98,31 @@ export default function SessionsPage() {
         <PageHeader
           title="Oturumlar"
           description="Oturumları görüntüleyin ve yönetin"
-          actions={(
+          actions={
             <Link href="/sessions/new">
               <Button>
                 <span className="flex items-center gap-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4v16m8-8H4"
+                    />
                   </svg>
                   Yeni Oturum
                 </span>
               </Button>
             </Link>
-          )}
+          }
         />
         {error ? (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-            <h2 className="text-lg font-semibold text-red-800 mb-2">Hata</h2>
+          <div className="rounded-lg border border-red-200 bg-red-50 p-6">
+            <h2 className="mb-2 text-lg font-semibold text-red-800">Hata</h2>
             <p className="text-red-700">{error}</p>
           </div>
         ) : sessions.length === 0 ? (
-          <div className="bg-light border border-dark-200 rounded-lg p-6 text-center">
+          <div className="bg-light border-dark-200 rounded-lg border p-6 text-center">
             <p className="text-dark opacity-60">Henüz oturum bulunmamaktadır.</p>
           </div>
         ) : (
@@ -116,14 +131,22 @@ export default function SessionsPage() {
               <div
                 key={s.id}
                 onClick={() => handleEdit(s)}
-                className="bg-light border border-dark-200 rounded-md p-3 hover:bg-brand-50 hover:border-brand transition cursor-pointer"
+                className="bg-light border-dark-200 hover:bg-brand-50 hover:border-brand cursor-pointer rounded-md border p-3 transition"
               >
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
-                    <div className="text-sm font-medium text-dark-900 truncate">{s.title}</div>
-                    <div className="text-xs text-dark-600 truncate">{s.speakerName || '-'} • {s.startTime ? new Date(s.startTime).toLocaleString('tr-TR') : '-'}{s.endTime ? ` - ${new Date(s.endTime).toLocaleString('tr-TR')}` : ''}</div>
+                    <div className="text-dark-900 truncate text-sm font-medium">{s.title}</div>
+                    <div className="text-dark-600 truncate text-xs">
+                      {s.speakerName || '-'} •{' '}
+                      {s.startTime ? new Date(s.startTime).toLocaleString('tr-TR') : '-'}
+                      {s.endTime ? ` - ${new Date(s.endTime).toLocaleString('tr-TR')}` : ''}
+                    </div>
                   </div>
-                  {s.sessionType && (<span className="px-2 py-0.5 text-[10px] font-medium rounded-full border bg-dark-100 text-dark-600 border-dark-200/50">{s.sessionType}</span>)}
+                  {s.sessionType && (
+                    <span className="bg-dark-100 text-dark-600 border-dark-200/50 rounded-full border px-2 py-0.5 text-[10px] font-medium">
+                      {s.sessionType}
+                    </span>
+                  )}
                 </div>
               </div>
             ))}
@@ -131,15 +154,15 @@ export default function SessionsPage() {
         )}
       </div>
 
-      <Modal
-        isOpen={showDeleteModal}
-        onClose={() => setShowDeleteModal(false)}
-        title="Oturumu Sil"
-      >
+      <Modal isOpen={showDeleteModal} onClose={() => setShowDeleteModal(false)} title="Oturumu Sil">
         <p>Bu oturumu silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.</p>
         <div className="mt-4 flex justify-end gap-2">
-          <Button variant="danger" onClick={confirmDelete}>Sil</Button>
-          <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>İptal</Button>
+          <Button variant="danger" onClick={confirmDelete}>
+            Sil
+          </Button>
+          <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
+            İptal
+          </Button>
         </div>
       </Modal>
     </AppShell>

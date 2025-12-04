@@ -39,14 +39,17 @@ export const eventsApi = {
     return apiClient.get<DataResultListEventDto>(`/api/events/active${qs ? `?${qs}` : ''}`);
   },
 
-  async getByEventType(eventTypeName: string, params?: {
-    includeEventType?: boolean;
-    includeSession?: boolean;
-    includeCompetitors?: boolean;
-    includeImages?: boolean;
-    includeSeason?: boolean;
-    includeCompetition?: boolean;
-  }) {
+  async getByEventType(
+    eventTypeName: string,
+    params?: {
+      includeEventType?: boolean;
+      includeSession?: boolean;
+      includeCompetitors?: boolean;
+      includeImages?: boolean;
+      includeSeason?: boolean;
+      includeCompetition?: boolean;
+    },
+  ) {
     const query = new URLSearchParams();
     query.set('eventTypeName', eventTypeName);
     Object.entries(params || {}).forEach(([key, value]) => {
@@ -55,14 +58,17 @@ export const eventsApi = {
     return apiClient.get(`/api/events/event-type?${query.toString()}`);
   },
 
-  async getById(id: string, params?: {
-    includeEventType?: boolean;
-    includeSession?: boolean;
-    includeCompetitors?: boolean;
-    includeImages?: boolean;
-    includeSeason?: boolean;
-    includeCompetition?: boolean;
-  }) {
+  async getById(
+    id: string,
+    params?: {
+      includeEventType?: boolean;
+      includeSession?: boolean;
+      includeCompetitors?: boolean;
+      includeImages?: boolean;
+      includeSeason?: boolean;
+      includeCompetition?: boolean;
+    },
+  ) {
     const query = new URLSearchParams();
     Object.entries(params || {}).forEach(([key, value]) => {
       if (value !== undefined) query.set(key, value.toString());
@@ -76,7 +82,8 @@ export const eventsApi = {
     if (coverImage) {
       formData.append('coverImage', coverImage);
     }
-    formData.append('data', JSON.stringify(data));
+    const jsonBlob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+    formData.append('data', jsonBlob);
     return apiClient.postFormData<DataResultEventDto>('/api/events/', formData);
   },
 
@@ -91,4 +98,3 @@ export const eventsApi = {
     return apiClient.delete<Result>(`/api/events/${id}`);
   },
 };
-

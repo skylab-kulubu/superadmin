@@ -9,14 +9,24 @@ import type {
 export const seasonsApi = {
   async getAll(params?: { includeEvents?: boolean }) {
     const query = new URLSearchParams();
-    if (params?.includeEvents !== undefined) query.set('includeEvents', params.includeEvents.toString());
+    if (params?.includeEvents !== undefined)
+      query.set('includeEvents', params.includeEvents.toString());
     const qs = query.toString();
     return apiClient.get<DataResultListSeasonDto>(`/api/seasons/${qs ? `?${qs}` : ''}`);
   },
 
+  async getActive(params?: { includeEvents?: boolean }) {
+    const query = new URLSearchParams();
+    if (params?.includeEvents !== undefined)
+      query.set('includeEvents', params.includeEvents.toString());
+    const qs = query.toString();
+    return apiClient.get<DataResultListSeasonDto>(`/api/seasons/active${qs ? `?${qs}` : ''}`);
+  },
+
   async getById(id: string, params?: { includeEvents?: boolean }) {
     const query = new URLSearchParams();
-    if (params?.includeEvents !== undefined) query.set('includeEvents', params.includeEvents.toString());
+    if (params?.includeEvents !== undefined)
+      query.set('includeEvents', params.includeEvents.toString());
     const qs = query.toString();
     return apiClient.get<DataResultSeasonDto>(`/api/seasons/${id}${qs ? `?${qs}` : ''}`);
   },
@@ -26,7 +36,7 @@ export const seasonsApi = {
   },
 
   async update(id: string, data: Partial<CreateSeasonRequest>) {
-    return apiClient.patch<DataResultSeasonDto>(`/api/seasons/${id}`, data);
+    return apiClient.put<DataResultSeasonDto>(`/api/seasons/${id}`, data);
   },
 
   async delete(id: string) {
@@ -34,11 +44,10 @@ export const seasonsApi = {
   },
 
   async addEvent(seasonId: string, eventId: string) {
-    return apiClient.post<Result>(`/api/seasons/addEventToSeason?seasonId=${seasonId}&eventId=${eventId}`);
+    return apiClient.post<Result>(`/api/seasons/${seasonId}/events/${eventId}`);
   },
 
   async removeEvent(seasonId: string, eventId: string) {
-    return apiClient.post<Result>(`/api/seasons/removeEventFromSeason?seasonId=${seasonId}&eventId=${eventId}`);
+    return apiClient.delete<Result>(`/api/seasons/${seasonId}/events/${eventId}`);
   },
 };
-

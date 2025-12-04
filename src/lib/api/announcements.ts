@@ -8,7 +8,11 @@ import type {
 } from '@/types/api';
 
 export const announcementsApi = {
-  async getAll(params?: { includeUser?: boolean; includeEventType?: boolean; includeImages?: boolean }) {
+  async getAll(params?: {
+    includeUser?: boolean;
+    includeEventType?: boolean;
+    includeImages?: boolean;
+  }) {
     const query = new URLSearchParams();
     Object.entries(params || {}).forEach(([key, value]) => {
       if (value !== undefined) query.set(key, value.toString());
@@ -17,25 +21,34 @@ export const announcementsApi = {
     return apiClient.get<DataResultListAnnouncementDto>(`/api/announcements/${qs ? `?${qs}` : ''}`);
   },
 
-  async getByEventType(eventTypeId: string, params?: { includeUser?: boolean; includeEventType?: boolean; includeImages?: boolean }) {
+  async getByEventType(
+    eventTypeId: string,
+    params?: { includeUser?: boolean; includeEventType?: boolean; includeImages?: boolean },
+  ) {
     const query = new URLSearchParams();
     Object.entries(params || {}).forEach(([key, value]) => {
       if (value !== undefined) query.set(key, value.toString());
     });
     const qs = query.toString();
-    return apiClient.get<DataResultListAnnouncementDto>(`/api/announcements/event-type/${eventTypeId}${qs ? `?${qs}` : ''}`);
+    return apiClient.get<DataResultListAnnouncementDto>(
+      `/api/announcements/event-type/${eventTypeId}${qs ? `?${qs}` : ''}`,
+    );
   },
 
   async getById(id: string, params?: { includeEventType?: boolean }) {
     const query = new URLSearchParams();
-    if (params?.includeEventType !== undefined) query.set('includeEventType', params.includeEventType.toString());
+    if (params?.includeEventType !== undefined)
+      query.set('includeEventType', params.includeEventType.toString());
     const qs = query.toString();
-    return apiClient.get<DataResultAnnouncementDto>(`/api/announcements/${id}${qs ? `?${qs}` : ''}`);
+    return apiClient.get<DataResultAnnouncementDto>(
+      `/api/announcements/${id}${qs ? `?${qs}` : ''}`,
+    );
   },
 
   async create(data: CreateAnnouncementRequestDto, coverImage?: File) {
     const formData = new FormData();
-    formData.append('data', JSON.stringify(data));
+    const jsonBlob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+    formData.append('data', jsonBlob);
     if (coverImage) formData.append('coverImage', coverImage);
     return apiClient.postFormData<DataResultAnnouncementDto>('/api/announcements/', formData);
   },
@@ -48,9 +61,3 @@ export const announcementsApi = {
     return apiClient.delete<Result>(`/api/announcements/${id}`);
   },
 };
-
-
-
-
-
-

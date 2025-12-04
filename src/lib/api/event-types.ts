@@ -27,10 +27,10 @@ export const eventTypesApi = {
   async delete(id: string) {
     return apiClient.delete<Result>(`/api/event-types/${id}`);
   },
+
+  async getCoordinators(eventTypeName: string) {
+    return apiClient.get<DataResultListEventTypeDto>(
+      `/api/event-types/${eventTypeName}/coordinators`,
+    );
+  },
 };
-
-
-
-
-
-

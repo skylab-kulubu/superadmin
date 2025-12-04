@@ -11,7 +11,8 @@ export const competitorsApi = {
   async getAll(params?: { includeUser?: boolean; includeEvent?: boolean }) {
     const query = new URLSearchParams();
     if (params?.includeUser !== undefined) query.set('includeUser', params.includeUser.toString());
-    if (params?.includeEvent !== undefined) query.set('includeEvent', params.includeEvent.toString());
+    if (params?.includeEvent !== undefined)
+      query.set('includeEvent', params.includeEvent.toString());
     const qs = query.toString();
     return apiClient.get<DataResultListCompetitorDto>(`/api/competitors/${qs ? `?${qs}` : ''}`);
   },
@@ -19,7 +20,8 @@ export const competitorsApi = {
   async getById(id: string, params?: { includeUser?: boolean; includeEvent?: boolean }) {
     const query = new URLSearchParams();
     if (params?.includeUser !== undefined) query.set('includeUser', params.includeUser.toString());
-    if (params?.includeEvent !== undefined) query.set('includeEvent', params.includeEvent.toString());
+    if (params?.includeEvent !== undefined)
+      query.set('includeEvent', params.includeEvent.toString());
     const qs = query.toString();
     return apiClient.get<DataResultCompetitorDto>(`/api/competitors/${id}${qs ? `?${qs}` : ''}`);
   },
@@ -39,7 +41,8 @@ export const competitorsApi = {
   async getMy(params?: { includeUser?: boolean; includeEvent?: boolean }) {
     const query = new URLSearchParams();
     if (params?.includeUser !== undefined) query.set('includeUser', params.includeUser.toString());
-    if (params?.includeEvent !== undefined) query.set('includeEvent', params.includeEvent.toString());
+    if (params?.includeEvent !== undefined)
+      query.set('includeEvent', params.includeEvent.toString());
     const qs = query.toString();
     return apiClient.get<DataResultListCompetitorDto>(`/api/competitors/my${qs ? `?${qs}` : ''}`);
   },
@@ -47,25 +50,61 @@ export const competitorsApi = {
   async getByUserId(userId: string, params?: { includeUser?: boolean; includeEvent?: boolean }) {
     const query = new URLSearchParams();
     if (params?.includeUser !== undefined) query.set('includeUser', params.includeUser.toString());
-    if (params?.includeEvent !== undefined) query.set('includeEvent', params.includeEvent.toString());
+    if (params?.includeEvent !== undefined)
+      query.set('includeEvent', params.includeEvent.toString());
     const qs = query.toString();
-    return apiClient.get<DataResultListCompetitorDto>(`/api/competitors/user/${userId}${qs ? `?${qs}` : ''}`);
+    return apiClient.get<DataResultListCompetitorDto>(
+      `/api/competitors/user/${userId}${qs ? `?${qs}` : ''}`,
+    );
   },
 
   async getByEventId(eventId: string, params?: { includeUser?: boolean; includeEvent?: boolean }) {
     const query = new URLSearchParams();
     if (params?.includeUser !== undefined) query.set('includeUser', params.includeUser.toString());
-    if (params?.includeEvent !== undefined) query.set('includeEvent', params.includeEvent.toString());
+    if (params?.includeEvent !== undefined)
+      query.set('includeEvent', params.includeEvent.toString());
     const qs = query.toString();
-    return apiClient.get<DataResultListCompetitorDto>(`/api/competitors/event/${eventId}${qs ? `?${qs}` : ''}`);
+    return apiClient.get<DataResultListCompetitorDto>(
+      `/api/competitors/event/${eventId}${qs ? `?${qs}` : ''}`,
+    );
   },
 
-  async getLeaderboard(competitionId: string, params?: { includeUser?: boolean; includeEvent?: boolean }) {
+  async getLeaderboard(params?: { includeUser?: boolean; includeEvent?: boolean }) {
     const query = new URLSearchParams();
     if (params?.includeUser !== undefined) query.set('includeUser', params.includeUser.toString());
-    if (params?.includeEvent !== undefined) query.set('includeEvent', params.includeEvent.toString());
+    if (params?.includeEvent !== undefined)
+      query.set('includeEvent', params.includeEvent.toString());
     const qs = query.toString();
-    return apiClient.get<DataResultListCompetitorDto>(`/api/competitors/leaderboard/${competitionId}${qs ? `?${qs}` : ''}`);
+    return apiClient.get<DataResultListCompetitorDto>(
+      `/api/competitors/leaderboard${qs ? `?${qs}` : ''}`,
+    );
+  },
+
+  async getSeasonLeaderboard(
+    seasonId: string,
+    params?: { includeUser?: boolean; includeEvent?: boolean },
+  ) {
+    const query = new URLSearchParams();
+    if (params?.includeUser !== undefined) query.set('includeUser', params.includeUser.toString());
+    if (params?.includeEvent !== undefined)
+      query.set('includeEvent', params.includeEvent.toString());
+    const qs = query.toString();
+    return apiClient.get<DataResultListCompetitorDto>(
+      `/api/competitors/leaderboard/season/${seasonId}${qs ? `?${qs}` : ''}`,
+    );
+  },
+
+  async getEventWinner(
+    eventId: string,
+    params?: { includeUser?: boolean; includeEvent?: boolean },
+  ) {
+    const query = new URLSearchParams();
+    if (params?.includeUser !== undefined) query.set('includeUser', params.includeUser.toString());
+    if (params?.includeEvent !== undefined)
+      query.set('includeEvent', params.includeEvent.toString());
+    const qs = query.toString();
+    return apiClient.get<DataResultCompetitorDto>(
+      `/api/competitors/event/${eventId}/winner${qs ? `?${qs}` : ''}`,
+    );
   },
 };
-

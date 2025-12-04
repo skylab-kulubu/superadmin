@@ -21,7 +21,6 @@ import type { UserDto } from '@/types/api';
 const menuItems = [
   { href: '/dashboard', label: 'Dashboard', icon: HiOutlineChartBar },
   { href: '/users', label: 'Kullanıcılar', icon: HiOutlineUsers },
-  { href: '/competitions', label: 'Yarışmalar', icon: HiOutlineTrophy },
   { href: '/events', label: 'Etkinlikler', icon: HiOutlineCalendar },
   { href: '/event-types', label: 'Etkinlik Tipleri', icon: HiOutlineTag },
   { href: '/competitors', label: 'Yarışmacılar', icon: HiOutlineUser },
@@ -76,11 +75,11 @@ export function Sidebar({ isMobileOpen = false, onMobileClose }: SidebarProps) {
     if (loading) {
       return (
         <div className={`flex items-center gap-3 ${showDetails ? '' : 'justify-center'}`}>
-          <div className="h-10 w-10 flex-shrink-0 animate-pulse rounded-full bg-dark-700" />
+          <div className="bg-dark-700 h-10 w-10 flex-shrink-0 animate-pulse rounded-full" />
           {showDetails && (
             <div className="min-w-0 flex-1">
-              <div className="mb-1.5 h-4 animate-pulse rounded bg-dark-700" />
-              <div className="h-3 w-2/3 animate-pulse rounded bg-dark-700" />
+              <div className="bg-dark-700 mb-1.5 h-4 animate-pulse rounded" />
+              <div className="bg-dark-700 h-3 w-2/3 animate-pulse rounded" />
             </div>
           )}
         </div>
@@ -90,18 +89,17 @@ export function Sidebar({ isMobileOpen = false, onMobileClose }: SidebarProps) {
     if (!user) {
       return (
         <div className={`flex items-center gap-3 ${showDetails ? '' : 'justify-center'}`}>
-          <div className="h-10 w-10 flex-shrink-0 rounded-full bg-dark-700" />
+          <div className="bg-dark-700 h-10 w-10 flex-shrink-0 rounded-full" />
           {showDetails && (
             <div className="min-w-0 flex-1">
-              <p className="truncate text-xs text-light/60">Kullanıcı bilgisi yüklenemedi</p>
+              <p className="text-light/60 truncate text-xs">Kullanıcı bilgisi yüklenemedi</p>
             </div>
           )}
         </div>
       );
     }
 
-    const initials =
-      user.firstName?.[0]?.toUpperCase() || user.username?.[0]?.toUpperCase() || 'U';
+    const initials = user.firstName?.[0]?.toUpperCase() || user.username?.[0]?.toUpperCase() || 'U';
 
     return (
       <div className={`flex items-center gap-3 ${showDetails ? '' : 'justify-center'}`}>
@@ -112,18 +110,18 @@ export function Sidebar({ isMobileOpen = false, onMobileClose }: SidebarProps) {
             className="h-10 w-10 flex-shrink-0 rounded-full object-cover"
           />
         ) : (
-          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-brand text-sm font-semibold text-dark">
+          <div className="bg-brand text-dark flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-sm font-semibold">
             {initials}
           </div>
         )}
         {showDetails && (
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-light">
+            <p className="text-light truncate text-sm font-medium">
               {user.firstName && user.lastName
                 ? `${user.firstName} ${user.lastName}`
                 : user.username}
             </p>
-            <p className="truncate text-xs text-light/60">{user.email}</p>
+            <p className="text-light/60 truncate text-xs">{user.email}</p>
           </div>
         )}
       </div>
@@ -133,7 +131,7 @@ export function Sidebar({ isMobileOpen = false, onMobileClose }: SidebarProps) {
   const renderMenu = (showLabels: boolean) => (
     <div className="flex h-full flex-col">
       <div
-        className={`flex items-center border-b border-dark-700 p-4 ${
+        className={`border-dark-700 flex items-center border-b p-4 ${
           showLabels ? 'justify-start' : 'justify-center'
         }`}
       >
@@ -144,35 +142,26 @@ export function Sidebar({ isMobileOpen = false, onMobileClose }: SidebarProps) {
             className="h-12 w-auto origin-left transition-all"
           />
         ) : (
-          <img
-            src="/logo.png"
-            alt="Skylab Admin"
-            className="h-12 w-12 object-contain"
-          />
+          <img src="/logo.png" alt="Skylab Admin" className="h-12 w-12 object-contain" />
         )}
       </div>
 
       <nav className="flex-1 overflow-y-auto px-2 py-4">
         <ul className="space-y-2">
           {menuItems.map((item) => {
-            const isActive =
-              pathname === item.href || pathname?.startsWith(item.href + '/');
+            const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
 
             const linkClasses = [
               'flex items-center rounded-lg text-sm font-medium transition-colors',
               showLabels ? 'gap-3 px-4 py-2 justify-start' : 'justify-center py-2',
-              isActive
-                ? 'bg-brand text-light'
-                : 'text-light hover:bg-dark-800 hover:text-brand',
+              isActive ? 'bg-brand text-light' : 'text-light hover:bg-dark-800 hover:text-brand',
             ].join(' ');
 
             return (
               <li key={item.href}>
                 <Link href={item.href} className={linkClasses} onClick={handleNavigate}>
                   <item.icon className="h-5 w-5 flex-shrink-0" />
-                  {showLabels && (
-                    <span className="whitespace-nowrap">{item.label}</span>
-                  )}
+                  {showLabels && <span className="whitespace-nowrap">{item.label}</span>}
                 </Link>
               </li>
             );
@@ -180,14 +169,14 @@ export function Sidebar({ isMobileOpen = false, onMobileClose }: SidebarProps) {
         </ul>
       </nav>
 
-      <div className="border-t border-dark-700 p-3">{renderUserSection(showLabels)}</div>
+      <div className="border-dark-700 border-t p-3">{renderUserSection(showLabels)}</div>
     </div>
   );
 
   return (
     <>
       <aside
-        className={`hidden h-full flex-col bg-dark text-light transition-[width] duration-300 ease-out lg:flex ${
+        className={`bg-dark text-light hidden h-full flex-col transition-[width] duration-300 ease-out lg:flex ${
           isDesktopExpanded ? 'w-64' : 'w-20'
         }`}
         onMouseEnter={() => setIsDesktopExpanded(true)}
@@ -201,15 +190,11 @@ export function Sidebar({ isMobileOpen = false, onMobileClose }: SidebarProps) {
           isMobileOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
         }`}
       >
-        <div
-          className="absolute inset-0 bg-dark/60"
-          onClick={onMobileClose}
-          role="presentation"
-        />
+        <div className="bg-dark/60 absolute inset-0" onClick={onMobileClose} role="presentation" />
       </div>
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex h-full w-64 transform flex-col bg-dark text-light shadow-lg transition-transform duration-300 lg:hidden ${
+        className={`bg-dark text-light fixed inset-y-0 left-0 z-50 flex h-full w-64 transform flex-col shadow-lg transition-transform duration-300 lg:hidden ${
           isMobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -218,4 +203,3 @@ export function Sidebar({ isMobileOpen = false, onMobileClose }: SidebarProps) {
     </>
   );
 }
-
