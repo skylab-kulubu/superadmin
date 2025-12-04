@@ -121,6 +121,7 @@ export interface EventDto {
   imageUrls?: string[];
   competitors?: CompetitorDto[];
   season?: SeasonDto;
+  competition?: CompetitionDto;
 }
 
 export interface CreateEventRequest {
@@ -133,6 +134,12 @@ export interface CreateEventRequest {
   endDate?: string;
   linkedin?: string;
   active?: boolean;
+  competitionId?: string;
+}
+
+export interface CompetitionDto {
+  id: string;
+  name: string;
 }
 
 export interface SeasonDto {

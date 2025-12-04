@@ -174,7 +174,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
     );
   }
 
-  const isLeader = currentUser && !!getLeaderEventType(currentUser);
+  const isLeader = !!currentUser && !!getLeaderEventType(currentUser);
 
   return (
     <AppShell>
