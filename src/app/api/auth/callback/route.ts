@@ -19,13 +19,16 @@ export async function GET(request: NextRequest) {
 
   try {
     const { access_token, refresh_token } = await exchangeCodeForToken(code);
-    
+
     console.log('✅ OAuth callback: Token exchange başarılı');
-    console.log('Token uzunlukları:', { access_token: access_token?.length, refresh_token: refresh_token?.length });
-    
+    console.log('Token uzunlukları:', {
+      access_token: access_token?.length,
+      refresh_token: refresh_token?.length,
+    });
+
     // Next.js 15'te cookies() async olmalı
     const cookieStore = await cookies();
-    
+
     cookieStore.set('auth_token', access_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -42,13 +45,36 @@ export async function GET(request: NextRequest) {
       path: '/',
     });
 
-    console.log('✅ OAuth callback: Cookie\'ler set edildi, dashboard\'a yönlendiriliyor');
+    console.log("✅ OAuth callback: Cookie'ler set edildi, dashboard'a yönlendiriliyor");
 
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+    // Redirect URL'ini belirle
+    // Docker/Proxy arkasında request.url localhost olabilir, bu yüzden env var'dan almayı dene
+    let baseUrl = request.nextUrl.origin;
+    const redirectUri = process.env.NEXT_PUBLIC_OAUTH2_REDIRECT_URI;
+
+    if (process.env.NEXT_PUBLIC_APP_URL) {
+      baseUrl = process.env.NEXT_PUBLIC_APP_URL;
+    } else if (redirectUri) {
+      try {
+        const url = new URL(redirectUri);
+        baseUrl = url.origin;
+      } catch (e) {
+        console.error('Invalid NEXT_PUBLIC_OAUTH2_REDIRECT_URI', e);
+      }
+    }
+
+    const redirectUrl = new URL('/dashboard', baseUrl);
+    console.log('Redirecting to:', redirectUrl.toString());
+
+    return NextResponse.redirect(redirectUrl);
   } catch (error) {
     console.error('❌ OAuth callback: Token exchange başarısız:', error);
     const errorMessage = error instanceof Error ? error.message : 'unknown_error';
-    return NextResponse.redirect(new URL('/login?error=token_exchange_failed&details=' + encodeURIComponent(errorMessage), request.url));
+    return NextResponse.redirect(
+      new URL(
+        '/login?error=token_exchange_failed&details=' + encodeURIComponent(errorMessage),
+        request.url,
+      ),
+    );
   }
 }
-
