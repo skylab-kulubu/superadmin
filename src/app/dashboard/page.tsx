@@ -6,9 +6,17 @@ import { getEvents } from '@/app/events/actions';
 import { getAnnouncements } from '@/app/announcements/actions';
 import { getSessions } from '@/app/sessions/actions';
 import Link from 'next/link';
+import { serverFetch } from '@/lib/api/server-client';
+import { canManageModule, getLeaderEventType, isSuperAdmin } from '@/lib/utils/permissions';
 
 export const dynamic = 'force-dynamic';
-import type { AnnouncementDto, EventDto, SessionDto, UserDto } from '@/types/api';
+import type {
+  AnnouncementDto,
+  EventDto,
+  SessionDto,
+  UserDto,
+  DataResultUserDto,
+} from '@/types/api';
 
 const ROLE_PRIORITY = [
   'ADMIN',
@@ -42,7 +50,6 @@ const getPrimaryRole = (roles: string[] = []) => {
 
 export default async function DashboardPage() {
   let usersCount = 0;
-
   let eventsCount = 0;
   let announcementsCount = 0;
   let sessionsCount = 0;
@@ -51,49 +58,78 @@ export default async function DashboardPage() {
   let usersList: UserDto[] = [];
   let announcementsList: AnnouncementDto[] = [];
   let sessionsList: SessionDto[] = [];
+  let eventsList: EventDto[] = [];
+
+  let currentUser: UserDto | null = null;
 
   try {
-    const [users, events, announcements, sessions] = await Promise.allSettled([
-      getUsers(),
-      getEvents({ includeEventType: true }),
-      getAnnouncements({ includeUser: true }),
-      getSessions({ includeEvent: true }),
-    ]);
+    // Fetch current user first to determine permissions
+    const userResult = await serverFetch<DataResultUserDto>('/api/users/me');
+    currentUser = userResult.data;
 
-    if (users.status === 'fulfilled') {
-      usersList = users.value;
-      usersCount = users.value.length;
-    } else if (
-      users.reason?.message?.includes('502') ||
-      users.reason?.message?.includes('Backend servisi')
-    )
-      backendError = true;
+    const isSuper = isSuperAdmin(currentUser);
+    const leaderEventType = getLeaderEventType(currentUser);
 
-    if (events.status === 'fulfilled') {
-      eventsCount = events.value.length;
-    } else if (
-      events.reason?.message?.includes('502') ||
-      events.reason?.message?.includes('Backend servisi')
-    )
-      backendError = true;
+    const promises = [];
 
-    if (announcements.status === 'fulfilled') {
-      announcementsList = announcements.value;
-      announcementsCount = announcements.value.length;
-    } else if (
-      announcements.reason?.message?.includes('502') ||
-      announcements.reason?.message?.includes('Backend servisi')
-    )
-      backendError = true;
+    // Users: Only for Super Admins
+    if (canManageModule(currentUser, 'users')) {
+      promises.push(getUsers().then((res) => ({ type: 'users', res })));
+    } else {
+      promises.push(Promise.resolve({ type: 'users', res: [] }));
+    }
 
-    if (sessions.status === 'fulfilled') {
-      sessionsList = sessions.value;
-      sessionsCount = sessions.value.length;
-    } else if (
-      sessions.reason?.message?.includes('502') ||
-      sessions.reason?.message?.includes('Backend servisi')
-    )
-      backendError = true;
+    // Events: All or Filtered
+    promises.push(getEvents({ includeEventType: true }).then((res) => ({ type: 'events', res })));
+
+    // Announcements: Visible to all staff (except USER)
+    // canManageModule('announcements') checks for ADMIN roles, but we want leaders to see them too.
+    // Since this page is already protected from USERs, we can just fetch announcements for everyone here.
+    promises.push(
+      getAnnouncements({ includeUser: true }).then((res) => ({ type: 'announcements', res })),
+    );
+
+    // Sessions: All or Filtered
+    promises.push(getSessions({ includeEvent: true }).then((res) => ({ type: 'sessions', res })));
+
+    const results = await Promise.allSettled(promises);
+
+    for (const result of results) {
+      if (result.status === 'fulfilled') {
+        const { type, res } = result.value;
+
+        if (type === 'users') {
+          usersList = Array.isArray(res) ? (res as UserDto[]) : [];
+          usersCount = usersList.length;
+        } else if (type === 'events') {
+          let events = Array.isArray(res) ? (res as EventDto[]) : [];
+          if (leaderEventType) {
+            events = events.filter((e: any) => e.type?.name === leaderEventType);
+          }
+          eventsList = events;
+          eventsCount = events.length;
+        } else if (type === 'announcements') {
+          announcementsList = Array.isArray(res) ? (res as AnnouncementDto[]) : [];
+          announcementsCount = announcementsList.length;
+        } else if (type === 'sessions') {
+          let sessions = Array.isArray(res) ? (res as SessionDto[]) : [];
+          if (leaderEventType) {
+            sessions = sessions.filter((s: any) => s.event?.type?.name === leaderEventType);
+          }
+          sessionsList = sessions;
+          sessionsCount = sessions.length;
+        }
+      } else {
+        console.error('Dashboard fetch error:', result.reason);
+
+        if (
+          result.reason?.message?.includes('502') ||
+          result.reason?.message?.includes('Backend servisi')
+        ) {
+          backendError = true;
+        }
+      }
+    }
   } catch (error) {
     console.error('Dashboard error:', error);
     if (
@@ -142,6 +178,7 @@ export default async function DashboardPage() {
           />
         </svg>
       ),
+      permission: 'users',
     },
 
     {
@@ -164,6 +201,7 @@ export default async function DashboardPage() {
         </svg>
       ),
       displayClass: 'hidden sm:block',
+      permission: 'events',
     },
     {
       title: 'Duyurular',
@@ -185,6 +223,7 @@ export default async function DashboardPage() {
         </svg>
       ),
       displayClass: 'hidden md:block',
+      permission: 'announcements',
     },
     {
       title: 'Oturumlar',
@@ -206,6 +245,7 @@ export default async function DashboardPage() {
         </svg>
       ),
       displayClass: 'hidden lg:block',
+      permission: 'sessions',
     },
   ];
 
@@ -242,82 +282,90 @@ export default async function DashboardPage() {
         )}
 
         <div className="flex gap-2 overflow-x-auto pb-1 sm:gap-3">
-          {statsCards.map((card) => (
-            <Link
-              key={card.title}
-              href={card.href}
-              className={`border-dark-200 bg-light hover:border-brand/70 focus-visible:outline-brand min-w-[150px] flex-1 rounded-lg border p-4 transition hover:shadow focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 sm:min-w-[180px] ${card.displayClass ?? ''}`}
-            >
-              <div className="flex items-center justify-between gap-2 sm:gap-3">
-                <span className="text-dark-500 text-xs font-medium tracking-wide uppercase sm:text-sm sm:tracking-normal sm:normal-case">
-                  {card.title}
-                </span>
-                <div className="flex items-center gap-1.5 sm:gap-2">
-                  <span className="text-dark-900 text-xl font-semibold sm:text-2xl">
-                    {card.value}
+          {statsCards
+            .filter((card) => {
+              if (card.permission === 'announcements') return true; // Visible to all staff
+              return canManageModule(currentUser, card.permission as any);
+            })
+            .map((card) => (
+              <Link
+                key={card.title}
+                href={card.href}
+                className={`border-dark-200 bg-light hover:border-brand/70 focus-visible:outline-brand min-w-[150px] flex-1 rounded-lg border p-4 transition hover:shadow focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 sm:min-w-[180px] ${card.displayClass ?? ''}`}
+              >
+                <div className="flex items-center justify-between gap-2 sm:gap-3">
+                  <span className="text-dark-500 text-xs font-medium tracking-wide uppercase sm:text-sm sm:tracking-normal sm:normal-case">
+                    {card.title}
                   </span>
-                  {card.icon}
+                  <div className="flex items-center gap-1.5 sm:gap-2">
+                    <span className="text-dark-900 text-xl font-semibold sm:text-2xl">
+                      {card.value}
+                    </span>
+                    {card.icon}
+                  </div>
                 </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            ))}
         </div>
 
         <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.1fr_1fr]">
           <div className="space-y-5">
-            <section className="border-dark-200 bg-light rounded-xl border p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-dark-900 text-lg font-semibold">Son Kullanıcılar</h2>
-                  <p className="text-dark-500 text-sm">
-                    Kullanıcılar ekranındaki en güncel kayıtlar
-                  </p>
-                </div>
-                <Link
-                  href="/users"
-                  className="text-brand text-sm font-medium transition hover:opacity-80"
-                >
-                  Tümünü Gör
-                </Link>
-              </div>
-              <div className="mt-4 space-y-2.5">
-                {recentUsers.length === 0 ? (
-                  <div className="border-dark-200/70 text-dark-500 rounded-lg border border-dashed p-5 text-center text-sm">
-                    Henüz kullanıcı verisi bulunmuyor.
+            {canManageModule(currentUser, 'users') && (
+              <section className="border-dark-200 bg-light rounded-xl border p-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-dark-900 text-lg font-semibold">Son Kullanıcılar</h2>
+                    <p className="text-dark-500 text-sm">
+                      Kullanıcılar ekranındaki en güncel kayıtlar
+                    </p>
                   </div>
-                ) : (
-                  recentUsers.map((user) => {
-                    const fullName =
-                      `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || user.username;
-                    const primaryRole = getPrimaryRole(user.roles || []);
+                  <Link
+                    href="/users"
+                    className="text-brand text-sm font-medium transition hover:opacity-80"
+                  >
+                    Tümünü Gör
+                  </Link>
+                </div>
+                <div className="mt-4 space-y-2.5">
+                  {recentUsers.length === 0 ? (
+                    <div className="border-dark-200/70 text-dark-500 rounded-lg border border-dashed p-5 text-center text-sm">
+                      Henüz kullanıcı verisi bulunmuyor.
+                    </div>
+                  ) : (
+                    recentUsers.map((user) => {
+                      const fullName =
+                        `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || user.username;
+                      const primaryRole = getPrimaryRole(user.roles || []);
 
-                    return (
-                      <Link
-                        key={user.id}
-                        href={`/users/${user.id}`}
-                        className="hover:border-brand/60 hover:bg-brand-50/40 flex items-center gap-4 rounded-lg border border-transparent bg-white/60 p-3 transition"
-                      >
-                        <div className="bg-brand-100 text-brand-600 flex h-12 w-12 items-center justify-center rounded-full">
-                          <span className="text-sm font-semibold">
-                            {fullName ? fullName[0] : '?'}
-                          </span>
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-dark-900 text-sm font-semibold">{fullName}</p>
-                          <p className="text-dark-500 text-xs">{user.email}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="border-brand-200 bg-brand-50 text-brand-600 rounded-full border px-3 py-1 text-xs font-medium">
-                            {primaryRole}
-                          </span>
-                        </div>
-                      </Link>
-                    );
-                  })
-                )}
-              </div>
-            </section>
+                      return (
+                        <Link
+                          key={user.id}
+                          href={`/users/${user.id}`}
+                          className="hover:border-brand/60 hover:bg-brand-50/40 flex items-center gap-4 rounded-lg border border-transparent bg-white/60 p-3 transition"
+                        >
+                          <div className="bg-brand-100 text-brand-600 flex h-12 w-12 items-center justify-center rounded-full">
+                            <span className="text-sm font-semibold">
+                              {fullName ? fullName[0] : '?'}
+                            </span>
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-dark-900 text-sm font-semibold">{fullName}</p>
+                            <p className="text-dark-500 text-xs">{user.email}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="border-brand-200 bg-brand-50 text-brand-600 rounded-full border px-3 py-1 text-xs font-medium">
+                              {primaryRole}
+                            </span>
+                          </div>
+                        </Link>
+                      );
+                    })
+                  )}
+                </div>
+              </section>
+            )}
 
+            {/* Announcements Section - Visible to all staff */}
             <section className="border-dark-200 bg-light rounded-xl border p-5">
               <div className="flex items-center justify-between">
                 <div>

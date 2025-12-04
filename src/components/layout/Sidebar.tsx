@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   HiOutlineCalendar,
   HiOutlineCalendarDays,
@@ -12,11 +12,12 @@ import {
   HiOutlinePhoto,
   HiOutlineQrCode,
   HiOutlineTag,
-  HiOutlineTrophy,
   HiOutlineUser,
   HiOutlineUsers,
+  HiOutlinePuzzlePiece,
 } from 'react-icons/hi2';
-import type { UserDto } from '@/types/api';
+import { canAccessPage } from '@/lib/utils/permissions';
+import { useAuth } from '@/context/AuthContext';
 
 const menuItems = [
   { href: '/dashboard', label: 'Dashboard', icon: HiOutlineChartBar },
@@ -29,6 +30,7 @@ const menuItems = [
   { href: '/announcements', label: 'Duyurular', icon: HiOutlineMegaphone },
   { href: '/images', label: 'Resimler', icon: HiOutlinePhoto },
   { href: '/qr', label: 'QR Kodlar', icon: HiOutlineQrCode },
+  { href: '/waiting-room', label: 'Oyun Alanı', icon: HiOutlinePuzzlePiece },
 ];
 
 type SidebarProps = {
@@ -38,32 +40,8 @@ type SidebarProps = {
 
 export function Sidebar({ isMobileOpen = false, onMobileClose }: SidebarProps) {
   const pathname = usePathname();
-  const [user, setUser] = useState<UserDto | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading } = useAuth();
   const [isDesktopExpanded, setIsDesktopExpanded] = useState(false);
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const response = await fetch('/api/auth/me', {
-          credentials: 'include',
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.authenticated && data.user) {
-            setUser(data.user);
-          }
-        }
-      } catch (error) {
-        console.error('Kullanıcı bilgileri yüklenirken hata:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUser();
-  }, []);
 
   const handleNavigate = () => {
     if (onMobileClose) {
@@ -148,24 +126,28 @@ export function Sidebar({ isMobileOpen = false, onMobileClose }: SidebarProps) {
 
       <nav className="flex-1 overflow-y-auto px-2 py-4">
         <ul className="space-y-2">
-          {menuItems.map((item) => {
-            const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
+          {menuItems
+            .filter((item) => (user ? canAccessPage(user, item.href) : false))
+            .map((item) => {
+              const isActive =
+                pathname === item.href ||
+                (item.href !== '/dashboard' && pathname?.startsWith(item.href + '/'));
 
-            const linkClasses = [
-              'flex items-center rounded-lg text-sm font-medium transition-colors',
-              showLabels ? 'gap-3 px-4 py-2 justify-start' : 'justify-center py-2',
-              isActive ? 'bg-brand text-light' : 'text-light hover:bg-dark-800 hover:text-brand',
-            ].join(' ');
+              const linkClasses = [
+                'flex items-center rounded-lg text-sm font-medium transition-colors',
+                showLabels ? 'gap-3 px-4 py-2 justify-start' : 'justify-center py-2',
+                isActive ? 'bg-brand text-light' : 'text-light hover:bg-dark-800 hover:text-brand',
+              ].join(' ');
 
-            return (
-              <li key={item.href}>
-                <Link href={item.href} className={linkClasses} onClick={handleNavigate}>
-                  <item.icon className="h-5 w-5 flex-shrink-0" />
-                  {showLabels && <span className="whitespace-nowrap">{item.label}</span>}
-                </Link>
-              </li>
-            );
-          })}
+              return (
+                <li key={item.href}>
+                  <Link href={item.href} className={linkClasses} onClick={handleNavigate}>
+                    <item.icon className="h-5 w-5 flex-shrink-0" />
+                    {showLabels && <span className="whitespace-nowrap">{item.label}</span>}
+                  </Link>
+                </li>
+              );
+            })}
         </ul>
       </nav>
 

@@ -28,19 +28,20 @@ function LoginContent() {
   // Hata durumunda kullanıcıya göster
   if (error) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-light">
-        <div className="text-center max-w-md p-6 bg-light border border-dark-200 rounded-lg">
-          <h1 className="text-2xl font-bold mb-4 text-brand">Giriş Hatası</h1>
+      <div className="bg-light flex min-h-screen items-center justify-center">
+        <div className="bg-light border-dark-200 max-w-md rounded-lg border p-6 text-center">
+          <h1 className="text-brand mb-4 text-2xl font-bold">Giriş Hatası</h1>
           <p className="text-dark mb-4">
-            {error === 'token_exchange_failed' 
+            {error === 'token_exchange_failed'
               ? 'Token değişimi başarısız oldu. Lütfen tekrar deneyin.'
               : error === 'no_code'
-              ? 'Authorization kodu alınamadı. Lütfen tekrar deneyin.'
-              : `Hata: ${error}`
-            }
+                ? 'Authorization kodu alınamadı. Lütfen tekrar deneyin.'
+                : error === 'config_missing'
+                  ? 'OAuth2 konfigürasyonu eksik (Client ID). Lütfen yönetici ile iletişime geçin.'
+                  : `Hata: ${error}`}
           </p>
           {details && (
-            <div className="mb-4 p-3 bg-light rounded text-sm text-left text-dark opacity-80 break-all border border-dark-200">
+            <div className="bg-light text-dark border-dark-200 mb-4 rounded border p-3 text-left text-sm break-all opacity-80">
               <strong>Detay:</strong> {details}
             </div>
           )}
@@ -49,7 +50,7 @@ function LoginContent() {
               setHasRedirected(false);
               window.location.href = getOAuth2AuthUrl();
             }}
-            className="px-4 py-2 bg-brand text-light rounded hover:bg-brand-600 font-medium"
+            className="bg-brand text-light hover:bg-brand-600 rounded px-4 py-2 font-medium"
           >
             Tekrar Dene
           </button>
@@ -58,10 +59,22 @@ function LoginContent() {
               onClick={() => {
                 router.push('/login');
               }}
-              className="px-4 py-2 bg-dark-200 text-light rounded hover:bg-dark-300 text-sm"
+              className="bg-dark-200 text-light hover:bg-dark-300 rounded px-4 py-2 text-sm"
             >
               Sayfayı Yenile
             </button>
+          </div>
+          <div className="border-dark-200 mt-6 border-t pt-4">
+            <details className="text-left">
+              <summary className="text-dark cursor-pointer text-xs opacity-50 hover:opacity-100">
+                Debug Bilgisi
+              </summary>
+              <div className="bg-dark-100 text-dark mt-2 rounded p-2 font-mono text-xs break-all">
+                <p>
+                  <strong>Auth URL:</strong> {getOAuth2AuthUrl()}
+                </p>
+              </div>
+            </details>
           </div>
         </div>
       </div>
@@ -74,7 +87,7 @@ function LoginContent() {
       try {
         // LocalStorage'ı temizle
         localStorage.removeItem('auth_token');
-        
+
         // Cookie'leri kesinlikle temizlemek için logout endpoint'ini tekrar çağır
         const logoutResponse = await fetch('/api/auth/logout', {
           method: 'POST',
@@ -82,16 +95,16 @@ function LoginContent() {
         }).catch(() => {
           // Hata olsa bile devam et
         });
-        
+
         console.log('Logout response:', logoutResponse?.status);
-        
+
         // Cookie'lerin temizlenmesi için bekleme
-        await new Promise(resolve => setTimeout(resolve, 300));
-        
+        await new Promise((resolve) => setTimeout(resolve, 300));
+
         // OAuth URL'ini al
         const oauthUrl = getOAuth2AuthUrl();
         console.log('Redirecting to OAuth URL:', oauthUrl);
-        
+
         // External URL'e git - bu middleware'i bypass eder
         // window.location.href kullan (external URL olduğu için middleware intercept edemez)
         window.location.href = oauthUrl;
@@ -105,15 +118,16 @@ function LoginContent() {
     };
 
     return (
-      <div className="flex min-h-screen items-center justify-center bg-light">
-        <div className="text-center max-w-md p-6 bg-light border border-dark-200 rounded-lg">
-          <h1 className="text-2xl font-bold mb-4 text-brand">Başarıyla Çıkış Yaptınız</h1>
+      <div className="bg-light flex min-h-screen items-center justify-center">
+        <div className="bg-light border-dark-200 max-w-md rounded-lg border p-6 text-center">
+          <h1 className="text-brand mb-4 text-2xl font-bold">Başarıyla Çıkış Yaptınız</h1>
           <p className="text-dark mb-4">
-            Güvenli bir şekilde çıkış yaptınız. Tekrar giriş yapmak için lütfen aşağıdaki butona tıklayın.
+            Güvenli bir şekilde çıkış yaptınız. Tekrar giriş yapmak için lütfen aşağıdaki butona
+            tıklayın.
           </p>
           <button
             onClick={handleLogin}
-            className="px-4 py-2 bg-brand text-light rounded hover:bg-brand-600 font-medium"
+            className="bg-brand text-light hover:bg-brand-600 rounded px-4 py-2 font-medium"
           >
             Giriş Yap
           </button>
@@ -123,9 +137,9 @@ function LoginContent() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-light">
+    <div className="bg-light flex min-h-screen items-center justify-center">
       <div className="text-center">
-        <h1 className="text-2xl font-bold mb-4 text-brand">Yönlendiriliyor...</h1>
+        <h1 className="text-brand mb-4 text-2xl font-bold">Yönlendiriliyor...</h1>
         <p className="text-dark opacity-60">Giriş sayfasına yönlendiriliyorsunuz.</p>
       </div>
     </div>
@@ -134,15 +148,16 @@ function LoginContent() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={
-      <div className="flex min-h-screen items-center justify-center bg-light">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4 text-brand">Yükleniyor...</h1>
+    <Suspense
+      fallback={
+        <div className="bg-light flex min-h-screen items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-brand mb-4 text-2xl font-bold">Yükleniyor...</h1>
+          </div>
         </div>
-      </div>
-    }>
+      }
+    >
       <LoginContent />
     </Suspense>
   );
 }
-

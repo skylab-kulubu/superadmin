@@ -17,6 +17,8 @@ import { z } from 'zod';
 import { eventsApi } from '@/lib/api/events';
 import { eventTypesApi } from '@/lib/api/event-types';
 import { convertGMT3ToGMT0, getCurrentDateTimeGMT3 } from '@/lib/utils/date';
+import { getLeaderEventType } from '@/lib/utils/permissions';
+import { UserDto } from '@/types/api';
 
 const eventSchema = z.object({
   name: z.string().min(2, 'En az 2 karakter olmalı'),
@@ -43,13 +45,20 @@ export default function NewEventPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCreatingEventType, setIsCreatingEventType] = useState(false);
   const eventFormMethodsRef = useRef<any>(null);
+  const [currentUser, setCurrentUser] = useState<UserDto | null>(null);
+  const [leaderEventTypeId, setLeaderEventTypeId] = useState<string | null>(null);
 
   const loadEventTypes = () => {
     eventTypesApi
       .getAll()
       .then((response) => {
         if (response.success && response.data) {
-          setEventTypes(response.data.map((et) => ({ value: et.id, label: et.name })));
+          const types = response.data.map((et) => ({ value: et.id, label: et.name }));
+          setEventTypes(types);
+
+          if (currentUser) {
+            checkLeaderRole(currentUser, types);
+          }
         }
       })
       .catch((error) => {
@@ -57,9 +66,37 @@ export default function NewEventPage() {
       });
   };
 
+  const checkLeaderRole = (user: UserDto, types: { value: string; label: string }[]) => {
+    const leaderTypeName = getLeaderEventType(user);
+    if (leaderTypeName) {
+      const matchedType = types.find((t) => t.label === leaderTypeName);
+      if (matchedType) {
+        setLeaderEventTypeId(matchedType.value);
+        if (eventFormMethodsRef.current) {
+          eventFormMethodsRef.current.setValue('eventTypeId', matchedType.value);
+        }
+      }
+    }
+  };
+
   useEffect(() => {
+    fetch('/api/auth/me')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.authenticated && data.user) {
+          setCurrentUser(data.user);
+        }
+      })
+      .catch((err) => console.error('User fetch error:', err));
+
     loadEventTypes();
   }, []);
+
+  useEffect(() => {
+    if (currentUser && eventTypes.length > 0) {
+      checkLeaderRole(currentUser, eventTypes);
+    }
+  }, [currentUser, eventTypes]);
 
   const handleSubmit = async (data: z.infer<typeof eventSchema>) => {
     startTransition(async () => {
@@ -70,7 +107,6 @@ export default function NewEventPage() {
           description: data.description || undefined,
           location: data.location ?? '',
           eventTypeId: data.eventTypeId,
-          // Eğer görsel yüklenmediyse formUrl gönderilmesin (gerçi şema zorunlu kılıyor ama yine de kontrol)
           formUrl: coverImage ? data.formUrl || undefined : undefined,
           startDate: convertGMT3ToGMT0(data.startDate),
           endDate: convertGMT3ToGMT0(data.endDate),
@@ -123,13 +159,12 @@ export default function NewEventPage() {
               onSubmit={handleSubmit}
               defaultValues={{
                 coverImage: undefined,
-                eventTypeId: '',
+                eventTypeId: leaderEventTypeId || '',
                 startDate: getCurrentDateTimeGMT3(),
                 endDate: getCurrentDateTimeGMT3(),
               }}
             >
               {(methods) => {
-                // Form method'larını ref'te sakla (state set etme, render sırasında setState hatasına yol açar)
                 eventFormMethodsRef.current = methods;
                 const formErrors = methods.formState.errors;
                 return (
@@ -156,12 +191,24 @@ export default function NewEventPage() {
                             required
                             placeholder="Yazılım Geliştirme Workshop'u"
                           />
-                          <Select
-                            name="eventTypeId"
-                            label="Etkinlik Tipi"
-                            options={eventTypes}
-                            required
-                          />
+                          <div className="relative">
+                            <Select
+                              name="eventTypeId"
+                              label="Etkinlik Tipi"
+                              options={eventTypes}
+                              required
+                              disabled={!!leaderEventTypeId}
+                            />
+                            {!leaderEventTypeId && (
+                              <button
+                                type="button"
+                                onClick={() => setIsModalOpen(true)}
+                                className="text-brand absolute top-0 right-0 text-xs font-medium hover:underline"
+                              >
+                                + Yeni Tip
+                              </button>
+                            )}
+                          </div>
                           <TextField
                             name="location"
                             label="Konum"
