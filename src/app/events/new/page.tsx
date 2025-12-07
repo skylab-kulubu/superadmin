@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { AppShell } from '@/components/layout/AppShell';
+
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Form } from '@/components/forms/Form';
 import { TextField } from '@/components/forms/TextField';
@@ -148,166 +148,160 @@ export default function NewEventPage() {
   };
 
   return (
-    <AppShell>
-      <div className="space-y-6">
-        <PageHeader title="Yeni Etkinlik" description="Sisteme yeni etkinlik ekleyin" />
+    <div className="space-y-6">
+      <PageHeader title="Yeni Etkinlik" description="Sisteme yeni etkinlik ekleyin" />
 
-        <div className="mx-auto max-w-3xl">
-          <div className="bg-light border-dark-200 rounded-lg border p-4 shadow">
-            <Form
-              schema={eventSchema}
-              onSubmit={handleSubmit}
-              defaultValues={{
-                coverImage: undefined,
-                eventTypeId: leaderEventTypeId || '',
-                startDate: getCurrentDateTimeGMT3(),
-                endDate: getCurrentDateTimeGMT3(),
-              }}
-            >
-              {(methods) => {
-                eventFormMethodsRef.current = methods;
-                const formErrors = methods.formState.errors;
-                return (
-                  <>
-                    {Object.keys(formErrors).length > 0 && (
-                      <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-4">
-                        <p className="mb-2 text-sm font-medium text-red-800">Form hataları:</p>
-                        <ul className="list-inside list-disc text-sm text-red-600">
-                          {Object.entries(formErrors).map(([key, error]) => (
-                            <li key={key}>
-                              {key}: {error?.message as string}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    <div className="space-y-5">
-                      <div>
-                        <h3 className="text-dark-800 mb-3 text-sm font-semibold">Temel Bilgiler</h3>
-                        <div className="grid grid-cols-2 gap-4">
-                          <TextField
-                            name="name"
-                            label="Ad"
+      <div className="mx-auto max-w-3xl">
+        <div className="bg-light border-dark-200 rounded-lg border p-4 shadow">
+          <Form
+            schema={eventSchema}
+            onSubmit={handleSubmit}
+            defaultValues={{
+              coverImage: undefined,
+              eventTypeId: leaderEventTypeId || '',
+              startDate: getCurrentDateTimeGMT3(),
+              endDate: getCurrentDateTimeGMT3(),
+            }}
+          >
+            {(methods) => {
+              eventFormMethodsRef.current = methods;
+              const formErrors = methods.formState.errors;
+              return (
+                <>
+                  {Object.keys(formErrors).length > 0 && (
+                    <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-4">
+                      <p className="mb-2 text-sm font-medium text-red-800">Form hataları:</p>
+                      <ul className="list-inside list-disc text-sm text-red-600">
+                        {Object.entries(formErrors).map(([key, error]) => (
+                          <li key={key}>
+                            {key}: {error?.message as string}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  <div className="space-y-5">
+                    <div>
+                      <h3 className="text-dark-800 mb-3 text-sm font-semibold">Temel Bilgiler</h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <TextField
+                          name="name"
+                          label="Ad"
+                          required
+                          placeholder="Yazılım Geliştirme Workshop'u"
+                        />
+                        <div className="relative">
+                          <Select
+                            name="eventTypeId"
+                            label="Etkinlik Tipi"
+                            options={eventTypes}
                             required
-                            placeholder="Yazılım Geliştirme Workshop'u"
+                            disabled={!!leaderEventTypeId}
                           />
-                          <div className="relative">
-                            <Select
-                              name="eventTypeId"
-                              label="Etkinlik Tipi"
-                              options={eventTypes}
-                              required
-                              disabled={!!leaderEventTypeId}
-                            />
-                            {!leaderEventTypeId && (
-                              <button
-                                type="button"
-                                onClick={() => setIsModalOpen(true)}
-                                className="text-brand absolute top-0 right-0 text-xs font-medium hover:underline"
-                              >
-                                + Yeni Tip
-                              </button>
-                            )}
-                          </div>
-                          <TextField
-                            name="location"
-                            label="Konum"
-                            placeholder="YTÜ Davutpaşa Kampüsü"
-                          />
-                          <TextField
-                            name="formUrl"
-                            label="Form URL"
-                            type="url"
-                            placeholder="https://forms.google.com/..."
-                          />
+                          {!leaderEventTypeId && (
+                            <button
+                              type="button"
+                              onClick={() => setIsModalOpen(true)}
+                              className="text-brand absolute top-0 right-0 text-xs font-medium hover:underline"
+                            >
+                              + Yeni Tip
+                            </button>
+                          )}
                         </div>
-                        <div className="mt-4">
-                          <Textarea
-                            name="description"
-                            label="Açıklama"
-                            rows={4}
-                            placeholder="Etkinlik hakkında detaylı bilgi..."
-                          />
-                        </div>
+                        <TextField
+                          name="location"
+                          label="Konum"
+                          placeholder="YTÜ Davutpaşa Kampüsü"
+                        />
+                        <TextField
+                          name="formUrl"
+                          label="Form URL"
+                          type="url"
+                          placeholder="https://forms.google.com/..."
+                        />
                       </div>
-
-                      <div className="border-dark-200 border-t pt-5">
-                        <h3 className="text-dark-800 mb-3 text-sm font-semibold">Tarih ve Zaman</h3>
-                        <div className="grid grid-cols-2 gap-4">
-                          <DatePicker name="startDate" label="Başlangıç Tarihi" required />
-                          <DatePicker name="endDate" label="Bitiş Tarihi" required />
-                        </div>
-                      </div>
-
-                      <div className="border-dark-200 border-t pt-5">
-                        <h3 className="text-dark-800 mb-3 text-sm font-semibold">Ek Bilgiler</h3>
-                        <div className="space-y-4">
-                          <TextField
-                            name="linkedin"
-                            label="LinkedIn URL"
-                            type="url"
-                            placeholder="https://www.linkedin.com/events/..."
-                          />
-                          <FileUpload name="coverImage" label="Kapak Resmi" accept="image/*" />
-                        </div>
+                      <div className="mt-4">
+                        <Textarea
+                          name="description"
+                          label="Açıklama"
+                          rows={4}
+                          placeholder="Etkinlik hakkında detaylı bilgi..."
+                        />
                       </div>
                     </div>
-                    <div className="border-dark-200 mt-6 flex items-center justify-between gap-3 border-t pt-5">
-                      <Button
-                        href="/events"
-                        variant="secondary"
-                        className="border-red-500 bg-transparent text-red-500 hover:bg-red-500 hover:text-white"
-                      >
-                        İptal
-                      </Button>
-                      <Button
-                        type="submit"
-                        disabled={isPending}
-                        className="!text-brand hover:!bg-brand border-brand !bg-transparent hover:!text-white"
-                      >
-                        {isPending ? 'Kaydediliyor...' : 'Kaydet'}
-                      </Button>
-                    </div>
-                  </>
-                );
-              }}
-            </Form>
-          </div>
-        </div>
 
-        <Modal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          title="Yeni Etkinlik Tipi"
-        >
-          <Form schema={eventTypeSchema} onSubmit={(data) => handleCreateEventType(data)}>
-            {(methods) => (
-              <>
-                <div className="space-y-4">
-                  <TextField name="name" label="Ad" required placeholder="Workshop, Seminer, vb." />
-                </div>
-                <div className="border-dark-200 mt-6 flex items-center justify-between gap-3 border-t pt-5">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={() => setIsModalOpen(false)}
-                    className="border-red-500 bg-transparent text-red-500 hover:bg-red-500 hover:text-white"
-                  >
-                    İptal
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={isCreatingEventType}
-                    className="!text-brand hover:!bg-brand border-brand !bg-transparent hover:!text-white"
-                  >
-                    {isCreatingEventType ? 'Kaydediliyor...' : 'Kaydet'}
-                  </Button>
-                </div>
-              </>
-            )}
+                    <div className="border-dark-200 border-t pt-5">
+                      <h3 className="text-dark-800 mb-3 text-sm font-semibold">Tarih ve Zaman</h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <DatePicker name="startDate" label="Başlangıç Tarihi" required />
+                        <DatePicker name="endDate" label="Bitiş Tarihi" required />
+                      </div>
+                    </div>
+
+                    <div className="border-dark-200 border-t pt-5">
+                      <h3 className="text-dark-800 mb-3 text-sm font-semibold">Ek Bilgiler</h3>
+                      <div className="space-y-4">
+                        <TextField
+                          name="linkedin"
+                          label="LinkedIn URL"
+                          type="url"
+                          placeholder="https://www.linkedin.com/events/..."
+                        />
+                        <FileUpload name="coverImage" label="Kapak Resmi" accept="image/*" />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="border-dark-200 mt-6 flex items-center justify-between gap-3 border-t pt-5">
+                    <Button
+                      href="/events"
+                      variant="secondary"
+                      className="border-red-500 bg-transparent text-red-500 hover:bg-red-500 hover:text-white"
+                    >
+                      İptal
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={isPending}
+                      className="!text-brand hover:!bg-brand border-brand !bg-transparent hover:!text-white"
+                    >
+                      {isPending ? 'Kaydediliyor...' : 'Kaydet'}
+                    </Button>
+                  </div>
+                </>
+              );
+            }}
           </Form>
-        </Modal>
+        </div>
       </div>
-    </AppShell>
+
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Yeni Etkinlik Tipi">
+        <Form schema={eventTypeSchema} onSubmit={(data) => handleCreateEventType(data)}>
+          {(methods) => (
+            <>
+              <div className="space-y-4">
+                <TextField name="name" label="Ad" required placeholder="Workshop, Seminer, vb." />
+              </div>
+              <div className="border-dark-200 mt-6 flex items-center justify-between gap-3 border-t pt-5">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => setIsModalOpen(false)}
+                  className="border-red-500 bg-transparent text-red-500 hover:bg-red-500 hover:text-white"
+                >
+                  İptal
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isCreatingEventType}
+                  className="!text-brand hover:!bg-brand border-brand !bg-transparent hover:!text-white"
+                >
+                  {isCreatingEventType ? 'Kaydediliyor...' : 'Kaydet'}
+                </Button>
+              </div>
+            </>
+          )}
+        </Form>
+      </Modal>
+    </div>
   );
 }

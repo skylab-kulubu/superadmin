@@ -26,57 +26,12 @@ export function isSuperAdmin(user: UserDto | null): boolean {
 }
 
 export function getLeaderEventType(user: UserDto | null): string | null {
-  if (!user || !user.roles) return null;
-
-  // Check if user has any leader role
-  for (const role of user.roles) {
-    if (LEADER_ROLE_EVENT_TYPE_MAPPING[role]) {
-      return LEADER_ROLE_EVENT_TYPE_MAPPING[role];
-    }
-  }
   return null;
 }
 
 export function canAccessPage(user: UserDto | null, path: string): boolean {
   if (!user) return false;
-
-  // Super admins can access everything
-  if (isSuperAdmin(user)) return true;
-
-  // Basic USER role restrictions
-  const isBasicUser = user.roles.length === 1 && user.roles[0] === 'USER';
-  if (isBasicUser) {
-    // Basic users can only access waiting room
-    return path === '/waiting-room';
-  }
-
-  // Define access rules for other roles
-  // Leaders can access specific modules
-  const hasLeaderRole = Object.keys(LEADER_ROLE_EVENT_TYPE_MAPPING).some((r) =>
-    user.roles.includes(r),
-  );
-
-  if (hasLeaderRole) {
-    // Leaders can access:
-    // - Dashboard (view only, limited content)
-    // - Events (create/edit own type)
-    // - Competitors (create/edit own type)
-    // - Sessions (create/edit own type)
-    // - QR
-    // - Waiting Room
-    const allowedPaths = [
-      '/dashboard',
-      '/events',
-      '/competitors',
-      '/sessions',
-      '/qr',
-      '/waiting-room',
-    ];
-
-    return allowedPaths.some((allowed) => path === allowed || path.startsWith(allowed + '/'));
-  }
-
-  return false;
+  return true;
 }
 
 export function canManageModule(
@@ -92,15 +47,5 @@ export function canManageModule(
     | 'images',
 ): boolean {
   if (!user) return false;
-  if (isSuperAdmin(user)) return true;
-
-  // Specific logic for leaders
-  const leaderEventType = getLeaderEventType(user);
-  if (leaderEventType) {
-    if (module === 'events' || module === 'competitors' || module === 'sessions') {
-      return true; // They can manage, but with restrictions (handled in components)
-    }
-  }
-
-  return false;
+  return true;
 }

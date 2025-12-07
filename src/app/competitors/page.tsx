@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { AppShell } from '@/components/layout/AppShell';
+
 import { PageHeader } from '@/components/layout/PageHeader';
 import { DataTable } from '@/components/tables/DataTable';
 import { Button } from '@/components/ui/Button';
@@ -115,17 +115,15 @@ export default function CompetitorsPage() {
 
   if (loading) {
     return (
-      <AppShell>
-        <div className="mx-auto max-w-2xl">
-          <h1 className="mb-6 text-2xl font-bold">Yarışmacılar</h1>
-          <p>Yükleniyor...</p>
-        </div>
-      </AppShell>
+      <div className="mx-auto max-w-2xl">
+        <h1 className="mb-6 text-2xl font-bold">Yarışmacılar</h1>
+        <p>Yükleniyor...</p>
+      </div>
     );
   }
 
   return (
-    <AppShell>
+    <>
       <div className="space-y-6">
         <PageHeader
           title="Yarışmacılar"
@@ -266,6 +264,6 @@ export default function CompetitorsPage() {
           </Button>
         </div>
       </Modal>
-    </AppShell>
+    </>
   );
 }

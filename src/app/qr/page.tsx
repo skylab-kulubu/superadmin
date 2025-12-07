@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { AppShell } from '@/components/layout/AppShell';
+
 import { PageHeader } from '@/components/layout/PageHeader';
 import { qrCodesApi } from '@/lib/api/qr-codes';
 import { Button } from '@/components/ui/Button';
@@ -29,13 +29,13 @@ export default function QRPage() {
     try {
       const width = 300;
       const height = 300;
-      
-      const blob = data.withLogo 
+
+      const blob = data.withLogo
         ? await qrCodesApi.generateQRCodeWithLogo(data.url, width, height, 50)
         : await qrCodesApi.generateQRCode(data.url, width, height);
       const url = URL.createObjectURL(blob);
       setQrCode(url);
-      
+
       // Otomatik indirme
       const link = document.createElement('a');
       link.href = url;
@@ -51,68 +51,67 @@ export default function QRPage() {
   };
 
   return (
-    <AppShell>
-      <ErrorBoundary>
+    <ErrorBoundary>
       <div className="space-y-6">
-        <PageHeader
-          title="QR Kodlar"
-          description="Bağlantılarınız için hızlıca QR kod oluşturun"
-        />
-        <div className="max-w-2xl mx-auto space-y-6">
-        <div className="bg-light p-4 rounded-lg shadow border border-dark-200">
-        <Form
-          schema={qrSchema}
-          onSubmit={handleGenerate}
-          defaultValues={{ url: '', withLogo: true }}
-        >
-          {(methods) => {
-            const formErrors = methods.formState.errors;
-            
-            return (
-              <>
-                {Object.keys(formErrors).length > 0 && (
-                  <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
-                    <p className="text-sm font-medium text-red-800 mb-2">Form hataları:</p>
-                    <ul className="list-disc list-inside text-sm text-red-600">
-                      {Object.entries(formErrors).map(([key, error]) => (
-                        <li key={key}>
-                          {key}: {error?.message as string}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                <div className="space-y-4">
-                  <TextField name="url" label="URL" type="url" required placeholder="https://example.com" />
-                  <Toggle name="withLogo" label="Logo" />
-                </div>
-                <div className="mt-6">
-                  <Button type="submit" disabled={loading}>
-                    {loading ? 'Oluşturuluyor...' : 'QR Kod Oluştur'}
-                  </Button>
-                </div>
-              </>
-            );
-          }}
-        </Form>
-        </div>
-        {/* Hata mesajını göstermeyelim; global banner yeterli */}
-        
-        {qrCode && (
-          <div>
-            <img
-              src={qrCode}
-              alt="QR Code"
-              className="border rounded-lg mx-auto"
-              onError={() => setError('QR görseli yüklenemedi')}
-            />
+        <PageHeader title="QR Kodlar" description="Bağlantılarınız için hızlıca QR kod oluşturun" />
+        <div className="mx-auto max-w-2xl space-y-6">
+          <div className="bg-light border-dark-200 rounded-lg border p-4 shadow">
+            <Form
+              schema={qrSchema}
+              onSubmit={handleGenerate}
+              defaultValues={{ url: '', withLogo: true }}
+            >
+              {(methods) => {
+                const formErrors = methods.formState.errors;
+
+                return (
+                  <>
+                    {Object.keys(formErrors).length > 0 && (
+                      <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-4">
+                        <p className="mb-2 text-sm font-medium text-red-800">Form hataları:</p>
+                        <ul className="list-inside list-disc text-sm text-red-600">
+                          {Object.entries(formErrors).map(([key, error]) => (
+                            <li key={key}>
+                              {key}: {error?.message as string}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    <div className="space-y-4">
+                      <TextField
+                        name="url"
+                        label="URL"
+                        type="url"
+                        required
+                        placeholder="https://example.com"
+                      />
+                      <Toggle name="withLogo" label="Logo" />
+                    </div>
+                    <div className="mt-6">
+                      <Button type="submit" disabled={loading}>
+                        {loading ? 'Oluşturuluyor...' : 'QR Kod Oluştur'}
+                      </Button>
+                    </div>
+                  </>
+                );
+              }}
+            </Form>
           </div>
-        )}
+          {/* Hata mesajını göstermeyelim; global banner yeterli */}
+
+          {qrCode && (
+            <div>
+              <img
+                src={qrCode}
+                alt="QR Code"
+                className="mx-auto rounded-lg border"
+                onError={() => setError('QR görseli yüklenemedi')}
+              />
+            </div>
+          )}
         </div>
       </div>
-      </ErrorBoundary>
-    </AppShell>
+    </ErrorBoundary>
   );
 }
-
-

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useTransition } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { AppShell } from '@/components/layout/AppShell';
+
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Form } from '@/components/forms/Form';
 import { TextField } from '@/components/forms/TextField';
@@ -28,18 +28,21 @@ export default function EditEventTypePage() {
 
   useEffect(() => {
     if (id) {
-      eventTypesApi.getById(id).then((response) => {
-        if (response.success && response.data) {
-          setEventType(response.data);
-        } else {
-          setError('Etkinlik tipi bulunamadı');
-        }
-        setLoading(false);
-      }).catch((err) => {
-        console.error('Event type fetch error:', err);
-        setError('Etkinlik tipi yüklenirken hata oluştu');
-        setLoading(false);
-      });
+      eventTypesApi
+        .getById(id)
+        .then((response) => {
+          if (response.success && response.data) {
+            setEventType(response.data);
+          } else {
+            setError('Etkinlik tipi bulunamadı');
+          }
+          setLoading(false);
+        })
+        .catch((err) => {
+          console.error('Event type fetch error:', err);
+          setError('Etkinlik tipi yüklenirken hata oluştu');
+          setLoading(false);
+        });
     }
   }, [id]);
 
@@ -50,54 +53,53 @@ export default function EditEventTypePage() {
         router.push('/event-types');
       } catch (error) {
         console.error('Event type update error:', error);
-        alert('Etkinlik tipi güncellenirken hata oluştu: ' + (error instanceof Error ? error.message : 'Bilinmeyen hata'));
+        alert(
+          'Etkinlik tipi güncellenirken hata oluştu: ' +
+            (error instanceof Error ? error.message : 'Bilinmeyen hata'),
+        );
       }
     });
   };
 
   if (loading) {
     return (
-      <AppShell>
-        <div className="max-w-2xl mx-auto">
-          <div className="text-center py-8">Yükleniyor...</div>
-        </div>
-      </AppShell>
+      <div className="mx-auto max-w-2xl">
+        <div className="py-8 text-center">Yükleniyor...</div>
+      </div>
     );
   }
 
   if (error || !eventType) {
     return (
-      <AppShell>
-        <div className="max-w-2xl mx-auto">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-            <h2 className="text-lg font-semibold text-red-800 mb-2">Hata</h2>
-            <p className="text-red-700">{error || 'Etkinlik tipi bulunamadı'}</p>
-            <Button href="/event-types" variant="secondary" className="mt-4">
-              Geri Dön
-            </Button>
-          </div>
+      <div className="mx-auto max-w-2xl">
+        <div className="rounded-lg border border-red-200 bg-red-50 p-6">
+          <h2 className="mb-2 text-lg font-semibold text-red-800">Hata</h2>
+          <p className="text-red-700">{error || 'Etkinlik tipi bulunamadı'}</p>
+          <Button href="/event-types" variant="secondary" className="mt-4">
+            Geri Dön
+          </Button>
         </div>
-      </AppShell>
+      </div>
     );
   }
 
   return (
-    <AppShell>
-      <div className="space-y-6">
-        <PageHeader
-          title="Etkinlik Tipi Düzenle"
-          description={eventType.name}
-        />
-        <div className="max-w-2xl mx-auto">
-        <Form schema={eventTypeSchema} onSubmit={handleSubmit} defaultValues={{ name: eventType.name }}>
+    <div className="space-y-6">
+      <PageHeader title="Etkinlik Tipi Düzenle" description={eventType.name} />
+      <div className="mx-auto max-w-2xl">
+        <Form
+          schema={eventTypeSchema}
+          onSubmit={handleSubmit}
+          defaultValues={{ name: eventType.name }}
+        >
           {(methods) => {
             const formErrors = methods.formState.errors;
             return (
               <>
                 {Object.keys(formErrors).length > 0 && (
-                  <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
-                    <p className="text-sm font-medium text-red-800 mb-2">Form hataları:</p>
-                    <ul className="list-disc list-inside text-sm text-red-600">
+                  <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-4">
+                    <p className="mb-2 text-sm font-medium text-red-800">Form hataları:</p>
+                    <ul className="list-inside list-disc text-sm text-red-600">
                       {Object.entries(formErrors).map(([key, error]) => (
                         <li key={key}>
                           {key}: {error?.message as string}
@@ -122,9 +124,7 @@ export default function EditEventTypePage() {
             );
           }}
         </Form>
-        </div>
       </div>
-    </AppShell>
+    </div>
   );
 }
-

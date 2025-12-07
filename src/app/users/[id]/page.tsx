@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { AppShell } from '@/components/layout/AppShell';
+
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
 // import { Modal } from '@/components/ui/Modal';
@@ -129,247 +129,239 @@ export default function UserDetailPage() {
 
   if (loading) {
     return (
-      <AppShell>
-        <div className="mx-auto max-w-4xl">
-          <div className="flex items-center justify-center py-20">
-            <div className="text-center">
-              <div className="border-brand-200 border-t-brand mx-auto mb-4 h-16 w-16 animate-spin rounded-full border-4"></div>
-              <p className="text-dark-600 font-medium">Yükleniyor...</p>
-            </div>
+      <div className="mx-auto max-w-4xl">
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <div className="border-brand-200 border-t-brand mx-auto mb-4 h-16 w-16 animate-spin rounded-full border-4"></div>
+            <p className="text-dark-600 font-medium">Yükleniyor...</p>
           </div>
         </div>
-      </AppShell>
+      </div>
     );
   }
 
   if (error || !user) {
     return (
-      <AppShell>
-        <div className="mx-auto max-w-4xl">
-          <div className="bg-light border-danger rounded-xl border-l-4 p-6 shadow-lg">
-            <div className="flex items-start gap-4">
-              <div className="flex-shrink-0">
-                <div className="bg-danger-100 flex h-12 w-12 items-center justify-center rounded-full">
-                  <svg
-                    className="text-danger-700 h-6 w-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                </div>
+      <div className="mx-auto max-w-4xl">
+        <div className="bg-light border-danger rounded-xl border-l-4 p-6 shadow-lg">
+          <div className="flex items-start gap-4">
+            <div className="flex-shrink-0">
+              <div className="bg-danger-100 flex h-12 w-12 items-center justify-center rounded-full">
+                <svg
+                  className="text-danger-700 h-6 w-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
               </div>
-              <div className="flex-1">
-                <h2 className="text-danger-800 mb-2 text-lg font-semibold">Hata</h2>
-                <p className="text-dark-700 mb-4">{error || 'Kullanıcı bulunamadı'}</p>
-                <Button href="/users" variant="secondary" className="mt-4">
-                  Geri Dön
-                </Button>
-              </div>
+            </div>
+            <div className="flex-1">
+              <h2 className="text-danger-800 mb-2 text-lg font-semibold">Hata</h2>
+              <p className="text-dark-700 mb-4">{error || 'Kullanıcı bulunamadı'}</p>
+              <Button href="/users" variant="secondary" className="mt-4">
+                Geri Dön
+              </Button>
             </div>
           </div>
         </div>
-      </AppShell>
+      </div>
     );
   }
 
   // const availableRolesToAdd = AVAILABLE_ROLES.filter(role => !user.roles.includes(role));
 
   return (
-    <AppShell>
-      <div className="space-y-6">
-        <PageHeader
-          title="Kullanıcı Düzenle"
-          description={`${user.firstName} ${user.lastName} - ${user.email}`}
-          actions={
-            <button
-              onClick={async () => {
-                if (!user) return;
-                if (!confirm('Bu kullanıcıyı silmek istediğinize emin misiniz?')) return;
-                setIsProcessing(true);
-                try {
-                  await usersApi.delete(user.id);
-                  router.push('/users');
-                } catch (err) {
-                  alert('Kullanıcı silinirken hata oluştu');
-                } finally {
-                  setIsProcessing(false);
-                }
-              }}
-              className="text-light cursor-pointer rounded-md bg-red-500 px-4 py-2 font-medium transition-colors hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50"
-              disabled={isProcessing}
-            >
-              Sil
-            </button>
-          }
-        />
+    <div className="space-y-6">
+      <PageHeader
+        title="Kullanıcı Düzenle"
+        description={`${user.firstName} ${user.lastName} - ${user.email}`}
+        actions={
+          <button
+            onClick={async () => {
+              if (!user) return;
+              if (!confirm('Bu kullanıcıyı silmek istediğinize emin misiniz?')) return;
+              setIsProcessing(true);
+              try {
+                await usersApi.delete(user.id);
+                router.push('/users');
+              } catch (err) {
+                alert('Kullanıcı silinirken hata oluştu');
+              } finally {
+                setIsProcessing(false);
+              }
+            }}
+            className="text-light cursor-pointer rounded-md bg-red-500 px-4 py-2 font-medium transition-colors hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={isProcessing}
+          >
+            Sil
+          </button>
+        }
+      />
 
-        <div className="mx-auto max-w-3xl">
-          <div className="bg-light border-dark-200 rounded-lg border p-4 shadow">
-            <div className="space-y-5">
-              {/* Temel Bilgiler */}
-              <div>
-                <h3 className="text-dark-800 mb-3 text-sm font-semibold">Temel Bilgiler</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-dark mb-1 block text-sm font-medium">Ad</label>
-                    <input
-                      className="border-dark-200 focus:ring-brand text-dark bg-light-50 w-full rounded-md border px-3 py-2 focus:border-transparent focus:ring-2 focus:outline-none"
-                      value={editData.firstName || ''}
-                      onChange={(e) => setEditData((d) => ({ ...d, firstName: e.target.value }))}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-dark mb-1 block text-sm font-medium">Soyad</label>
-                    <input
-                      className="border-dark-200 focus:ring-brand text-dark bg-light-50 w-full rounded-md border px-3 py-2 focus:border-transparent focus:ring-2 focus:outline-none"
-                      value={editData.lastName || ''}
-                      onChange={(e) => setEditData((d) => ({ ...d, lastName: e.target.value }))}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-dark mb-1 block text-sm font-medium">Email</label>
-                    <input
-                      disabled
-                      className="border-dark-200 bg-dark-50 text-dark-500 w-full cursor-not-allowed rounded-md border px-3 py-2"
-                      value={user.email}
-                      readOnly
-                    />
-                  </div>
-                  <div>
-                    <label className="text-dark mb-1 block text-sm font-medium">
-                      Kullanıcı Adı
-                    </label>
-                    <input
-                      disabled
-                      className="border-dark-200 bg-dark-50 text-dark-500 w-full cursor-not-allowed rounded-md border px-3 py-2"
-                      value={user.username}
-                      readOnly
-                    />
-                  </div>
+      <div className="mx-auto max-w-3xl">
+        <div className="bg-light border-dark-200 rounded-lg border p-4 shadow">
+          <div className="space-y-5">
+            {/* Temel Bilgiler */}
+            <div>
+              <h3 className="text-dark-800 mb-3 text-sm font-semibold">Temel Bilgiler</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-dark mb-1 block text-sm font-medium">Ad</label>
+                  <input
+                    className="border-dark-200 focus:ring-brand text-dark bg-light-50 w-full rounded-md border px-3 py-2 focus:border-transparent focus:ring-2 focus:outline-none"
+                    value={editData.firstName || ''}
+                    onChange={(e) => setEditData((d) => ({ ...d, firstName: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <label className="text-dark mb-1 block text-sm font-medium">Soyad</label>
+                  <input
+                    className="border-dark-200 focus:ring-brand text-dark bg-light-50 w-full rounded-md border px-3 py-2 focus:border-transparent focus:ring-2 focus:outline-none"
+                    value={editData.lastName || ''}
+                    onChange={(e) => setEditData((d) => ({ ...d, lastName: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <label className="text-dark mb-1 block text-sm font-medium">Email</label>
+                  <input
+                    disabled
+                    className="border-dark-200 bg-dark-50 text-dark-500 w-full cursor-not-allowed rounded-md border px-3 py-2"
+                    value={user.email}
+                    readOnly
+                  />
+                </div>
+                <div>
+                  <label className="text-dark mb-1 block text-sm font-medium">Kullanıcı Adı</label>
+                  <input
+                    disabled
+                    className="border-dark-200 bg-dark-50 text-dark-500 w-full cursor-not-allowed rounded-md border px-3 py-2"
+                    value={user.username}
+                    readOnly
+                  />
                 </div>
               </div>
+            </div>
 
-              {/* Ek Bilgiler */}
-              <div className="border-dark-200 border-t pt-5">
-                <h3 className="text-dark-800 mb-3 text-sm font-semibold">Ek Bilgiler</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-dark mb-1 block text-sm font-medium">LinkedIn</label>
-                    <input
-                      className="border-dark-200 focus:ring-brand text-dark bg-light-50 w-full rounded-md border px-3 py-2 focus:border-transparent focus:ring-2 focus:outline-none"
-                      value={editData.linkedin || ''}
-                      onChange={(e) => setEditData((d) => ({ ...d, linkedin: e.target.value }))}
-                      placeholder="https://www.linkedin.com/in/..."
-                    />
-                  </div>
-                  <div>
-                    <label className="text-dark mb-1 block text-sm font-medium">Üniversite</label>
-                    <input
-                      className="border-dark-200 focus:ring-brand text-dark bg-light-50 w-full rounded-md border px-3 py-2 focus:border-transparent focus:ring-2 focus:outline-none"
-                      value={editData.university || ''}
-                      onChange={(e) => setEditData((d) => ({ ...d, university: e.target.value }))}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-dark mb-1 block text-sm font-medium">Fakülte</label>
-                    <input
-                      className="border-dark-200 focus:ring-brand text-dark bg-light-50 w-full rounded-md border px-3 py-2 focus:border-transparent focus:ring-2 focus:outline-none"
-                      value={editData.faculty || ''}
-                      onChange={(e) => setEditData((d) => ({ ...d, faculty: e.target.value }))}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-dark mb-1 block text-sm font-medium">Bölüm</label>
-                    <input
-                      className="border-dark-200 focus:ring-brand text-dark bg-light-50 w-full rounded-md border px-3 py-2 focus:border-transparent focus:ring-2 focus:outline-none"
-                      value={editData.department || ''}
-                      onChange={(e) => setEditData((d) => ({ ...d, department: e.target.value }))}
-                    />
-                  </div>
+            {/* Ek Bilgiler */}
+            <div className="border-dark-200 border-t pt-5">
+              <h3 className="text-dark-800 mb-3 text-sm font-semibold">Ek Bilgiler</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-dark mb-1 block text-sm font-medium">LinkedIn</label>
+                  <input
+                    className="border-dark-200 focus:ring-brand text-dark bg-light-50 w-full rounded-md border px-3 py-2 focus:border-transparent focus:ring-2 focus:outline-none"
+                    value={editData.linkedin || ''}
+                    onChange={(e) => setEditData((d) => ({ ...d, linkedin: e.target.value }))}
+                    placeholder="https://www.linkedin.com/in/..."
+                  />
+                </div>
+                <div>
+                  <label className="text-dark mb-1 block text-sm font-medium">Üniversite</label>
+                  <input
+                    className="border-dark-200 focus:ring-brand text-dark bg-light-50 w-full rounded-md border px-3 py-2 focus:border-transparent focus:ring-2 focus:outline-none"
+                    value={editData.university || ''}
+                    onChange={(e) => setEditData((d) => ({ ...d, university: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <label className="text-dark mb-1 block text-sm font-medium">Fakülte</label>
+                  <input
+                    className="border-dark-200 focus:ring-brand text-dark bg-light-50 w-full rounded-md border px-3 py-2 focus:border-transparent focus:ring-2 focus:outline-none"
+                    value={editData.faculty || ''}
+                    onChange={(e) => setEditData((d) => ({ ...d, faculty: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <label className="text-dark mb-1 block text-sm font-medium">Bölüm</label>
+                  <input
+                    className="border-dark-200 focus:ring-brand text-dark bg-light-50 w-full rounded-md border px-3 py-2 focus:border-transparent focus:ring-2 focus:outline-none"
+                    value={editData.department || ''}
+                    onChange={(e) => setEditData((d) => ({ ...d, department: e.target.value }))}
+                  />
                 </div>
               </div>
+            </div>
 
-              {/* Roller */}
-              <div className="border-dark-200 border-t pt-5">
-                <h3 className="text-dark-800 mb-3 text-sm font-semibold">Roller</h3>
-                <div className="grid grid-cols-3 gap-2">
-                  {(availableRoles || []).map((role) => {
-                    const isSelected = selectedRoles.includes(role);
-                    return (
-                      <label
-                        key={role}
-                        style={{
-                          backgroundColor: isSelected ? '#e6f5f2' : undefined,
-                          borderColor: isSelected ? '#27a68e' : undefined,
+            {/* Roller */}
+            <div className="border-dark-200 border-t pt-5">
+              <h3 className="text-dark-800 mb-3 text-sm font-semibold">Roller</h3>
+              <div className="grid grid-cols-3 gap-2">
+                {(availableRoles || []).map((role) => {
+                  const isSelected = selectedRoles.includes(role);
+                  return (
+                    <label
+                      key={role}
+                      style={{
+                        backgroundColor: isSelected ? '#e6f5f2' : undefined,
+                        borderColor: isSelected ? '#27a68e' : undefined,
+                      }}
+                      className={`flex cursor-pointer items-center gap-2 rounded-md border p-2 transition-all ${
+                        isSelected ? '' : 'bg-light border-dark-200'
+                      }`}
+                      onMouseEnter={(e) => {
+                        if (!isSelected) {
+                          e.currentTarget.style.backgroundColor = '#e6f5f2';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isSelected) {
+                          e.currentTarget.style.backgroundColor = '';
+                        }
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        style={{ accentColor: '#27a68e' }}
+                        className="h-4 w-4 rounded"
+                        checked={isSelected}
+                        onChange={(e) => {
+                          setSelectedRoles((prev) =>
+                            e.target.checked ? [...prev, role] : prev.filter((r) => r !== role),
+                          );
                         }}
-                        className={`flex cursor-pointer items-center gap-2 rounded-md border p-2 transition-all ${
-                          isSelected ? '' : 'bg-light border-dark-200'
-                        }`}
-                        onMouseEnter={(e) => {
-                          if (!isSelected) {
-                            e.currentTarget.style.backgroundColor = '#e6f5f2';
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          if (!isSelected) {
-                            e.currentTarget.style.backgroundColor = '';
-                          }
-                        }}
+                      />
+                      <span
+                        style={{ color: isSelected ? '#27a68e' : undefined }}
+                        className={`text-sm ${isSelected ? 'font-medium' : 'text-dark-700'}`}
                       >
-                        <input
-                          type="checkbox"
-                          style={{ accentColor: '#27a68e' }}
-                          className="h-4 w-4 rounded"
-                          checked={isSelected}
-                          onChange={(e) => {
-                            setSelectedRoles((prev) =>
-                              e.target.checked ? [...prev, role] : prev.filter((r) => r !== role),
-                            );
-                          }}
-                        />
-                        <span
-                          style={{ color: isSelected ? '#27a68e' : undefined }}
-                          className={`text-sm ${isSelected ? 'font-medium' : 'text-dark-700'}`}
-                        >
-                          {role}
-                        </span>
-                      </label>
-                    );
-                  })}
-                </div>
-                <p className="text-dark-500 mt-3 text-xs">
-                  Değişiklikleri kaydetmek için Kaydet butonuna basın.
-                </p>
+                        {role}
+                      </span>
+                    </label>
+                  );
+                })}
               </div>
+              <p className="text-dark-500 mt-3 text-xs">
+                Değişiklikleri kaydetmek için Kaydet butonuna basın.
+              </p>
+            </div>
 
-              {/* Action Buttons */}
-              <div className="border-dark-200 flex items-center justify-between gap-3 border-t pt-5">
-                <Button
-                  href="/users"
-                  variant="secondary"
-                  className="border-red-500 bg-transparent text-red-500 hover:bg-red-500 hover:text-white"
-                >
-                  İptal
-                </Button>
-                <Button
-                  onClick={handleSave}
-                  disabled={isSaving}
-                  className="!text-brand hover:!bg-brand border-brand !bg-transparent hover:!text-white"
-                >
-                  {isSaving ? 'Kaydediliyor...' : 'Kaydet'}
-                </Button>
-              </div>
+            {/* Action Buttons */}
+            <div className="border-dark-200 flex items-center justify-between gap-3 border-t pt-5">
+              <Button
+                href="/users"
+                variant="secondary"
+                className="border-red-500 bg-transparent text-red-500 hover:bg-red-500 hover:text-white"
+              >
+                İptal
+              </Button>
+              <Button
+                onClick={handleSave}
+                disabled={isSaving}
+                className="!text-brand hover:!bg-brand border-brand !bg-transparent hover:!text-white"
+              >
+                {isSaving ? 'Kaydediliyor...' : 'Kaydet'}
+              </Button>
             </div>
           </div>
         </div>
       </div>
-    </AppShell>
+    </div>
   );
 }

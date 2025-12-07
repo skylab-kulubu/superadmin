@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Sidebar } from './Sidebar';
+import { usePathname } from 'next/navigation';
 import { GlobalErrorMessenger } from '@/components/common/GlobalErrorMessenger';
 import { MobileSidebarContext } from './MobileSidebarContext';
 
@@ -9,6 +10,18 @@ import { AuthProvider } from '@/context/AuthContext';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  const pathname = usePathname();
+  const isPublicPage = pathname?.startsWith('/login');
+
+  if (isPublicPage) {
+    return (
+      <AuthProvider>
+        <GlobalErrorMessenger />
+        {children}
+      </AuthProvider>
+    );
+  }
 
   return (
     <AuthProvider>

@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { AppShell } from '@/components/layout/AppShell';
+
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Form } from '@/components/forms/Form';
 import { TextField } from '@/components/forms/TextField';
@@ -122,27 +122,23 @@ export default function EditCompetitorPage({ params }: { params: Promise<{ id: s
 
   if (loading) {
     return (
-      <AppShell>
-        <div className="mx-auto max-w-2xl">
-          <div className="py-8 text-center">Yükleniyor...</div>
-        </div>
-      </AppShell>
+      <div className="mx-auto max-w-2xl">
+        <div className="py-8 text-center">Yükleniyor...</div>
+      </div>
     );
   }
 
   if (error || !competitor) {
     return (
-      <AppShell>
-        <div className="mx-auto max-w-2xl">
-          <div className="rounded-lg border border-red-200 bg-red-50 p-6">
-            <h2 className="mb-2 text-lg font-semibold text-red-800">Hata</h2>
-            <p className="text-red-700">{error || 'Yarışmacı bulunamadı'}</p>
-            <Button href="/competitors" variant="secondary" className="mt-4">
-              Geri Dön
-            </Button>
-          </div>
+      <div className="mx-auto max-w-2xl">
+        <div className="rounded-lg border border-red-200 bg-red-50 p-6">
+          <h2 className="mb-2 text-lg font-semibold text-red-800">Hata</h2>
+          <p className="text-red-700">{error || 'Yarışmacı bulunamadı'}</p>
+          <Button href="/competitors" variant="secondary" className="mt-4">
+            Geri Dön
+          </Button>
         </div>
-      </AppShell>
+      </div>
     );
   }
 
@@ -153,73 +149,71 @@ export default function EditCompetitorPage({ params }: { params: Promise<{ id: s
       : events;
 
   return (
-    <AppShell>
-      <div className="space-y-6">
-        <PageHeader
-          title="Yarışmacı Düzenle"
-          description={
-            competitor.user ? `${competitor.user.firstName} ${competitor.user.lastName}` : undefined
-          }
-        />
-        <div className="mx-auto max-w-2xl">
-          <div className="bg-light border-dark-200 rounded-lg border p-4 shadow">
-            <Form
-              schema={competitorSchema}
-              onSubmit={handleSubmit}
-              defaultValues={{
-                userId: competitor.user?.id || '',
-                eventId: competitor.event?.id || '',
-                points: competitor.points ?? undefined,
-                winner: competitor.winner || false,
-              }}
-            >
-              {(methods) => {
-                const formErrors = methods.formState.errors;
-                return (
-                  <>
-                    {Object.keys(formErrors).length > 0 && (
-                      <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-4">
-                        <p className="mb-2 text-sm font-medium text-red-800">Form hataları:</p>
-                        <ul className="list-inside list-disc text-sm text-red-600">
-                          {Object.entries(formErrors).map(([key, error]) => (
-                            <li key={key}>
-                              {key}: {error?.message as string}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    <div className="space-y-4">
-                      <Select name="userId" label="Kullanıcı" options={users} required />
-                      <Select name="eventId" label="Etkinlik" options={filteredEvents} required />
-                      <TextField name="points" label="Puan" type="number" placeholder="100" />
-                      <div className="flex items-end">
-                        <Checkbox name="winner" label="Kazanan" />
-                      </div>
+    <div className="space-y-6">
+      <PageHeader
+        title="Yarışmacı Düzenle"
+        description={
+          competitor.user ? `${competitor.user.firstName} ${competitor.user.lastName}` : undefined
+        }
+      />
+      <div className="mx-auto max-w-2xl">
+        <div className="bg-light border-dark-200 rounded-lg border p-4 shadow">
+          <Form
+            schema={competitorSchema}
+            onSubmit={handleSubmit}
+            defaultValues={{
+              userId: competitor.user?.id || '',
+              eventId: competitor.event?.id || '',
+              points: competitor.points ?? undefined,
+              winner: competitor.winner || false,
+            }}
+          >
+            {(methods) => {
+              const formErrors = methods.formState.errors;
+              return (
+                <>
+                  {Object.keys(formErrors).length > 0 && (
+                    <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-4">
+                      <p className="mb-2 text-sm font-medium text-red-800">Form hataları:</p>
+                      <ul className="list-inside list-disc text-sm text-red-600">
+                        {Object.entries(formErrors).map(([key, error]) => (
+                          <li key={key}>
+                            {key}: {error?.message as string}
+                          </li>
+                        ))}
+                      </ul>
                     </div>
-                    <div className="border-dark-200 mt-6 flex items-center justify-between gap-3 border-t pt-5">
-                      <Button
-                        href="/competitors"
-                        variant="secondary"
-                        className="border-red-500 bg-transparent text-red-500 hover:bg-red-500 hover:text-white"
-                      >
-                        İptal
-                      </Button>
-                      <Button
-                        type="submit"
-                        disabled={isPending}
-                        className="!text-brand hover:!bg-brand border-brand !bg-transparent hover:!text-white"
-                      >
-                        {isPending ? 'Güncelleniyor...' : 'Güncelle'}
-                      </Button>
+                  )}
+                  <div className="space-y-4">
+                    <Select name="userId" label="Kullanıcı" options={users} required />
+                    <Select name="eventId" label="Etkinlik" options={filteredEvents} required />
+                    <TextField name="points" label="Puan" type="number" placeholder="100" />
+                    <div className="flex items-end">
+                      <Checkbox name="winner" label="Kazanan" />
                     </div>
-                  </>
-                );
-              }}
-            </Form>
-          </div>
+                  </div>
+                  <div className="border-dark-200 mt-6 flex items-center justify-between gap-3 border-t pt-5">
+                    <Button
+                      href="/competitors"
+                      variant="secondary"
+                      className="border-red-500 bg-transparent text-red-500 hover:bg-red-500 hover:text-white"
+                    >
+                      İptal
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={isPending}
+                      className="!text-brand hover:!bg-brand border-brand !bg-transparent hover:!text-white"
+                    >
+                      {isPending ? 'Güncelleniyor...' : 'Güncelle'}
+                    </Button>
+                  </div>
+                </>
+              );
+            }}
+          </Form>
         </div>
       </div>
-    </AppShell>
+    </div>
   );
 }

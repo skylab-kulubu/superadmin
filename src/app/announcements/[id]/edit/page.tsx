@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { AppShell } from '@/components/layout/AppShell';
+
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Form } from '@/components/forms/Form';
 import { TextField } from '@/components/forms/TextField';
@@ -22,7 +22,9 @@ const announcementSchema = z.object({
   active: z.boolean().optional(),
   eventTypeId: z.string().min(1, 'Etkinlik tipi seçiniz'),
   formUrl: z.string().url().optional().or(z.literal('')),
-  coverImage: z.custom<File | undefined>((val) => val === undefined || val instanceof File).optional(),
+  coverImage: z
+    .custom<File | undefined>((val) => val === undefined || val instanceof File)
+    .optional(),
 });
 
 export default function EditAnnouncementPage() {
@@ -41,22 +43,24 @@ export default function EditAnnouncementPage() {
       Promise.all([
         announcementsApi.getById(id, { includeEventType: true }),
         eventTypesApi.getAll(),
-      ]).then(([announcementResponse, eventTypesResponse]) => {
-        if (announcementResponse.success && announcementResponse.data) {
-          setAnnouncement(announcementResponse.data);
-          setIsActive(announcementResponse.data.active ?? true);
-        } else {
-          setError('Duyuru bulunamadı');
-        }
-        if (eventTypesResponse.success && eventTypesResponse.data) {
-          setEventTypes(eventTypesResponse.data.map((et) => ({ value: et.id, label: et.name })));
-        }
-        setLoading(false);
-      }).catch((err) => {
-        console.error('Announcement fetch error:', err);
-        setError('Duyuru yüklenirken hata oluştu');
-        setLoading(false);
-      });
+      ])
+        .then(([announcementResponse, eventTypesResponse]) => {
+          if (announcementResponse.success && announcementResponse.data) {
+            setAnnouncement(announcementResponse.data);
+            setIsActive(announcementResponse.data.active ?? true);
+          } else {
+            setError('Duyuru bulunamadı');
+          }
+          if (eventTypesResponse.success && eventTypesResponse.data) {
+            setEventTypes(eventTypesResponse.data.map((et) => ({ value: et.id, label: et.name })));
+          }
+          setLoading(false);
+        })
+        .catch((err) => {
+          console.error('Announcement fetch error:', err);
+          setError('Duyuru yüklenirken hata oluştu');
+          setLoading(false);
+        });
     }
   }, [id]);
 
@@ -73,114 +77,134 @@ export default function EditAnnouncementPage() {
         router.push('/announcements');
       } catch (error) {
         console.error('Announcement update error:', error);
-        alert('Duyuru güncellenirken hata oluştu: ' + (error instanceof Error ? error.message : 'Bilinmeyen hata'));
+        alert(
+          'Duyuru güncellenirken hata oluştu: ' +
+            (error instanceof Error ? error.message : 'Bilinmeyen hata'),
+        );
       }
     });
   };
 
   if (loading) {
     return (
-      <AppShell>
-        <div className="max-w-2xl mx-auto">
-          <div className="text-center py-8">Yükleniyor...</div>
-        </div>
-      </AppShell>
+      <div className="mx-auto max-w-2xl">
+        <div className="py-8 text-center">Yükleniyor...</div>
+      </div>
     );
   }
 
   if (error || !announcement) {
     return (
-      <AppShell>
-        <div className="max-w-2xl mx-auto">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-            <h2 className="text-lg font-semibold text-red-800 mb-2">Hata</h2>
-            <p className="text-red-700">{error || 'Duyuru bulunamadı'}</p>
-            <Button href="/announcements" variant="secondary" className="mt-4">
-              Geri Dön
-            </Button>
-          </div>
+      <div className="mx-auto max-w-2xl">
+        <div className="rounded-lg border border-red-200 bg-red-50 p-6">
+          <h2 className="mb-2 text-lg font-semibold text-red-800">Hata</h2>
+          <p className="text-red-700">{error || 'Duyuru bulunamadı'}</p>
+          <Button href="/announcements" variant="secondary" className="mt-4">
+            Geri Dön
+          </Button>
         </div>
-      </AppShell>
+      </div>
     );
   }
 
   return (
-    <AppShell>
-      <div className="space-y-6">
-        <PageHeader
-          title="Duyuru Düzenle"
-          description={announcement.title}
-          actions={<Toggle checked={isActive} onChange={setIsActive} />}
-        />
+    <div className="space-y-6">
+      <PageHeader
+        title="Duyuru Düzenle"
+        description={announcement.title}
+        actions={<Toggle checked={isActive} onChange={setIsActive} />}
+      />
 
-        <div className="max-w-3xl mx-auto">
-        <div className="bg-light p-4 rounded-lg shadow border border-dark-200">
-        <Form 
-          schema={announcementSchema} 
-          onSubmit={handleSubmit} 
-          defaultValues={{ 
-            title: announcement.title,
-            body: announcement.body,
-            eventTypeId: announcement.eventType?.id || '',
-            formUrl: announcement.formUrl || '',
-            coverImage: undefined,
-          }}
-        >
-          {(methods) => {
-            const formErrors = methods.formState.errors;
-            return (
-              <>
-                {Object.keys(formErrors).length > 0 && (
-                  <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
-                    <p className="text-sm font-medium text-red-800 mb-2">Form hataları:</p>
-                    <ul className="list-disc list-inside text-sm text-red-600">
-                      {Object.entries(formErrors).map(([key, error]) => (
-                        <li key={key}>
-                          {key}: {error?.message as string}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+      <div className="mx-auto max-w-3xl">
+        <div className="bg-light border-dark-200 rounded-lg border p-4 shadow">
+          <Form
+            schema={announcementSchema}
+            onSubmit={handleSubmit}
+            defaultValues={{
+              title: announcement.title,
+              body: announcement.body,
+              eventTypeId: announcement.eventType?.id || '',
+              formUrl: announcement.formUrl || '',
+              coverImage: undefined,
+            }}
+          >
+            {(methods) => {
+              const formErrors = methods.formState.errors;
+              return (
+                <>
+                  {Object.keys(formErrors).length > 0 && (
+                    <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-4">
+                      <p className="mb-2 text-sm font-medium text-red-800">Form hataları:</p>
+                      <ul className="list-inside list-disc text-sm text-red-600">
+                        {Object.entries(formErrors).map(([key, error]) => (
+                          <li key={key}>
+                            {key}: {error?.message as string}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                   <div className="space-y-5">
                     <div>
-                      <h3 className="text-sm font-semibold text-dark-800 mb-3">Temel Bilgiler</h3>
-                <div className="space-y-4">
-                  <TextField name="title" label="Başlık" required placeholder="Önemli Duyuru Başlığı" />
-                  <Textarea name="body" label="İçerik" rows={6} required placeholder="Duyuru içeriği..." />
+                      <h3 className="text-dark-800 mb-3 text-sm font-semibold">Temel Bilgiler</h3>
+                      <div className="space-y-4">
+                        <TextField
+                          name="title"
+                          label="Başlık"
+                          required
+                          placeholder="Önemli Duyuru Başlığı"
+                        />
+                        <Textarea
+                          name="body"
+                          label="İçerik"
+                          rows={6}
+                          required
+                          placeholder="Duyuru içeriği..."
+                        />
                       </div>
                     </div>
 
-                    <div className="border-t border-dark-200 pt-5">
-                      <h3 className="text-sm font-semibold text-dark-800 mb-3">Ek Bilgiler</h3>
+                    <div className="border-dark-200 border-t pt-5">
+                      <h3 className="text-dark-800 mb-3 text-sm font-semibold">Ek Bilgiler</h3>
                       <div className="grid grid-cols-2 gap-4">
-                  <Select 
-                    name="eventTypeId" 
-                    label="Etkinlik Tipi" 
-                    options={eventTypes}
-                    required 
-                  />
-                  <TextField name="formUrl" label="Form URL" type="url" placeholder="https://forms.google.com/..." />
-                  <FileUpload name="coverImage" label="Kapak Resmi" accept="image/*" />
+                        <Select
+                          name="eventTypeId"
+                          label="Etkinlik Tipi"
+                          options={eventTypes}
+                          required
+                        />
+                        <TextField
+                          name="formUrl"
+                          label="Form URL"
+                          type="url"
+                          placeholder="https://forms.google.com/..."
+                        />
+                        <FileUpload name="coverImage" label="Kapak Resmi" accept="image/*" />
                       </div>
                     </div>
-                </div>
-                  <div className="flex justify-between items-center gap-3 mt-6 pt-5 border-t border-dark-200">
-                    <Button href="/announcements" variant="secondary" className="text-red-500 hover:bg-red-500 hover:text-white bg-transparent border-red-500">
+                  </div>
+                  <div className="border-dark-200 mt-6 flex items-center justify-between gap-3 border-t pt-5">
+                    <Button
+                      href="/announcements"
+                      variant="secondary"
+                      className="border-red-500 bg-transparent text-red-500 hover:bg-red-500 hover:text-white"
+                    >
                       İptal
                     </Button>
-                    <Button type="submit" disabled={isPending} className="!text-brand hover:!bg-brand hover:!text-white !bg-transparent border-brand">
-                    {isPending ? 'Güncelleniyor...' : 'Güncelle'}
-                  </Button>
-                </div>
-              </>
-            );
-          }}
-        </Form>
-        </div>
+                    <Button
+                      type="submit"
+                      disabled={isPending}
+                      className="!text-brand hover:!bg-brand border-brand !bg-transparent hover:!text-white"
+                    >
+                      {isPending ? 'Güncelleniyor...' : 'Güncelle'}
+                    </Button>
+                  </div>
+                </>
+              );
+            }}
+          </Form>
         </div>
       </div>
-    </AppShell>
+    </div>
   );
 }
-

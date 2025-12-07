@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { AppShell } from '@/components/layout/AppShell';
+
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
@@ -49,43 +49,45 @@ export default function EventsPage() {
   }, []);
 
   return (
-    <AppShell>
-      <div className="space-y-6">
-        <PageHeader
-          title="Etkinlikler"
-          description="Tüm etkinlikleri görüntüleyin ve yönetin"
-          actions={(
-            <Link href="/events/new">
-              <Button>
-                <span className="flex items-center gap-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  Yeni Etkinlik
-                </span>
-              </Button>
-            </Link>
-          )}
-        />
+    <div className="space-y-6">
+      <PageHeader
+        title="Etkinlikler"
+        description="Tüm etkinlikleri görüntüleyin ve yönetin"
+        actions={
+          <Link href="/events/new">
+            <Button>
+              <span className="flex items-center gap-2">
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+                Yeni Etkinlik
+              </span>
+            </Button>
+          </Link>
+        }
+      />
 
-        {loading ? (
-          <div className="bg-light border border-dark-200 rounded-lg p-6 text-center text-dark-600">Yükleniyor...</div>
-        ) : error ? (
-          <div className="bg-light border border-danger rounded-lg p-6 text-danger">
-            <p className="font-medium">Hata oluştu</p>
-            <p className="text-sm opacity-80">{error}</p>
-          </div>
-        ) : events.length === 0 ? (
-          <div className="bg-light border border-dark-200 rounded-lg p-6 text-center text-dark-600">
-            Henüz etkinlik bulunmuyor.
-          </div>
-        ) : (
-          <EventsGridClient
-            events={events}
-            eventTypeOrder={eventTypeOrder}
-          />
-        )}
-      </div>
-    </AppShell>
+      {loading ? (
+        <div className="bg-light border-dark-200 text-dark-600 rounded-lg border p-6 text-center">
+          Yükleniyor...
+        </div>
+      ) : error ? (
+        <div className="bg-light border-danger text-danger rounded-lg border p-6">
+          <p className="font-medium">Hata oluştu</p>
+          <p className="text-sm opacity-80">{error}</p>
+        </div>
+      ) : events.length === 0 ? (
+        <div className="bg-light border-dark-200 text-dark-600 rounded-lg border p-6 text-center">
+          Henüz etkinlik bulunmuyor.
+        </div>
+      ) : (
+        <EventsGridClient events={events} eventTypeOrder={eventTypeOrder} />
+      )}
+    </div>
   );
 }

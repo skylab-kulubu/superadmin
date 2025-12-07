@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { AppShell } from '@/components/layout/AppShell';
+
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
 import { eventsApi } from '@/lib/api/events';
@@ -14,7 +14,11 @@ export default function ImagesPage() {
   const [error, setError] = useState<string | null>(null);
   const [images, setImages] = useState<{ url: string; name?: string; id?: string }[]>([]);
   const [search, setSearch] = useState('');
-  const [previewImage, setPreviewImage] = useState<{ url: string; name?: string; id?: string } | null>(null);
+  const [previewImage, setPreviewImage] = useState<{
+    url: string;
+    name?: string;
+    id?: string;
+  } | null>(null);
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
 
   const loadImages = async () => {
@@ -23,7 +27,9 @@ export default function ImagesPage() {
     try {
       const res = await eventsApi.getAll({ includeImages: true });
       const list = (res.data || []).flatMap((ev) => {
-        const fromCover = ev.coverImageUrl ? [{ url: ev.coverImageUrl, name: `${ev.name} - kapak` }] : [];
+        const fromCover = ev.coverImageUrl
+          ? [{ url: ev.coverImageUrl, name: `${ev.name} - kapak` }]
+          : [];
         const fromImages = (ev.imageUrls || []).map((u) => ({ url: u, name: ev.name }));
         return [...fromCover, ...fromImages];
       });
@@ -112,42 +118,47 @@ export default function ImagesPage() {
   const uploadedCount = images.filter((img) => Boolean(img.id)).length;
 
   return (
-    <AppShell>
+    <>
       <div className="space-y-6">
         <PageHeader
           title="Resimler"
           description="Yüklenen tüm görselleri görüntüleyin ve yönetin"
-          actions={(
+          actions={
             <Link href="/images/new">
               <Button>
                 <span className="flex items-center gap-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4v16m8-8H4"
+                    />
                   </svg>
                   Yeni Resim
                 </span>
               </Button>
             </Link>
-          )}
+          }
         />
 
         {error && (
-          <div className="bg-light border border-dark-200 rounded-lg p-4 mb-6 text-dark">
+          <div className="bg-light border-dark-200 text-dark mb-6 rounded-lg border p-4">
             {error}
           </div>
         )}
 
-        <div className="bg-light border border-dark-200 rounded-lg p-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="bg-light border-dark-200 flex flex-col gap-4 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm text-dark-600">Toplam Görsel</p>
-            <p className="text-2xl font-semibold text-brand">{totalCount}</p>
+            <p className="text-dark-600 text-sm">Toplam Görsel</p>
+            <p className="text-brand text-2xl font-semibold">{totalCount}</p>
           </div>
-          <div className="hidden h-10 w-px bg-dark-200/70 sm:block" />
+          <div className="bg-dark-200/70 hidden h-10 w-px sm:block" />
           <div>
-            <p className="text-sm text-dark-600">Panel Üzerinden Yüklenenler</p>
-            <p className="text-2xl font-semibold text-brand">{uploadedCount}</p>
+            <p className="text-dark-600 text-sm">Panel Üzerinden Yüklenenler</p>
+            <p className="text-brand text-2xl font-semibold">{uploadedCount}</p>
           </div>
-          <div className="hidden h-10 w-px bg-dark-200/70 sm:block" />
+          <div className="bg-dark-200/70 hidden h-10 w-px sm:block" />
           <div className="w-full sm:w-1/2">
             <div className="relative">
               <input
@@ -155,19 +166,34 @@ export default function ImagesPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Görsel ara..."
-                className="w-full px-4 py-2 pl-10 border border-dark-200 rounded-md focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent text-dark bg-light-50 text-sm"
+                className="border-dark-200 focus:ring-brand text-dark bg-light-50 w-full rounded-md border px-4 py-2 pl-10 text-sm focus:border-transparent focus:ring-2 focus:outline-none"
               />
-              <svg className="absolute left-3 top-2.5 w-5 h-5 text-dark-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              <svg
+                className="text-dark-400 absolute top-2.5 left-3 h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
               </svg>
               {search && (
                 <button
                   type="button"
                   onClick={() => setSearch('')}
-                  className="absolute right-3 top-2.5 text-dark-400 hover:text-dark-600"
+                  className="text-dark-400 hover:text-dark-600 absolute top-2.5 right-3"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
                   </svg>
                 </button>
               )}
@@ -178,18 +204,18 @@ export default function ImagesPage() {
         {loading ? (
           <div className="text-dark opacity-60">Yükleniyor...</div>
         ) : filteredImages.length === 0 ? (
-          <div className="bg-light border border-dark-200 rounded-lg p-6 text-center text-dark opacity-60">
+          <div className="bg-light border-dark-200 text-dark rounded-lg border p-6 text-center opacity-60">
             Arama kriterlerine uygun görsel bulunamadı.
           </div>
         ) : (
-          <div className="columns-1 sm:columns-2 xl:columns-4 gap-4 space-y-4">
+          <div className="columns-1 gap-4 space-y-4 sm:columns-2 xl:columns-4">
             {filteredImages.map((img) => (
               <div key={img.url} className="break-inside-avoid">
-                <div className="overflow-hidden rounded-xl border border-dark-200 bg-dark-200 cursor-pointer">
+                <div className="border-dark-200 bg-dark-200 cursor-pointer overflow-hidden rounded-xl border">
                   <img
                     src={img.url}
                     alt={img.name || 'image'}
-                    className="w-full object-cover block max-h-80"
+                    className="block max-h-80 w-full object-cover"
                     loading="lazy"
                     onClick={() => setPreviewImage({ url: img.url, name: img.name, id: img.id })}
                   />
@@ -207,17 +233,22 @@ export default function ImagesPage() {
       >
         {previewImage && (
           <div className="space-y-4">
-            <div className="rounded-lg overflow-hidden border border-dark-200">
+            <div className="border-dark-200 overflow-hidden rounded-lg border">
               <img
                 src={previewImage.url}
                 alt={previewImage.name || 'Preview'}
-                className="w-full h-auto object-contain max-h-[60vh]"
+                className="h-auto max-h-[60vh] w-full object-contain"
               />
             </div>
             <div className="flex flex-col gap-2 text-sm">
               <div className="text-dark-700 break-all">
                 <span className="font-medium">Bağlantı: </span>
-                <a href={previewImage.url} target="_blank" rel="noreferrer" className="text-brand hover:underline">
+                <a
+                  href={previewImage.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-brand hover:underline"
+                >
                   {previewImage.url}
                 </a>
               </div>
@@ -225,10 +256,16 @@ export default function ImagesPage() {
                 Kaynak: {previewImage.id ? 'Panel Yüklemesi' : 'Etkinlik'}
               </div>
             </div>
-            <div className="flex flex-wrap items-center gap-3 justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 {previewImage.id && (
-                  <Button variant="danger" onClick={() => { handleDelete(previewImage.id, previewImage.url); setPreviewImage(null); }}>
+                  <Button
+                    variant="danger"
+                    onClick={() => {
+                      handleDelete(previewImage.id, previewImage.url);
+                      setPreviewImage(null);
+                    }}
+                  >
                     Sil
                   </Button>
                 )}
@@ -240,11 +277,6 @@ export default function ImagesPage() {
           </div>
         )}
       </Modal>
-    </AppShell>
+    </>
   );
 }
-
-
-
-
-
