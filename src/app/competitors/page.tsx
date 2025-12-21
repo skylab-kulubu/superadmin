@@ -26,14 +26,19 @@ export default function CompetitorsPage() {
       .then((data) => {
         if (data.authenticated && data.user) {
           setCurrentUser(data.user);
+        } else {
+          // Kullanıcı yüklenemedi, yine de veri çekmeyi dene
+          setCurrentUser({});
         }
       })
-      .catch((err) => console.error('User fetch error:', err));
+      .catch((err) => {
+        console.error('User fetch error:', err);
+        // Hata olsa bile veri çekmeyi dene
+        setCurrentUser({});
+      });
   }, []);
 
   const loadCompetitors = async () => {
-    if (!currentUser) return; // Wait for user
-
     setLoading(true);
     setError(null);
     try {
@@ -41,11 +46,12 @@ export default function CompetitorsPage() {
       if (response.success && response.data) {
         let data = response.data;
 
-        // Filter for leaders
-        const leaderEventType = getLeaderEventType(currentUser);
-
-        if (leaderEventType) {
-          data = data.filter((c) => c.event?.type?.name === leaderEventType);
+        // Filter for leaders (currentUser.roles varsa kontrol et)
+        if (currentUser?.roles?.length) {
+          const leaderEventType = getLeaderEventType(currentUser);
+          if (leaderEventType) {
+            data = data.filter((c) => c.event?.type?.name === leaderEventType);
+          }
         }
 
         setCompetitors(data);
@@ -70,7 +76,7 @@ export default function CompetitorsPage() {
   };
 
   useEffect(() => {
-    if (currentUser) {
+    if (currentUser !== null) {
       loadCompetitors();
     }
   }, [currentUser]);
