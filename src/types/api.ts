@@ -130,6 +130,7 @@ export interface EventDto {
   imageUrls?: string[];
   competitors?: CompetitorDto[];
   ranked?: boolean;
+  competition?: CompetitionDto;
 }
 
 export interface CreateEventRequest {
@@ -146,6 +147,11 @@ export interface CreateEventRequest {
   competitionId?: string;
   prizeInfo?: string;
   ranked?: boolean;
+}
+
+export interface CompetitionDto {
+  id: string;
+  name: string;
 }
 
 export interface UpdateEventRequest {
