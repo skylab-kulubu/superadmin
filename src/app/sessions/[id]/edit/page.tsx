@@ -1,9 +1,34 @@
 'use client';
 
+// =====================================================
+// BU SAYFA BAKIM AŞAMASINDA - EKSİK ENDPOINT
+// Sebep: GET /api/sessions/{id} endpoint'i backend'de yok
+// =====================================================
+
+import { PageHeader } from '@/components/layout/PageHeader';
+
+export default function EditSessionPage({ params }: { params: Promise<{ id: string }> }) {
+  return (
+    <div className="space-y-6">
+      <PageHeader title="Oturumu Düzenle" description="Oturum bilgilerini güncelleyin" />
+
+      <div className="flex h-64 items-center justify-center rounded-lg border border-amber-200 bg-amber-50 p-4">
+        <div className="text-center">
+          <p className="text-lg font-semibold text-amber-800">🚧 Bakım Aşamasında</p>
+          <p className="mt-2 text-amber-600">Bu sayfa şu anda bakım aşamasındadır.</p>
+          <p className="text-sm text-amber-500">(Eksik Endpoint: GET /api/sessions/:id)</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/*
+// ====================== YORUM SATIRINA ALINAN KOD ======================
+
 import { useState, useTransition, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 
-import { PageHeader } from '@/components/layout/PageHeader';
 import { Form } from '@/components/forms/Form';
 import { TextField } from '@/components/forms/TextField';
 import { Textarea } from '@/components/forms/Textarea';
@@ -42,6 +67,7 @@ const sessionSchema = z.object({
     ])
     .optional(),
 });
+
 
 export default function EditSessionPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
@@ -282,3 +308,4 @@ export default function EditSessionPage({ params }: { params: Promise<{ id: stri
     </div>
   );
 }
+*/

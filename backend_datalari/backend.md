@@ -824,6 +824,26 @@ Type: [CreateSessionRequest](#createsessionrequest)
 | ---- | ----------- | --------------------------------------------- |
 | 200  | OK          | [DataResultSessionDto](#dataresultsessiondto) |
 
+### PUT `/api/sessions/{id}`
+
+**Operation ID:** `updateSession`
+
+#### Parameters
+
+| Name | In   | Required | Type          |
+| ---- | ---- | -------- | ------------- |
+| id   | path | True     | string (uuid) |
+
+#### Request Body (application/json)
+
+Type: [UpdateSessionRequest](#updatesessionrequest)
+
+#### Responses
+
+| Code | Description | Type                                          |
+| ---- | ----------- | --------------------------------------------- |
+| 200  | OK          | [DataResultSessionDto](#dataresultsessiondto) |
+
 ### DELETE `/api/sessions/{id}`
 
 **Operation ID:** `deleteSession`
@@ -1219,6 +1239,21 @@ Type: object
 | ldapSkyNumber | string |
 
 ### CreateSessionRequest
+
+**Type:** object
+| Property | Type |
+|---|---|
+| eventId | string (uuid) |
+| title | string |
+| speakerName | string |
+| speakerLinkedin | string |
+| description | string |
+| startTime | string (date-time) |
+| endTime | string (date-time) |
+| orderIndex | integer (int32) |
+| sessionType | string |
+
+### UpdateSessionRequest
 
 **Type:** object
 | Property | Type |
