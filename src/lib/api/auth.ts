@@ -1,5 +1,10 @@
 import { apiClient } from './client';
-import type { CreateUserRequest, SuccessResult, RegisterRequestDto, RegisterResponseDto } from '@/types/api';
+import type {
+  CreateUserRequest,
+  SuccessResult,
+  RegisterRequestDto,
+  RegisterResponseDto,
+} from '@/types/api';
 
 export const authApi = {
   async register(data: CreateUserRequest) {
@@ -10,9 +15,3 @@ export const authApi = {
     return apiClient.post<RegisterResponseDto>('/internal/api/auth/register/oauth2', data);
   },
 };
-
-
-
-
-
-

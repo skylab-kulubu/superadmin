@@ -19,11 +19,30 @@ export const sessionsApi = {
     return apiClient.post<DataResultSessionDto>('/api/sessions/', data);
   },
 
-  async getById(id: string) {
-    return apiClient.get<DataResultSessionDto>(`/api/sessions/${id}`);
+  async getById(id: string, params?: { includeEvent?: boolean }) {
+    const query = new URLSearchParams();
+    if (params?.includeEvent !== undefined)
+      query.set('includeEvent', params.includeEvent.toString());
+    const qs = query.toString();
+    return apiClient.get<DataResultSessionDto>(`/api/sessions/${id}${qs ? `?${qs}` : ''}`);
   },
 
-  async update(id: string, data: Partial<CreateSessionRequest>) {
+  async update(
+    id: string,
+    data: {
+      eventId?: string;
+      title?: string;
+      speakerName?: string;
+      speakerLinkedin?: string;
+      description?: string;
+      startTime?: string;
+      endTime?: string;
+      orderIndex?: number;
+      sessionType?: string;
+    },
+  ) {
+    // Should use UpdateSessionRequest but for simplicity/avoiding import hell I define inline or just use any if needed, but here I can just use the shape.
+    // Wait, I can import UpdateSessionRequest now.
     return apiClient.put<DataResultSessionDto>(`/api/sessions/${id}`, data);
   },
 

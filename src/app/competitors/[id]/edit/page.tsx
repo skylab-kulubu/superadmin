@@ -16,6 +16,9 @@ import { eventsApi } from '@/lib/api/events';
 import { getLeaderEventType } from '@/lib/utils/permissions';
 import { UserDto, CompetitorDto } from '@/types/api';
 
+import { Modal } from '@/components/ui/Modal';
+import { HiOutlineTrash } from 'react-icons/hi2';
+
 const competitorSchema = z.object({
   userId: z.string().min(1, 'Kullanıcı seçiniz'),
   eventId: z.string().min(1, 'Etkinlik seçiniz'),
@@ -36,6 +39,8 @@ export default function EditCompetitorPage({ params }: { params: Promise<{ id: s
   const [users, setUsers] = useState<{ value: string; label: string }[]>([]);
   const [events, setEvents] = useState<{ value: string; label: string; type?: string }[]>([]);
   const [currentUser, setCurrentUser] = useState<UserDto | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     // Fetch user
@@ -112,12 +117,25 @@ export default function EditCompetitorPage({ params }: { params: Promise<{ id: s
         router.push('/competitors');
       } catch (error) {
         console.error('Competitor update error:', error);
-        alert(
-          'Yarışmacı güncellenirken hata oluştu: ' +
-            (error instanceof Error ? error.message : 'Bilinmeyen hata'),
-        );
       }
     });
+  };
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      const response = await competitorsApi.delete(id);
+      if (response.success) {
+        router.push('/competitors');
+      } else {
+        console.error('Delete failed:', response);
+      }
+    } catch (error) {
+      console.error('Delete error:', error);
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteModal(false);
+    }
   };
 
   if (loading) {
@@ -155,6 +173,17 @@ export default function EditCompetitorPage({ params }: { params: Promise<{ id: s
         description={
           competitor.user ? `${competitor.user.firstName} ${competitor.user.lastName}` : undefined
         }
+        actions={
+          <Button
+            type="button"
+            variant="danger"
+            onClick={() => setShowDeleteModal(true)}
+            className="flex items-center justify-center !border-0 !bg-transparent !px-3 !py-3 hover:!bg-transparent"
+            aria-label="Yarışmacıyı sil"
+          >
+            <HiOutlineTrash className="text-danger h-5 w-5" />
+          </Button>
+        }
       />
       <div className="mx-auto max-w-2xl">
         <div className="bg-light border-dark-200 rounded-lg border p-4 shadow">
@@ -164,7 +193,7 @@ export default function EditCompetitorPage({ params }: { params: Promise<{ id: s
             defaultValues={{
               userId: competitor.user?.id || '',
               eventId: competitor.event?.id || '',
-              points: competitor.points ?? undefined,
+              points: competitor.score ?? undefined,
               winner: competitor.winner || false,
             }}
           >
@@ -214,6 +243,25 @@ export default function EditCompetitorPage({ params }: { params: Promise<{ id: s
           </Form>
         </div>
       </div>
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        title="Yarışmacıyı Sil"
+      >
+        <p>Bu yarışmacıyı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.</p>
+        <div className="mt-4 flex justify-end gap-2">
+          <Button variant="danger" onClick={handleDelete} disabled={isDeleting}>
+            {isDeleting ? 'Siliniyor...' : 'Sil'}
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => setShowDeleteModal(false)}
+            disabled={isDeleting}
+          >
+            İptal
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 }

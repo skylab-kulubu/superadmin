@@ -16,6 +16,9 @@ import { announcementsApi } from '@/lib/api/announcements';
 import { eventTypesApi } from '@/lib/api/event-types';
 import type { AnnouncementDto } from '@/types/api';
 
+import { Modal } from '@/components/ui/Modal';
+import { HiOutlineTrash } from 'react-icons/hi2';
+
 const announcementSchema = z.object({
   title: z.string().min(2, 'En az 2 karakter olmalı'),
   body: z.string().min(2, 'En az 2 karakter olmalı'),
@@ -37,6 +40,8 @@ export default function EditAnnouncementPage() {
   const [error, setError] = useState<string | null>(null);
   const [eventTypes, setEventTypes] = useState<{ value: string; label: string }[]>([]);
   const [isActive, setIsActive] = useState(true);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -77,12 +82,25 @@ export default function EditAnnouncementPage() {
         router.push('/announcements');
       } catch (error) {
         console.error('Announcement update error:', error);
-        alert(
-          'Duyuru güncellenirken hata oluştu: ' +
-            (error instanceof Error ? error.message : 'Bilinmeyen hata'),
-        );
       }
     });
+  };
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      const response = await announcementsApi.delete(id);
+      if (response.success) {
+        router.push('/announcements');
+      } else {
+        console.error('Delete failed:', response);
+      }
+    } catch (error) {
+      console.error('Delete error:', error);
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteModal(false);
+    }
   };
 
   if (loading) {
@@ -112,7 +130,20 @@ export default function EditAnnouncementPage() {
       <PageHeader
         title="Duyuru Düzenle"
         description={announcement.title}
-        actions={<Toggle checked={isActive} onChange={setIsActive} />}
+        actions={
+          <div className="flex items-center gap-3">
+            <Toggle checked={isActive} onChange={setIsActive} />
+            <Button
+              type="button"
+              variant="danger"
+              onClick={() => setShowDeleteModal(true)}
+              className="flex items-center justify-center !border-0 !bg-transparent !px-3 !py-3 hover:!bg-transparent"
+              aria-label="Duyuruyu sil"
+            >
+              <HiOutlineTrash className="text-danger h-5 w-5" />
+            </Button>
+          </div>
+        }
       />
 
       <div className="mx-auto max-w-3xl">
@@ -205,6 +236,28 @@ export default function EditAnnouncementPage() {
           </Form>
         </div>
       </div>
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        title="Duyuruyu Sil"
+      >
+        <p>
+          <strong>{announcement.title}</strong> duyurusunu silmek istediğinizden emin misiniz? Bu
+          işlem geri alınamaz.
+        </p>
+        <div className="mt-4 flex justify-end gap-2">
+          <Button variant="danger" onClick={handleDelete} disabled={isDeleting}>
+            {isDeleting ? 'Siliniyor...' : 'Sil'}
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => setShowDeleteModal(false)}
+            disabled={isDeleting}
+          >
+            İptal
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 }

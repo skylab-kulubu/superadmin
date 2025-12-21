@@ -5,6 +5,7 @@ import type {
   UpdateUserRequest,
   Result,
 } from '@/types/api';
+// Assuming normalizeRoleForBackend is still valid and needed
 import { normalizeRoleForBackend } from '@/config/roles';
 
 export const usersApi = {

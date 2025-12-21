@@ -11,7 +11,7 @@ import type {
 export async function getEventTypes() {
   try {
     const response = await serverFetch<DataResultListEventTypeDto>('/api/event-types/');
-    
+
     console.log('EventTypes API Response (full):', JSON.stringify(response, null, 2));
     console.log('EventTypes API Response:', {
       success: response?.success,
@@ -21,7 +21,7 @@ export async function getEventTypes() {
       dataLength: Array.isArray(response?.data) ? response.data.length : 'N/A',
       responseKeys: response ? Object.keys(response) : 'no response',
     });
-    
+
     // Eğer response boş obje ise ({}) veya hiç property yoksa, boş array döndür
     if (!response || (typeof response === 'object' && Object.keys(response).length === 0)) {
       console.warn('API boş yanıt döndü, boş array döndürülüyor');
@@ -55,7 +55,7 @@ export async function getEventTypes() {
     if (response.data && !Array.isArray(response.data)) {
       throw new Error('Geçersiz API yanıtı: data bir array değil');
     }
-    
+
     // Eğer buraya geldiysek ve data varsa döndür
     return Array.isArray(response.data) ? response.data : [];
   } catch (error) {
@@ -68,7 +68,7 @@ export async function getEventTypes() {
 export async function getEventTypeById(id: string) {
   try {
     const response = await serverFetch<DataResultEventTypeDto>(`/api/event-types/${id}`);
-    
+
     if (!response) {
       throw new Error('API yanıtı alınamadı');
     }
@@ -80,7 +80,7 @@ export async function getEventTypeById(id: string) {
     if (!response.data) {
       throw new Error('Geçersiz API yanıtı: data bulunamadı');
     }
-    
+
     return response.data;
   } catch (error) {
     console.error('getEventTypeById error:', error);
@@ -90,8 +90,10 @@ export async function getEventTypeById(id: string) {
 }
 
 export async function createEventType(formData: FormData) {
+  const name = formData.get('name') as string;
   const data: CreateEventTypeRequest = {
-    name: formData.get('name') as string,
+    name,
+    authorizedRoles: [name, `${name}_LEADER`],
   };
 
   try {
@@ -107,8 +109,7 @@ export async function createEventType(formData: FormData) {
 
 export async function updateEventType(id: string, formData: FormData) {
   const data: UpdateEventTypeRequest = {
-    name: formData.get('name') as string || undefined,
-    competitive: formData.get('competitive') === 'true' || undefined,
+    name: (formData.get('name') as string) || undefined,
   };
 
   try {

@@ -130,7 +130,10 @@ export default function NewEventPage() {
   const handleCreateEventType = async (data: z.infer<typeof eventTypeSchema>) => {
     setIsCreatingEventType(true);
     try {
-      const response = await eventTypesApi.create({ name: data.name });
+      const response = await eventTypesApi.create({
+        name: data.name,
+        authorizedRoles: [data.name, `${data.name}_LEADER`],
+      });
       if (response.success && response.data) {
         loadEventTypes();
         eventFormMethodsRef.current?.setValue?.('eventTypeId', response.data.id);

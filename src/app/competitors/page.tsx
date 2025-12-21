@@ -1,24 +1,21 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 import { PageHeader } from '@/components/layout/PageHeader';
-import { DataTable } from '@/components/tables/DataTable';
 import { Button } from '@/components/ui/Button';
-import { Modal } from '@/components/ui/Modal';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { CompetitorDto } from '@/types/api';
 import { competitorsApi } from '@/lib/api/competitors';
 import { getLeaderEventType } from '@/lib/utils/permissions';
+import { CompetitorsGridClient } from './CompetitorsGridClient';
 
 export default function CompetitorsPage() {
   const router = useRouter();
   const [competitors, setCompetitors] = useState<CompetitorDto[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [selectedCompetitorId, setSelectedCompetitorId] = useState<string | null>(null);
 
   const [currentUser, setCurrentUser] = useState<any>(null);
 
@@ -44,7 +41,6 @@ export default function CompetitorsPage() {
       if (response.success && response.data) {
         let data = response.data;
 
-        // Filter for leaders
         // Filter for leaders
         const leaderEventType = getLeaderEventType(currentUser);
 
@@ -79,39 +75,18 @@ export default function CompetitorsPage() {
     }
   }, [currentUser]);
 
-  const handleEdit = (competitor: CompetitorDto) => {
-    router.push(`/competitors/${competitor.id}/edit`);
-  };
-
-  const handleDelete = (competitor: CompetitorDto) => {
-    setSelectedCompetitorId(competitor.id);
-    setShowDeleteModal(true);
-  };
-
-  const confirmDelete = async () => {
-    if (selectedCompetitorId) {
-      try {
-        await competitorsApi.delete(selectedCompetitorId);
-        loadCompetitors();
-        setShowDeleteModal(false);
-        setSelectedCompetitorId(null);
-      } catch (err) {
-        alert(
-          'Silme işlemi başarısız oldu: ' +
-            (err instanceof Error ? err.message : 'Bilinmeyen hata'),
-        );
-        console.error('Delete competitor error:', err);
+  // Group competitors by Event Name
+  const competitorsByEvent = useMemo(() => {
+    const grouped: Record<string, CompetitorDto[]> = {};
+    competitors.forEach((comp) => {
+      const eventName = comp.event?.name || 'Etkinliksiz';
+      if (!grouped[eventName]) {
+        grouped[eventName] = [];
       }
-    }
-  };
-
-  // Format data for display
-  const formattedCompetitors = competitors.map((competitor) => ({
-    ...competitor,
-    userName: competitor.user ? `${competitor.user.firstName} ${competitor.user.lastName}` : '-',
-    eventName: competitor.event?.name || '-',
-    winnerText: competitor.winner ? 'Evet' : 'Hayır',
-  }));
+      grouped[eventName].push(comp);
+    });
+    return grouped;
+  }, [competitors]);
 
   if (loading) {
     return (
@@ -147,7 +122,34 @@ export default function CompetitorsPage() {
           }
         />
 
-        {competitors.length === 0 ? (
+        {/* Error State */}
+        {error ? (
+          <div className="bg-light border-danger rounded-lg border-l-4 p-6">
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0">
+                <div className="bg-danger-100 flex h-10 w-10 items-center justify-center rounded-full">
+                  <svg
+                    className="text-danger-700 h-6 w-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+              </div>
+              <div className="flex-1">
+                <h2 className="text-danger-800 mb-2 text-lg font-semibold">Hata Oluştu</h2>
+                <p className="text-dark-700 mb-4">{error}</p>
+              </div>
+            </div>
+          </div>
+        ) : competitors.length === 0 ? (
           /* Empty State */
           <div className="bg-light border-dark-200/50 rounded-xl border p-12 text-center shadow-lg">
             <div className="mx-auto max-w-md">
@@ -186,84 +188,10 @@ export default function CompetitorsPage() {
             </div>
           </div>
         ) : (
-          /* Competitors Table */
-          <div className="bg-light border-dark-200/50 rounded-xl border p-6 shadow-lg">
-            <div className="mb-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="bg-brand-100 flex h-10 w-10 items-center justify-center rounded-lg">
-                  <svg
-                    className="text-brand-600 h-6 w-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-dark-600 text-sm font-medium">Toplam Yarışmacı</p>
-                  <p className="text-brand text-2xl font-bold">{competitors.length}</p>
-                </div>
-              </div>
-            </div>
-            <DataTable
-              data={formattedCompetitors}
-              columns={[
-                { key: 'userName', header: 'Kullanıcı' },
-                { key: 'eventName', header: 'Etkinlik' },
-                {
-                  key: 'points',
-                  header: 'Puan',
-                  render: (value) => (
-                    <span className="bg-brand-100 text-brand-700 rounded-md px-2.5 py-1 text-sm font-semibold">
-                      {value || 0}
-                    </span>
-                  ),
-                },
-                {
-                  key: 'winnerText',
-                  header: 'Kazanan',
-                  render: (value) => (
-                    <span
-                      className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                        value === 'Evet'
-                          ? 'border border-purple-200/50 bg-purple-100 text-purple-700'
-                          : 'bg-dark-100 text-dark-600 border-dark-200/50 border'
-                      }`}
-                    >
-                      {value}
-                    </span>
-                  ),
-                },
-              ]}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              idKey="id"
-            />
-          </div>
+          /* Competitors Grid */
+          <CompetitorsGridClient competitorsByEvent={competitorsByEvent} />
         )}
       </div>
-
-      <Modal
-        isOpen={showDeleteModal}
-        onClose={() => setShowDeleteModal(false)}
-        title="Yarışmacıyı Sil"
-      >
-        <p>Bu yarışmacıyı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.</p>
-        <div className="mt-4 flex justify-end gap-2">
-          <Button variant="danger" onClick={confirmDelete}>
-            Sil
-          </Button>
-          <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
-            İptal
-          </Button>
-        </div>
-      </Modal>
     </>
   );
 }

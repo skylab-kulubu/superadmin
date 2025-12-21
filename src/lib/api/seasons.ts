@@ -3,6 +3,7 @@ import type {
   DataResultListSeasonDto,
   DataResultSeasonDto,
   CreateSeasonRequest,
+  UpdateSeasonRequest,
   Result,
 } from '@/types/api';
 
@@ -35,7 +36,7 @@ export const seasonsApi = {
     return apiClient.post<DataResultSeasonDto>('/api/seasons/', data);
   },
 
-  async update(id: string, data: Partial<CreateSeasonRequest>) {
+  async update(id: string, data: UpdateSeasonRequest) {
     return apiClient.put<DataResultSeasonDto>(`/api/seasons/${id}`, data);
   },
 

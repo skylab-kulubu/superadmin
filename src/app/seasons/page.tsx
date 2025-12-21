@@ -16,8 +16,6 @@ export default function SeasonsPage() {
   const [seasons, setSeasons] = useState<SeasonDto[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [selectedSeasonId, setSelectedSeasonId] = useState<string | null>(null);
 
   const loadSeasons = async () => {
     setLoading(true);
@@ -43,28 +41,6 @@ export default function SeasonsPage() {
 
   const handleEdit = (season: SeasonDto) => {
     router.push(`/seasons/${season.id}/edit`);
-  };
-
-  const handleDelete = (season: SeasonDto) => {
-    setSelectedSeasonId(season.id);
-    setShowDeleteModal(true);
-  };
-
-  const confirmDelete = async () => {
-    if (selectedSeasonId) {
-      try {
-        await seasonsApi.delete(selectedSeasonId);
-        loadSeasons();
-        setShowDeleteModal(false);
-        setSelectedSeasonId(null);
-      } catch (err) {
-        alert(
-          'Silme işlemi başarısız oldu: ' +
-            (err instanceof Error ? err.message : 'Bilinmeyen hata'),
-        );
-        console.error('Delete season error:', err);
-      }
-    }
   };
 
   // Format data for display
@@ -130,7 +106,7 @@ export default function SeasonsPage() {
                 <div className="min-w-0">
                   <div className="text-dark-900 truncate text-sm font-medium">{s.name}</div>
                   <div className="text-dark-600 truncate text-xs">
-                    {new Date(s.startDate).toLocaleDateString('tr-TR')} -{' '}
+                    {s.startDate ? new Date(s.startDate).toLocaleDateString('tr-TR') : ''} -{' '}
                     {s.endDate ? new Date(s.endDate).toLocaleDateString('tr-TR') : '-'}
                   </div>
                 </div>
@@ -144,18 +120,6 @@ export default function SeasonsPage() {
           </div>
         )}
       </div>
-
-      <Modal isOpen={showDeleteModal} onClose={() => setShowDeleteModal(false)} title="Sezonu Sil">
-        <p>Bu sezonu silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.</p>
-        <div className="mt-4 flex justify-end gap-2">
-          <Button variant="danger" onClick={confirmDelete}>
-            Sil
-          </Button>
-          <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
-            İptal
-          </Button>
-        </div>
-      </Modal>
     </>
   );
 }

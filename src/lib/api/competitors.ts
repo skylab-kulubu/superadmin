@@ -5,6 +5,7 @@ import type {
   CreateCompetitorRequest,
   UpdateCompetitorRequest,
   Result,
+  DataResultListLeaderboardDto,
 } from '@/types/api';
 
 export const competitorsApi = {
@@ -69,27 +70,26 @@ export const competitorsApi = {
     );
   },
 
-  async getLeaderboard(params?: { includeUser?: boolean; includeEvent?: boolean }) {
+  async getLeaderboard(
+    eventTypeName: string,
+    params?: { includeUser?: boolean; includeEvent?: boolean },
+  ) {
     const query = new URLSearchParams();
+    query.set('eventTypeName', eventTypeName);
     if (params?.includeUser !== undefined) query.set('includeUser', params.includeUser.toString());
     if (params?.includeEvent !== undefined)
       query.set('includeEvent', params.includeEvent.toString());
     const qs = query.toString();
-    return apiClient.get<DataResultListCompetitorDto>(
+    return apiClient.get<DataResultListLeaderboardDto>(
       `/api/competitors/leaderboard${qs ? `?${qs}` : ''}`,
     );
   },
 
-  async getSeasonLeaderboard(
-    seasonId: string,
-    params?: { includeUser?: boolean; includeEvent?: boolean },
-  ) {
+  async getSeasonLeaderboard(seasonId: string, eventTypeName: string) {
     const query = new URLSearchParams();
-    if (params?.includeUser !== undefined) query.set('includeUser', params.includeUser.toString());
-    if (params?.includeEvent !== undefined)
-      query.set('includeEvent', params.includeEvent.toString());
+    query.set('eventTypeName', eventTypeName);
     const qs = query.toString();
-    return apiClient.get<DataResultListCompetitorDto>(
+    return apiClient.get<DataResultListLeaderboardDto>(
       `/api/competitors/leaderboard/season/${seasonId}${qs ? `?${qs}` : ''}`,
     );
   },

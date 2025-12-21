@@ -3,6 +3,7 @@ import type {
   DataResultListEventDto,
   DataResultEventDto,
   CreateEventRequest,
+  UpdateEventRequest,
   Result,
 } from '@/types/api';
 
@@ -13,7 +14,6 @@ export const eventsApi = {
     includeCompetitors?: boolean;
     includeImages?: boolean;
     includeSeason?: boolean;
-    includeCompetition?: boolean;
   }) {
     const query = new URLSearchParams();
     Object.entries(params || {}).forEach(([key, value]) => {
@@ -29,7 +29,6 @@ export const eventsApi = {
     includeCompetitors?: boolean;
     includeImages?: boolean;
     includeSeason?: boolean;
-    includeCompetition?: boolean;
   }) {
     const query = new URLSearchParams();
     Object.entries(params || {}).forEach(([key, value]) => {
@@ -47,7 +46,6 @@ export const eventsApi = {
       includeCompetitors?: boolean;
       includeImages?: boolean;
       includeSeason?: boolean;
-      includeCompetition?: boolean;
     },
   ) {
     const query = new URLSearchParams();
@@ -55,7 +53,8 @@ export const eventsApi = {
     Object.entries(params || {}).forEach(([key, value]) => {
       if (value !== undefined) query.set(key, value.toString());
     });
-    return apiClient.get(`/api/events/event-type?${query.toString()}`);
+    // Response type is generic object in docs
+    return apiClient.get<any>(`/api/events/event-type?${query.toString()}`);
   },
 
   async getById(
@@ -66,7 +65,6 @@ export const eventsApi = {
       includeCompetitors?: boolean;
       includeImages?: boolean;
       includeSeason?: boolean;
-      includeCompetition?: boolean;
     },
   ) {
     const query = new URLSearchParams();
@@ -77,21 +75,17 @@ export const eventsApi = {
     return apiClient.get<DataResultEventDto>(`/api/events/${id}${qs ? `?${qs}` : ''}`);
   },
 
-  async create(data: CreateEventRequest, coverImage?: File) {
+  async create(data: CreateEventRequest, coverImage: File) {
     const formData = new FormData();
-    if (coverImage) {
-      formData.append('coverImage', coverImage);
-    }
+    formData.append('coverImage', coverImage);
     const jsonBlob = new Blob([JSON.stringify(data)], { type: 'application/json' });
     formData.append('data', jsonBlob);
     return apiClient.postFormData<DataResultEventDto>('/api/events/', formData);
   },
 
-  async update(id: string, coverImage: File | undefined, data: Partial<CreateEventRequest>) {
-    const formData = new FormData();
-    if (coverImage) formData.append('coverImage', coverImage);
-    formData.append('data', JSON.stringify(data));
-    return apiClient.putFormData<DataResultEventDto>(`/api/events/${id}`, formData);
+  async update(id: string, data: UpdateEventRequest) {
+    // Backend docs specify UpdateEventRequest JSON body for PUT
+    return apiClient.put<DataResultEventDto>(`/api/events/${id}`, data);
   },
 
   async delete(id: string) {

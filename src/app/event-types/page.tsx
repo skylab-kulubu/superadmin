@@ -17,8 +17,6 @@ export default function EventTypesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [selectedEventType, setSelectedEventType] = useState<EventTypeDto | null>(null);
 
   const loadEventTypes = () => {
     setLoading(true);
@@ -45,30 +43,6 @@ export default function EventTypesPage() {
 
   const handleEdit = (eventType: EventTypeDto) => {
     router.push(`/event-types/${eventType.id}/edit`);
-  };
-
-  const handleDeleteClick = (eventType: EventTypeDto) => {
-    setSelectedEventType(eventType);
-    setDeleteModalOpen(true);
-  };
-
-  const handleDeleteConfirm = () => {
-    if (!selectedEventType) return;
-
-    startTransition(async () => {
-      try {
-        await eventTypesApi.delete(selectedEventType.id);
-        setDeleteModalOpen(false);
-        setSelectedEventType(null);
-        loadEventTypes();
-      } catch (error) {
-        console.error('Event type delete error:', error);
-        alert(
-          'Etkinlik tipi silinirken hata oluştu: ' +
-            (error instanceof Error ? error.message : 'Bilinmeyen hata'),
-        );
-      }
-    });
   };
 
   if (loading) {
@@ -120,43 +94,6 @@ export default function EventTypesPage() {
           ))}
         </div>
       )}
-
-      <Modal
-        isOpen={deleteModalOpen}
-        onClose={() => {
-          setDeleteModalOpen(false);
-          setSelectedEventType(null);
-        }}
-        title="Etkinlik Tipi Sil"
-      >
-        <div className="space-y-4">
-          <p>
-            <strong>{selectedEventType?.name}</strong> adlı etkinlik tipini silmek istediğinize emin
-            misiniz?
-          </p>
-          <p className="text-dark text-sm opacity-60">Bu işlem geri alınamaz.</p>
-          <div className="mt-6 flex gap-4">
-            <Button
-              type="button"
-              variant="danger"
-              onClick={handleDeleteConfirm}
-              disabled={isPending}
-            >
-              {isPending ? 'Siliniyor...' : 'Sil'}
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => {
-                setDeleteModalOpen(false);
-                setSelectedEventType(null);
-              }}
-            >
-              İptal
-            </Button>
-          </div>
-        </div>
-      </Modal>
     </div>
   );
 }

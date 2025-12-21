@@ -16,8 +16,6 @@ export default function AnnouncementsPage() {
   const [announcements, setAnnouncements] = useState<AnnouncementDto[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [selectedAnnouncementId, setSelectedAnnouncementId] = useState<string | null>(null);
 
   const loadAnnouncements = async () => {
     setLoading(true);
@@ -43,28 +41,6 @@ export default function AnnouncementsPage() {
 
   const handleEdit = (announcement: AnnouncementDto) => {
     router.push(`/announcements/${announcement.id}/edit`);
-  };
-
-  const handleDelete = (announcement: AnnouncementDto) => {
-    setSelectedAnnouncementId(announcement.id);
-    setShowDeleteModal(true);
-  };
-
-  const confirmDelete = async () => {
-    if (selectedAnnouncementId) {
-      try {
-        await announcementsApi.delete(selectedAnnouncementId);
-        loadAnnouncements();
-        setShowDeleteModal(false);
-        setSelectedAnnouncementId(null);
-      } catch (err) {
-        alert(
-          'Silme işlemi başarısız oldu: ' +
-            (err instanceof Error ? err.message : 'Bilinmeyen hata'),
-        );
-        console.error('Delete announcement error:', err);
-      }
-    }
   };
 
   // Format data for display
@@ -139,22 +115,6 @@ export default function AnnouncementsPage() {
           </div>
         )}
       </div>
-
-      <Modal
-        isOpen={showDeleteModal}
-        onClose={() => setShowDeleteModal(false)}
-        title="Duyuruyu Sil"
-      >
-        <p>Bu duyuruyu silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.</p>
-        <div className="mt-4 flex justify-end gap-2">
-          <Button variant="danger" onClick={confirmDelete}>
-            Sil
-          </Button>
-          <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
-            İptal
-          </Button>
-        </div>
-      </Modal>
     </>
   );
 }

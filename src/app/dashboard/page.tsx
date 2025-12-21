@@ -142,7 +142,7 @@ export default async function DashboardPage() {
   const recentUsers = usersList.slice(0, 4);
   const upcomingSessions = [...sessionsList]
     .filter((session) => session.startTime)
-    .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+    .sort((a, b) => new Date(a.startTime!).getTime() - new Date(b.startTime!).getTime())
     .slice(0, 4);
 
   const latestAnnouncements = announcementsList.slice(0, 3);

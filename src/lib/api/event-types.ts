@@ -5,6 +5,7 @@ import type {
   CreateEventTypeRequest,
   UpdateEventTypeRequest,
   Result,
+  DataResultSetUserDto,
 } from '@/types/api';
 
 export const eventTypesApi = {
@@ -29,8 +30,6 @@ export const eventTypesApi = {
   },
 
   async getCoordinators(eventTypeName: string) {
-    return apiClient.get<DataResultListEventTypeDto>(
-      `/api/event-types/${eventTypeName}/coordinators`,
-    );
+    return apiClient.get<DataResultSetUserDto>(`/api/event-types/${eventTypeName}/coordinators`);
   },
 };

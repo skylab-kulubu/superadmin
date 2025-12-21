@@ -15,6 +15,7 @@ import {
   HiOutlineUser,
   HiOutlineUsers,
   HiOutlinePuzzlePiece,
+  HiOutlineArrowRightOnRectangle,
 } from 'react-icons/hi2';
 import { canAccessPage } from '@/lib/utils/permissions';
 import { useAuth } from '@/context/AuthContext';
@@ -42,6 +43,21 @@ export function Sidebar({ isMobileOpen = false, onMobileClose }: SidebarProps) {
   const pathname = usePathname();
   const { user, loading } = useAuth();
   const [isDesktopExpanded, setIsDesktopExpanded] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+      window.location.href = '/login';
+    }
+  };
 
   const handleNavigate = () => {
     if (onMobileClose) {
@@ -80,28 +96,48 @@ export function Sidebar({ isMobileOpen = false, onMobileClose }: SidebarProps) {
     const initials = user.firstName?.[0]?.toUpperCase() || user.username?.[0]?.toUpperCase() || 'U';
 
     return (
-      <div className={`flex items-center gap-3 ${showDetails ? '' : 'justify-center'}`}>
-        {user.profilePictureUrl ? (
-          <img
-            src={user.profilePictureUrl}
-            alt={`${user.firstName} ${user.lastName}`}
-            className="h-10 w-10 flex-shrink-0 rounded-full object-cover"
-          />
-        ) : (
-          <div className="bg-brand text-dark flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-sm font-semibold">
-            {initials}
+      <div className="relative">
+        {isUserMenuOpen && (
+          <div
+            className={`border-dark-600 bg-dark-800 absolute bottom-full z-50 mb-2 overflow-hidden rounded-lg border shadow-xl ${showDetails ? 'right-0 left-0' : 'left-0 w-48'}`}
+          >
+            <button
+              onClick={handleLogout}
+              className="hover:bg-dark-700 flex w-full items-center gap-3 px-4 py-3 text-sm text-red-400 transition-colors hover:text-red-300"
+            >
+              <HiOutlineArrowRightOnRectangle className="h-5 w-5" />
+              <span>Çıkış Yap</span>
+            </button>
           </div>
         )}
-        {showDetails && (
-          <div className="min-w-0 flex-1">
-            <p className="text-light truncate text-sm font-medium">
-              {user.firstName && user.lastName
-                ? `${user.firstName} ${user.lastName}`
-                : user.username}
-            </p>
-            <p className="text-light/60 truncate text-xs">{user.email}</p>
-          </div>
-        )}
+        <button
+          onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+          className={`group hover:bg-dark-800 flex w-full items-center gap-3 rounded-lg p-2 transition-colors ${
+            showDetails ? '' : 'justify-center'
+          }`}
+        >
+          {user.profilePictureUrl ? (
+            <img
+              src={user.profilePictureUrl}
+              alt={`${user.firstName} ${user.lastName}`}
+              className="group-hover:ring-dark-600 h-10 w-10 flex-shrink-0 rounded-full object-cover ring-2 ring-transparent transition-all"
+            />
+          ) : (
+            <div className="bg-brand text-dark group-hover:ring-dark-600 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-sm font-semibold ring-2 ring-transparent transition-all">
+              {initials}
+            </div>
+          )}
+          {showDetails && (
+            <div className="min-w-0 flex-1 text-left">
+              <p className="text-light truncate text-sm font-medium">
+                {user.firstName && user.lastName
+                  ? `${user.firstName} ${user.lastName}`
+                  : user.username}
+              </p>
+              <p className="text-light/60 truncate text-xs">{user.email}</p>
+            </div>
+          )}
+        </button>
       </div>
     );
   };

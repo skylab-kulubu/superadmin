@@ -99,12 +99,16 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
 
     startTransition(async () => {
       try {
-        const coverImage = data.coverImage;
+        // Note: Backend currently does not support updating cover image via PUT /api/events/{id}
+        // So we ignore data.coverImage for now or implement a separate image upload flow if backend supports it later.
+
         const eventData = {
           name: data.name,
           description: data.description || undefined,
           location: data.location || undefined,
-          eventTypeId: data.eventTypeId,
+          // typeId maps to 'type' or 'typeId' in request? Schema has both 'type' (string) and 'typeId' (uuid).
+          // Use typeId for uuid.
+          typeId: data.eventTypeId,
           formUrl: data.formUrl || undefined,
           startDate: convertGMT3ToGMT0(data.startDate),
           endDate: data.endDate ? convertGMT3ToGMT0(data.endDate) : undefined,
@@ -113,11 +117,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
           competitionId: data.competitionId || undefined,
         };
 
-        if (coverImage) {
-          await eventsApi.update(id, coverImage, eventData);
-        } else {
-          await eventsApi.update(id, undefined, eventData);
-        }
+        await eventsApi.update(id, eventData);
 
         router.push('/events');
       } catch (error) {
@@ -204,10 +204,11 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
               location: event.location || '',
               eventTypeId: event.type?.id || '',
               formUrl: event.formUrl || '',
-              startDate: formatGMT0ToLocalInput(event.startDate),
+              startDate: event.startDate ? formatGMT0ToLocalInput(event.startDate) : '',
               endDate: event.endDate ? formatGMT0ToLocalInput(event.endDate) : '',
               linkedin: event.linkedin || '',
-              competitionId: event.competition?.id || '',
+              // competitionId not present in EventDto according to backend spec
+              competitionId: '',
               coverImage: undefined,
             }}
           >

@@ -37,6 +37,8 @@ export interface DataResultVoid {
 }
 
 // Entity Types
+
+// User
 export interface UserDto {
   id: string;
   username: string;
@@ -68,31 +70,36 @@ export interface CreateUserRequest {
   password: string;
 }
 
+// EventType
 export interface EventTypeDto {
   id: string;
   name: string;
+  authorizedRoles?: string[];
 }
 
 export interface CreateEventTypeRequest {
   name: string;
+  authorizedRoles?: string[];
 }
 
 export interface UpdateEventTypeRequest {
   name?: string;
-  competitive?: boolean;
+  authorizedRoles?: string[];
 }
 
+// Competitor
 export interface CompetitorDto {
   id: string;
   user?: UserDto;
   event?: EventDto;
-  points: number;
-  winner: boolean;
+  score?: number;
+  rank?: number;
+  winner?: boolean;
 }
 
 export interface CreateCompetitorRequest {
-  userId: string;
-  eventId: string;
+  userId?: string;
+  eventId?: string;
   points?: number;
   winner?: boolean;
 }
@@ -104,6 +111,7 @@ export interface UpdateCompetitorRequest {
   winner?: boolean;
 }
 
+// Event
 export interface EventDto {
   id: string;
   name: string;
@@ -112,52 +120,76 @@ export interface EventDto {
   location?: string;
   type?: EventTypeDto;
   formUrl?: string;
-  startDate: string;
+  startDate?: string;
   endDate?: string;
   linkedin?: string;
   active?: boolean;
-
+  prizeInfo?: string;
+  season?: SeasonDto;
   sessions?: SessionDto[];
   imageUrls?: string[];
   competitors?: CompetitorDto[];
-  season?: SeasonDto;
-  competition?: CompetitionDto;
+  ranked?: boolean;
 }
 
 export interface CreateEventRequest {
-  name: string;
+  name?: string;
   description?: string;
-  location: string;
-  eventTypeId: string;
+  location?: string;
+  eventTypeId?: string;
+  seasonId?: string;
   formUrl?: string;
-  startDate: string;
+  startDate?: string;
   endDate?: string;
   linkedin?: string;
   active?: boolean;
   competitionId?: string;
+  prizeInfo?: string;
+  ranked?: boolean;
 }
 
-export interface CompetitionDto {
-  id: string;
-  name: string;
+export interface UpdateEventRequest {
+  name?: string;
+  description?: string;
+  location?: string;
+  type?: string;
+  formUrl?: string;
+  prizeInfo?: string;
+  startDate?: string;
+  typeId?: string;
+  seasonId?: string;
+  endDate?: string;
+  linkedin?: string;
+  active?: boolean;
+  competitionId?: string;
+  ranked?: boolean;
 }
 
+// Season
 export interface SeasonDto {
   id: string;
   name: string;
-  startDate: string;
-  endDate: string;
-  active: boolean;
+  startDate?: string;
+  endDate?: string;
+  active?: boolean;
   events?: EventDto[];
 }
 
 export interface CreateSeasonRequest {
-  name: string;
-  startDate: string;
-  endDate: string;
+  name?: string;
+  startDate?: string;
+  endDate?: string;
   active?: boolean;
 }
 
+export interface UpdateSeasonRequest {
+  name?: string;
+  startDate?: string;
+  endDate?: string;
+  active?: boolean;
+}
+
+// Session
 export interface SessionDto {
   id: string;
   title: string;
@@ -165,55 +197,39 @@ export interface SessionDto {
   speakerLinkedin?: string;
   speakerImageUrl?: string;
   description?: string;
-  startTime: string;
+  startTime?: string;
   endTime?: string;
   orderIndex?: number;
   event?: EventDto;
-  sessionType?:
-    | 'WORKSHOP'
-    | 'PRESENTATION'
-    | 'PANEL'
-    | 'KEYNOTE'
-    | 'NETWORKING'
-    | 'OTHER'
-    | 'CTF'
-    | 'HACKATHON'
-    | 'JAM';
+  sessionType?: string;
+  // Enum values are: WORKSHOP, PRESENTATION, PANEL, KEYNOTE, NETWORKING, OTHER, CTF, HACKATHON, JAM
 }
 
 export interface CreateSessionRequest {
-  eventId: string;
-  title: string;
+  eventId?: string;
+  title?: string;
   speakerName?: string;
   speakerLinkedin?: string;
   description?: string;
-  startTime: string;
+  startTime?: string;
   endTime?: string;
   orderIndex?: number;
-  sessionType?:
-    | 'WORKSHOP'
-    | 'PRESENTATION'
-    | 'PANEL'
-    | 'KEYNOTE'
-    | 'NETWORKING'
-    | 'OTHER'
-    | 'CTF'
-    | 'HACKATHON'
-    | 'JAM';
+  sessionType?: string;
 }
 
-export interface UploadImageResponseDto {
-  id: string;
-  fileName: string;
-  fileType: string;
-  fileUrl: string;
-  fileSize: number;
+export interface UpdateSessionRequest {
+  eventId?: string;
+  title?: string;
+  speakerName?: string;
+  speakerLinkedin?: string;
+  description?: string;
+  startTime?: string;
+  endTime?: string;
+  orderIndex?: number;
+  sessionType?: string;
 }
 
-export interface CreateGroupRequest {
-  groupName: string;
-}
-
+// Announcement
 export interface AnnouncementDto {
   id: string;
   title: string;
@@ -228,7 +244,7 @@ export interface CreateAnnouncementRequestDto {
   title: string;
   body: string;
   active?: boolean;
-  eventTypeId: string;
+  eventTypeId?: string;
   formUrl?: string;
 }
 
@@ -240,31 +256,62 @@ export interface UpdateAnnouncementRequest {
   formUrl?: string;
 }
 
+// Leaderboard
+export interface LeaderboardDto {
+  user?: UserDto;
+  totalScore?: number;
+  eventCount?: number;
+  rank?: number;
+}
+
+// Auth / Internal
 export interface RegisterRequestDto {
-  username: string;
-  email: string;
-  firstName: string;
-  lastName: string;
+  username?: string;
+  email?: string;
+  firstName?: string;
+  lastName?: string;
 }
 
 export interface RegisterResponseDto {
-  ldapSkyNumber: string;
+  ldapSkyNumber?: string;
 }
 
-// Response Types
+// Image
+export interface UploadImageResponseDto {
+  id: string;
+  fileName: string;
+  fileType: string;
+  fileUrl: string;
+  fileSize?: number;
+}
+
+export interface CreateGroupRequest {
+  groupName: string;
+}
+
+// Response Type Aliases
 export type DataResultUserDto = DataResult<UserDto>;
 export type DataResultListUserDto = DataResultList<UserDto>;
+export type DataResultSetUserDto = DataResult<UserDto[]>; // Special for Set return types if any, usually List
+
 export type DataResultEventTypeDto = DataResult<EventTypeDto>;
 export type DataResultListEventTypeDto = DataResultList<EventTypeDto>;
 
 export type DataResultCompetitorDto = DataResult<CompetitorDto>;
 export type DataResultListCompetitorDto = DataResultList<CompetitorDto>;
+
 export type DataResultEventDto = DataResult<EventDto>;
 export type DataResultListEventDto = DataResultList<EventDto>;
+
 export type DataResultSeasonDto = DataResult<SeasonDto>;
 export type DataResultListSeasonDto = DataResultList<SeasonDto>;
+
 export type DataResultSessionDto = DataResult<SessionDto>;
 export type DataResultListSessionDto = DataResultList<SessionDto>;
+
 export type DataResultAnnouncementDto = DataResult<AnnouncementDto>;
 export type DataResultListAnnouncementDto = DataResultList<AnnouncementDto>;
+
 export type SuccessDataResultUploadImageResponseDto = DataResult<UploadImageResponseDto>;
+
+export type DataResultListLeaderboardDto = DataResultList<LeaderboardDto>;
