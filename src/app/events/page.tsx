@@ -5,35 +5,16 @@ import { useState, useEffect } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
-import type { EventDto, UserDto } from '@/types/api';
+import type { EventDto } from '@/types/api';
 import { eventsApi } from '@/lib/api/events';
 import { eventTypesApi } from '@/lib/api/event-types';
 import { EventsGridClient } from './EventsGridClient';
-import { getLeaderEventType } from '@/lib/utils/permissions';
 
 export default function EventsPage() {
   const [events, setEvents] = useState<EventDto[]>([]);
   const [eventTypeOrder, setEventTypeOrder] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState<UserDto | null>(null);
-
-  useEffect(() => {
-    // Fetch user first
-    fetch('/api/auth/me')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.authenticated && data.user) {
-          setCurrentUser(data.user);
-        } else {
-          setCurrentUser({} as UserDto);
-        }
-      })
-      .catch((err) => {
-        console.error('User fetch error:', err);
-        setCurrentUser({} as UserDto);
-      });
-  }, []);
 
   const loadEvents = async () => {
     setLoading(true);
@@ -45,17 +26,7 @@ export default function EventsPage() {
       ]);
 
       if (eventsResponse.success && eventsResponse.data) {
-        let data = eventsResponse.data;
-
-        // Filter for leaders based on event type
-        if (currentUser?.roles?.length) {
-          const leaderEventType = getLeaderEventType(currentUser);
-          if (leaderEventType) {
-            data = data.filter((e) => e.type?.name === leaderEventType);
-          }
-        }
-
-        setEvents(data);
+        setEvents(eventsResponse.data);
       } else {
         setError(eventsResponse.message || 'Etkinlikler yüklenirken hata oluştu');
       }
@@ -74,10 +45,8 @@ export default function EventsPage() {
   };
 
   useEffect(() => {
-    if (currentUser !== null) {
-      loadEvents();
-    }
-  }, [currentUser]);
+    loadEvents();
+  }, []);
 
   return (
     <div className="space-y-6">
