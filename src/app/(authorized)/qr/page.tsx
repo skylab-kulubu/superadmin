@@ -20,6 +20,7 @@ type QRFormData = z.infer<typeof qrSchema>;
 
 export default function QRPage() {
   const [qrCode, setQrCode] = useState<string | null>(null);
+  const [previewWithLogo, setPreviewWithLogo] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,6 +36,7 @@ export default function QRPage() {
         : await qrCodesApi.generateQRCode(data.url, width, height);
       const url = URL.createObjectURL(blob);
       setQrCode(url);
+      setPreviewWithLogo(data.withLogo);
 
       // Otomatik indirme
       const link = document.createElement('a');
@@ -86,7 +88,7 @@ export default function QRPage() {
                         required
                         placeholder="https://example.com"
                       />
-                      <Toggle name="withLogo" label="Logo" />
+                      <Toggle name="withLogo" label="Logo" thumbUncheckedClassName="bg-green-500" />
                     </div>
                     <div className="mt-6">
                       <Button type="submit" disabled={loading}>
@@ -101,13 +103,23 @@ export default function QRPage() {
           {/* Hata mesajını göstermeyelim; global banner yeterli */}
 
           {qrCode && (
-            <div>
-              <img
-                src={qrCode}
-                alt="QR Code"
-                className="mx-auto rounded-lg border"
-                onError={() => setError('QR görseli yüklenemedi')}
-              />
+            <div className="flex justify-center">
+              <div
+                className={
+                  previewWithLogo
+                    ? 'border-dark-200 rounded-xl border bg-white p-3 shadow-sm'
+                    : 'border-dark-400 rounded-2xl border-2 bg-neutral-100 p-4 shadow-md ring-1 ring-black/10'
+                }
+              >
+                <div className="ring-dark-200/40 rounded-lg bg-white p-2 shadow-inner ring-1">
+                  <img
+                    src={qrCode}
+                    alt="QR Code"
+                    className="mx-auto block max-h-[300px] max-w-full rounded-md"
+                    onError={() => setError('QR görseli yüklenemedi')}
+                  />
+                </div>
+              </div>
             </div>
           )}
         </div>
