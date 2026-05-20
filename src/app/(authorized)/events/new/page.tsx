@@ -16,6 +16,7 @@ import { Checkbox } from '@/components/forms/Checkbox';
 import { Modal } from '@/components/ui/Modal';
 import { z } from 'zod';
 import { eventsApi } from '@/lib/api/events';
+import { eventDaysApi } from '@/lib/api/eventDays';
 import { eventTypesApi } from '@/lib/api/event-types';
 import { seasonsApi } from '@/lib/api/seasons';
 import { convertGMT3ToGMT0, getCurrentDateTimeGMT3 } from '@/lib/utils/date';
@@ -53,6 +54,12 @@ const eventTypeSchema = z.object({
   name: z.string().min(2, 'En az 2 karakter olmalı'),
 });
 
+type EventDayDraft = {
+  name: string;
+  startDate: string;
+  endDate: string;
+};
+
 export default function NewEventPage() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -60,6 +67,7 @@ export default function NewEventPage() {
   const [seasons, setSeasons] = useState<{ value: string; label: string }[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCreatingEventType, setIsCreatingEventType] = useState(false);
+  const [manualDays, setManualDays] = useState<EventDayDraft[]>([]);
   const eventFormMethodsRef = useRef<any>(null);
   const { user: currentUser, loading: authLoading } = useAuth();
 
@@ -125,11 +133,49 @@ export default function NewEventPage() {
       });
   }, [currentUser]);
 
+  const addManualDay = () => {
+    setManualDays((prev) => [
+      ...prev,
+      {
+        name: `${prev.length + 1}. Gün`,
+        startDate: getCurrentDateTimeGMT3(),
+        endDate: getCurrentDateTimeGMT3(),
+      },
+    ]);
+  };
+
+  const updateManualDay = (index: number, field: keyof EventDayDraft, value: string) => {
+    setManualDays((prev) => prev.map((day, i) => (i === index ? { ...day, [field]: value } : day)));
+  };
+
+  const removeManualDay = (index: number) => {
+    setManualDays((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async (data: z.infer<typeof eventSchema>) => {
     if (!canOperateEventScheduling(currentUser ?? null)) {
       router.replace('/events');
       return;
     }
+
+    const normalizedDays = manualDays.map((day) => ({
+      name: day.name.trim(),
+      startDate: day.startDate,
+      endDate: day.endDate,
+    }));
+
+    for (let i = 0; i < normalizedDays.length; i++) {
+      const day = normalizedDays[i];
+      if (!day.name || !day.startDate || !day.endDate) {
+        alert(`${i + 1}. gün için ad, başlangıç ve bitiş tarihini doldurun.`);
+        return;
+      }
+      if (new Date(day.startDate).getTime() > new Date(day.endDate).getTime()) {
+        alert(`${i + 1}. gün için bitiş tarihi başlangıçtan önce olamaz.`);
+        return;
+      }
+    }
+
     startTransition(async () => {
       try {
         const coverImage = data.coverImage;
@@ -150,7 +196,22 @@ export default function NewEventPage() {
           prizeInfo: privileged ? data.prizeInfo || undefined : undefined,
           competitionId: privileged ? data.competitionId || undefined : undefined,
         };
-        await eventsApi.create(eventData, coverImage);
+
+        const eventCreateRes = await eventsApi.create(eventData, coverImage);
+        const createdEventId = eventCreateRes.data?.id;
+
+        if (!eventCreateRes.success || !createdEventId) {
+          throw new Error(eventCreateRes.message || 'Etkinlik oluşturulamadı.');
+        }
+
+        for (const day of normalizedDays) {
+          await eventDaysApi.create({
+            eventId: createdEventId,
+            name: day.name,
+            startDate: convertGMT3ToGMT0(day.startDate),
+            endDate: convertGMT3ToGMT0(day.endDate),
+          });
+        }
 
         router.push('/events');
       } catch (error) {
@@ -305,6 +366,91 @@ export default function NewEventPage() {
                       <div className="grid grid-cols-2 gap-4">
                         <DatePicker name="startDate" label="Başlangıç Tarihi" required />
                         <DatePicker name="endDate" label="Bitiş Tarihi" required />
+                      </div>
+                    </div>
+
+                    <div className="border-dark-200 border-t pt-5">
+                      <div className="mb-3 flex items-center justify-between gap-2">
+                        <h3 className="text-dark-800 text-sm font-semibold">
+                          Etkinlik Günleri (Opsiyonel)
+                        </h3>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          onClick={addManualDay}
+                          className="!px-3 !py-1.5 text-xs"
+                        >
+                          + Gün Ekle
+                        </Button>
+                      </div>
+                      <p className="text-dark-500 mb-4 text-xs">
+                        Günler otomatik üretilmez. Lütfen etkinlik günlerini manuel olarak girin.
+                      </p>
+                      <div className="space-y-3">
+                        {manualDays.map((day, index) => (
+                          <div
+                            key={`${index}-${day.name}`}
+                            className="border-dark-200 bg-dark-50 rounded-md border p-3"
+                          >
+                            <div className="mb-3 flex items-center justify-between gap-2">
+                              <p className="text-dark-700 text-xs font-medium">Gün {index + 1}</p>
+                              <Button
+                                type="button"
+                                variant="outlineDanger"
+                                onClick={() => removeManualDay(index)}
+                                className="!px-2.5 !py-1 text-xs"
+                              >
+                                Sil
+                              </Button>
+                            </div>
+                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                              <div>
+                                <label className="text-dark mb-1 block text-sm font-medium">
+                                  Gün Adı
+                                </label>
+                                <input
+                                  type="text"
+                                  value={day.name}
+                                  onChange={(e) => updateManualDay(index, 'name', e.target.value)}
+                                  placeholder="1. Gün"
+                                  className="text-dark placeholder:text-dark border-dark-200 bg-light focus:ring-brand w-full rounded-md border px-3 py-2 text-sm placeholder:opacity-60 focus:border-transparent focus:ring-2 focus:outline-none"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-dark mb-1 block text-sm font-medium">
+                                  Başlangıç
+                                </label>
+                                <input
+                                  type="datetime-local"
+                                  value={day.startDate}
+                                  onChange={(e) =>
+                                    updateManualDay(index, 'startDate', e.target.value)
+                                  }
+                                  className="text-dark border-dark-200 bg-light focus:ring-brand w-full rounded-md border px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:outline-none"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-dark mb-1 block text-sm font-medium">
+                                  Bitiş
+                                </label>
+                                <input
+                                  type="datetime-local"
+                                  value={day.endDate}
+                                  onChange={(e) =>
+                                    updateManualDay(index, 'endDate', e.target.value)
+                                  }
+                                  className="text-dark border-dark-200 bg-light focus:ring-brand w-full rounded-md border px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:outline-none"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                        {manualDays.length === 0 && (
+                          <p className="text-dark-500 border-dark-200 rounded-md border border-dashed px-3 py-4 text-center text-sm">
+                            Gün eklemek zorunlu değil. İsterseniz yukarıdan '+ Gün Ekle' ile manuel
+                            gün tanımlayabilirsiniz.
+                          </p>
+                        )}
                       </div>
                     </div>
 

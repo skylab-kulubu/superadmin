@@ -19,7 +19,6 @@ import {
   canOperateEventSchedulingOnEvent,
 } from '@/lib/utils/permissions';
 import type { EventDto, GetEventDayResponseDto } from '@/types/api';
-import { getInclusiveLocalCalendarDates } from '@/lib/utils/eventCalendar';
 import { zOptionalLinkedInUrl } from '@/lib/utils/linkedinZod';
 
 const SESSION_TYPES = [
@@ -77,9 +76,9 @@ function NewSessionPageContent() {
   const [isPending, startTransition] = useTransition();
   const [eventDays, setEventDays] = useState<GetEventDayResponseDto[]>([]);
   const [event, setEvent] = useState<EventDto | null>(null);
-  const [daysBootstrap, setDaysBootstrap] = useState<
-    'idle' | 'loading' | 'syncing_days' | 'ready' | 'error'
-  >('idle');
+  const [daysBootstrap, setDaysBootstrap] = useState<'idle' | 'loading' | 'ready' | 'error'>(
+    'idle',
+  );
   const [daysError, setDaysError] = useState<string | null>(null);
   const [speakerPhoto, setSpeakerPhoto] = useState<File | null>(null);
 
@@ -123,53 +122,7 @@ function NewSessionPageContent() {
           setEvent(null);
         }
 
-        let days = daysRes.success && daysRes.data ? sortDaysByStart(daysRes.data) : [];
-
-        if (days.length === 0 && eventRes.success && eventRes.data) {
-          const ev = eventRes.data;
-          if (ev.startDate) {
-            const calendarDates = getInclusiveLocalCalendarDates(ev.startDate, ev.endDate);
-            if (calendarDates.length > 0) {
-              const recheck = await eventDaysApi.getByEventId(eventId);
-              if (cancelled) return;
-              if (recheck.success && recheck.data && recheck.data.length > 0) {
-                days = sortDaysByStart(recheck.data);
-              } else {
-                setDaysBootstrap('syncing_days');
-                for (let i = 0; i < calendarDates.length; i++) {
-                  const d = calendarDates[i];
-                  const startDate = new Date(
-                    d.getFullYear(),
-                    d.getMonth(),
-                    d.getDate(),
-                    0,
-                    0,
-                    0,
-                    0,
-                  );
-                  const endDate = new Date(
-                    d.getFullYear(),
-                    d.getMonth(),
-                    d.getDate(),
-                    23,
-                    59,
-                    59,
-                    999,
-                  );
-                  await eventDaysApi.create({
-                    eventId,
-                    name: `${i + 1}. Gün`,
-                    startDate: startDate.toISOString(),
-                    endDate: endDate.toISOString(),
-                  });
-                }
-                const after = await eventDaysApi.getByEventId(eventId);
-                if (cancelled) return;
-                days = after.success && after.data ? sortDaysByStart(after.data) : [];
-              }
-            }
-          }
-        }
+        const days = daysRes.success && daysRes.data ? sortDaysByStart(daysRes.data) : [];
 
         setEventDays(days);
         setDaysBootstrap('ready');
@@ -254,7 +207,7 @@ function NewSessionPageContent() {
     };
   });
 
-  const daySelectLoading = daysBootstrap === 'loading' || daysBootstrap === 'syncing_days';
+  const daySelectLoading = daysBootstrap === 'loading';
 
   return (
     <div className="space-y-6">
@@ -276,15 +229,13 @@ function NewSessionPageContent() {
               )}
               {daysBootstrap === 'ready' && eventDays.length === 0 && !daysError && event && (
                 <div className="border-warning-200 bg-warning-50 text-warning-900 mb-4 rounded-md border px-4 py-3 text-sm">
-                  Bu etkinlik için takvim günü üretilemedi. Etkinlikte başlangıç tarihi olduğundan
-                  emin olun veya yönetim panelinden etkinlik günlerini tanımlayın.
+                  Bu etkinlik için gün tanımlı değil. Oturum eklemeden önce etkinlik günlerini
+                  etkinlik detayındaki 'Günleri Yönet' ekranından manuel olarak tanımlayın.
                 </div>
               )}
               {daySelectLoading ? (
                 <div className="text-dark-600 py-8 text-center text-sm">
-                  {daysBootstrap === 'syncing_days'
-                    ? 'Etkinlik süresine göre günler oluşturuluyor…'
-                    : 'Etkinlik ve günler yükleniyor…'}
+                  Etkinlik ve günler yükleniyor…
                 </div>
               ) : (
                 <Form schema={sessionSchema} onSubmit={handleSubmit}>

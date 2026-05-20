@@ -263,13 +263,22 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
             <div className="border-dark-200 bg-dark-50 flex items-center justify-between border-b p-4">
               <h2 className="text-dark-900 text-lg font-semibold">Oturumlar ({sessions.length})</h2>
               {canMutateSchedule ? (
-                <Button
-                  href={`/sessions/new?eventId=${id}`}
-                  className="flex items-center gap-2 !px-3 !py-1.5 text-sm"
-                >
-                  <HiOutlinePlus className="h-4 w-4" />
-                  Yeni Oturum
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    href={`/events/${id}/days`}
+                    variant="secondary"
+                    className="!px-3 !py-1.5 text-sm"
+                  >
+                    Günleri Yönet
+                  </Button>
+                  <Button
+                    href={`/sessions/new?eventId=${id}`}
+                    className="flex items-center gap-2 !px-3 !py-1.5 text-sm"
+                  >
+                    <HiOutlinePlus className="h-4 w-4" />
+                    Yeni Oturum
+                  </Button>
+                </div>
               ) : null}
             </div>
             <div className="p-5">
