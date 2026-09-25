@@ -97,9 +97,10 @@ APP_URL=http://localhost:3000
 ## Kimlik Doğrulama ve Akış
 
 - Login sayfası `/login` oauth yetkilendirme URL’sine otomatik yönlendirir.
-- OAuth callback: `GET /api/auth/callback` kodu token’a çevirir ve `auth_token`/`refresh_token` cookie’lerini yazar, ardından `/dashboard`’a yönlendirir.
+- OAuth callback: `GET /api/auth/callback` kodu token’a çevirir ve oturum cookie’lerini yazar, ardından `/dashboard`’a yönlendirir.
+- Oturum cookie’leri (`src/lib/auth/session-cookies.ts`): `AUTH_COOKIE_SECURE` açıkken (production imajında varsayılan) adlar `__Host-auth_token`, `__Host-access_token`, `__Host-refresh_token`; tarayıcı bunları yalnız bu host’tan, Secure, `Path=/` ve `Domain`’siz kabul eder, böylece yildizskylab.com altındaki başka bir alt alan adı bu çerezleri ekleyemez ya da gölgeleyemez. Yerel http’de (`next dev`) adlar öneksizdir. Secure açıkken öneksiz eski adlar okunmaz.
 - Oturum durumu: `GET /api/auth/me` backend’e token ile gider, kullanıcıyı döner (erişim yoksa cookie temizleme).
-- Logout: `POST /api/auth/logout` cookie temizler.
+- Logout: `POST /api/auth/logout` oturum cookie’lerini ve eski öneksiz adları temizler.
 
 ## API Katmanı
 
@@ -127,5 +128,5 @@ APP_URL=http://localhost:3000
 ## Sorun Giderme
 
 - OAuth callback dönmüyorsa: `OAUTH2_REDIRECT_URI` prod/dev uyumunu ve OAuth client izinli URL’lerini kontrol edin.
-- 401/403: Cookie’de `auth_token` var mı; backend’da rol/yetki ayarlarını doğrulayın.
+- 401/403: Cookie’de `__Host-auth_token` (yerel http’de `auth_token`) var mı; backend’da rol/yetki ayarlarını doğrulayın.
 - `Dynamic server usage` uyarıları: sayfanın SSG yerine dinamik render edilmesi normal; gerekirse dinamik bayrakları ekleyin.

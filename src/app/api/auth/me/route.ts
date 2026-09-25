@@ -5,8 +5,12 @@ import { CORE_API_URL } from '@/lib/api/core';
 import { isJwtExpired } from '@/lib/auth/jwt-expiry';
 import { refreshAccessToken } from '@/lib/auth/oauth2';
 import { sessionUserFromAccessToken } from '@/lib/auth/session-user';
-import { getTokenFromCookies } from '@/lib/auth/token';
-import { authCookieSecure } from '@/lib/auth/cookie-secure';
+import {
+  clearSessionCookies,
+  readSessionAccessToken,
+  readSessionRefreshToken,
+  writeSessionCookies,
+} from '@/lib/auth/session-cookies';
 
 function userFromAccessToken(token: string): UserDto | null {
   const session = sessionUserFromAccessToken(token);
@@ -20,35 +24,6 @@ function userFromAccessToken(token: string): UserDto | null {
     roles: session.roles,
     groups: session.groups,
   };
-}
-
-async function setSessionCookies(
-  cookieStore: Awaited<ReturnType<typeof cookies>>,
-  accessToken: string,
-  refreshToken: string,
-) {
-  const secure = authCookieSecure();
-  cookieStore.set('auth_token', accessToken, {
-    httpOnly: true,
-    secure,
-    sameSite: 'lax',
-    maxAge: 60 * 60 * 24 * 7,
-    path: '/',
-  });
-  cookieStore.set('access_token', accessToken, {
-    httpOnly: true,
-    secure,
-    sameSite: 'lax',
-    maxAge: 60 * 60 * 24 * 7,
-    path: '/',
-  });
-  cookieStore.set('refresh_token', refreshToken, {
-    httpOnly: true,
-    secure,
-    sameSite: 'lax',
-    maxAge: 60 * 60 * 24 * 30,
-    path: '/',
-  });
 }
 
 async function jitShadowUser(token: string): Promise<void> {
@@ -65,17 +40,17 @@ async function jitShadowUser(token: string): Promise<void> {
 export async function GET() {
   try {
     const cookieStore = await cookies();
-    let token = getTokenFromCookies(cookieStore);
+    let token = readSessionAccessToken(cookieStore);
 
     if (!token || isJwtExpired(token)) {
-      const refreshToken = cookieStore.get('refresh_token')?.value;
+      const refreshToken = readSessionRefreshToken(cookieStore);
       if (!refreshToken) {
         return NextResponse.json({ authenticated: false }, { status: 401 });
       }
       try {
         const refreshed = await refreshAccessToken(refreshToken);
         token = refreshed.access_token;
-        await setSessionCookies(cookieStore, refreshed.access_token, refreshed.refresh_token);
+        writeSessionCookies(cookieStore, refreshed.access_token, refreshed.refresh_token);
       } catch {
         return NextResponse.json({ authenticated: false }, { status: 401 });
       }
@@ -83,8 +58,7 @@ export async function GET() {
 
     const user = userFromAccessToken(token);
     if (!user) {
-      cookieStore.delete('auth_token');
-      cookieStore.delete('refresh_token');
+      clearSessionCookies(cookieStore);
       return NextResponse.json({ authenticated: false }, { status: 401 });
     }
 

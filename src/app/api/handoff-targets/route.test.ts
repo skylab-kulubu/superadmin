@@ -103,6 +103,23 @@ describe('GET /api/handoff-targets', () => {
     });
   });
 
+  it('answers 401 without calling Keycloak when only a legacy unprefixed session cookie is present', async () => {
+    const secureSetting = process.env.AUTH_COOKIE_SECURE;
+    process.env.AUTH_COOKIE_SECURE = 'true';
+    try {
+      signedIn({ auth_token: accessToken(), refresh_token: 'refresh-1' });
+      const seen = fakeKeycloak(() => Response.json([]));
+
+      const response = await GET();
+
+      expect(seen).toHaveLength(0);
+      expect(response.status).toBe(401);
+    } finally {
+      if (secureSetting === undefined) delete process.env.AUTH_COOKIE_SECURE;
+      else process.env.AUTH_COOKIE_SECURE = secureSetting;
+    }
+  });
+
   it('refreshes an expired access token and keeps the new session in httpOnly cookies', async () => {
     const fresh = accessToken();
     const { set } = signedIn({ auth_token: accessToken(-60), refresh_token: 'refresh-1' });

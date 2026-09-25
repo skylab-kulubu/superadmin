@@ -7,6 +7,7 @@ import {
   OAUTH_CODE_VERIFIER_COOKIE,
   OAUTH_STATE_COOKIE,
 } from '@/lib/auth/oauth-transaction';
+import { writeSessionCookies } from '@/lib/auth/session-cookies';
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -56,30 +57,7 @@ export async function GET(request: NextRequest) {
       refresh_token: refresh_token?.length,
     });
 
-    // Next.js 15'te cookies() async olmalı
-    const secure = authCookieSecure();
-    cookieStore.set('auth_token', access_token, {
-      httpOnly: true,
-      secure,
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7,
-      path: '/',
-    });
-    cookieStore.set('access_token', access_token, {
-      httpOnly: true,
-      secure,
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7,
-      path: '/',
-    });
-
-    cookieStore.set('refresh_token', refresh_token, {
-      httpOnly: true,
-      secure,
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 30,
-      path: '/',
-    });
+    writeSessionCookies(cookieStore, access_token, refresh_token);
 
     console.log("✅ OAuth callback: Cookie'ler set edildi, dashboard'a yönlendiriliyor");
 
