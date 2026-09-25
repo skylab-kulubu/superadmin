@@ -14,6 +14,7 @@ import { seasonsApi, type Season } from '@/lib/api/seasons';
 import { teamsApi } from '@/lib/api/teams';
 import { canWriteEvent, isPrivileged, leaderOwnerTeams } from '@/lib/auth/groups';
 import { saveEventWithSeason } from '@/lib/scheduling/save-event';
+import { mediaProblemMessage } from '@/lib/media-problems';
 import { eventFormIssue } from '@/lib/events-view';
 import { formHandoffFromSearch } from '@/lib/event-forms';
 import {
@@ -124,7 +125,7 @@ function NewEventPageContent() {
                 clearEventDraft(sessionStorage, window.location.href);
               router.push(`/events/${id}`);
             } catch (err) {
-              setError(err instanceof ProblemError ? err.title : 'Oluşturulamadı');
+              setError(mediaProblemMessage(err, 'Oluşturulamadı'));
             } finally {
               setSaving(false);
             }

@@ -70,6 +70,7 @@ import { saveEventWithSeason } from '@/lib/scheduling/save-event';
 import { formHandoffFromSearch } from '@/lib/event-forms';
 import { clearEventDraft, formStateFromEvent, restoreEventEditor } from '@/lib/event-draft';
 import { publicMediaUrl } from '@/lib/event-media';
+import { mediaProblemMessage } from '@/lib/media-problems';
 import { openEventMail } from '@/lib/event-mail';
 import { eventFormIssue, eventListSubtitle } from '@/lib/events-view';
 import { publicShortUrl } from '@/lib/api/urls';
@@ -232,7 +233,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
           clearEventDraft(sessionStorage, window.location.href);
           setHandoffNote('Skyforms adresi bağlandı. Kısa link kayıtta skyl.app’den basılır.');
         } catch (err) {
-          setError(err instanceof ProblemError ? err.title : 'Form adresi kaydedilemedi');
+          setError(mediaProblemMessage(err, 'Form adresi kaydedilemedi'));
         }
       }
       const dayRows = await eventDaysApi.listByEvent(id);
@@ -669,7 +670,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
               setEditing(false);
               await load();
             } catch (err) {
-              setError(err instanceof ProblemError ? err.title : 'Kaydedilemedi');
+              setError(mediaProblemMessage(err, 'Kaydedilemedi'));
             }
           })}
         >

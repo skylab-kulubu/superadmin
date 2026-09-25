@@ -3,15 +3,53 @@ export const CORE_API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhos
   '',
 );
 
+/** What core's problem+json says beyond its status and title. */
+export type ProblemDetails = {
+  /** Core's stable, snake_case problem code, such as `media_too_large`. */
+  code?: string;
+  detail?: string;
+  /** The problem's extension members, such as `maxBytes` or `retryAfterSeconds`. */
+  members?: Record<string, unknown>;
+};
+
+const PROBLEM_FIELDS = new Set(['type', 'title', 'status', 'detail', 'instance', 'code']);
+
 export class ProblemError extends Error {
   status: number;
   title: string;
+  code?: string;
+  detail?: string;
+  members: Record<string, unknown>;
 
-  constructor(status: number, title: string) {
+  constructor(status: number, title: string, details: ProblemDetails = {}) {
     super(title);
     this.status = status;
     this.title = title;
+    this.code = details.code;
+    this.detail = details.detail;
+    this.members = details.members ?? {};
   }
+}
+
+function problemFromBody(status: number, text: string): ProblemError {
+  let title = `HTTP ${status}`;
+  let body: Record<string, unknown> = {};
+  try {
+    const parsed: unknown = JSON.parse(text);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      body = parsed as Record<string, unknown>;
+    }
+  } catch {}
+  if (typeof body.title === 'string' && body.title) title = body.title;
+  const members: Record<string, unknown> = {};
+  for (const [name, value] of Object.entries(body)) {
+    if (!PROBLEM_FIELDS.has(name)) members[name] = value;
+  }
+  return new ProblemError(status, title, {
+    code: typeof body.code === 'string' ? body.code : undefined,
+    detail: typeof body.detail === 'string' ? body.detail : undefined,
+    members,
+  });
 }
 
 async function bearer(): Promise<string | null> {
@@ -38,12 +76,7 @@ export async function coreFetch<T>(path: string, init: RequestInit = {}): Promis
   }
   const text = await res.text();
   if (!res.ok) {
-    let title = `HTTP ${res.status}`;
-    try {
-      const body = JSON.parse(text) as { title?: string };
-      if (body.title) title = body.title;
-    } catch {}
-    throw new ProblemError(res.status, title);
+    throw problemFromBody(res.status, text);
   }
   if (!text) return undefined as T;
   return JSON.parse(text) as T;

@@ -15,8 +15,9 @@ export type Media = {
 export const mediaApi = {
   list: () => coreFetch<Media[]>('/v1/media'),
   get: (id: string) => coreFetch<Media>(`/v1/media/${encodeURIComponent(id)}`),
-  upload: (file: File) => {
+  upload: (file: File, purpose?: string) => {
     const body = new FormData();
+    if (purpose) body.append('purpose', purpose);
     body.append('file', file);
     return coreFetch<Media>('/v1/media', { method: 'POST', body });
   },

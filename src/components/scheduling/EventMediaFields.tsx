@@ -15,10 +15,19 @@ import {
   type EventMediaHint,
   type TeamPhoto,
 } from '@/lib/event-media';
+import { mediaProblemMessage, uploadRetryAfterSeconds } from '@/lib/media-problems';
 import { pickerMatch } from '@/lib/picker';
 
 const ghostClass =
   'inline-flex h-8 items-center gap-1.5 rounded-md border border-white/10 px-3 text-2xs font-medium text-neutral-200 hover:border-white/20 hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60';
+
+/** Refusals about the file itself: retrying it cannot help, the next file may still fit. */
+function refusedForItself(cause: unknown): boolean {
+  return (
+    cause instanceof ProblemError &&
+    (cause.code === 'media_too_large' || cause.code === 'media_type_not_allowed')
+  );
+}
 
 type EventMediaFieldsProps = {
   ownerTeam: string;
@@ -42,7 +51,9 @@ export function EventMediaFields({
   const [previews, setPreviews] = useState<Record<string, string>>({});
   const [library, setLibrary] = useState<TeamPhoto[]>([]);
   const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [problems, setProblems] = useState<string[]>([]);
+  const [remaining, setRemaining] = useState<File[]>([]);
+  const [resumeWait, setResumeWait] = useState(0);
   const [picker, setPicker] = useState<'cover' | 'gallery' | null>(null);
   const [query, setQuery] = useState('');
 
@@ -66,30 +77,64 @@ export function EventMediaFields({
     };
   }, [ownerTeam]);
 
-  async function uploadFiles(files: FileList | null, target: 'cover' | 'gallery') {
-    if (!files?.length) return;
+  useEffect(() => {
+    if (!resumeWait) return;
+    const timer = window.setTimeout(() => setResumeWait(0), resumeWait * 1000);
+    return () => window.clearTimeout(timer);
+  }, [resumeWait]);
+
+  // Uploads one file at a time. A file core refuses for itself (too large,
+  // wrong type) is skipped and named. Any other refusal stops the batch
+  // without losing what already uploaded: those are handed to the Event (and
+  // attached on save), and the gallery files not yet sent join the ones
+  // waiting for the organizer to continue, after the wait core gives when the
+  // upload limit stopped them.
+  async function uploadFiles(files: File[], target: 'cover' | 'gallery', resuming = false) {
+    if (!files.length) return;
     setUploading(true);
-    setError(null);
+    setProblems([]);
+    if (resuming) setRemaining([]);
+    const purpose = target === 'cover' ? 'event_cover' : 'event_gallery';
+    const uploaded: Media[] = [];
+    const notes: string[] = [];
+    let stopped: { cause: unknown; rest: File[] } | null = null;
     try {
-      const uploaded: Media[] = [];
-      for (const file of Array.from(files)) {
-        uploaded.push(await mediaApi.upload(file));
+      for (const [index, file] of files.entries()) {
+        try {
+          uploaded.push(await mediaApi.upload(file, purpose));
+        } catch (cause) {
+          if (refusedForItself(cause)) {
+            notes.push(`${file.name}: ${mediaProblemMessage(cause)}`);
+            continue;
+          }
+          stopped = { cause, rest: files.slice(index) };
+          break;
+        }
       }
       const extra: Record<string, string> = {};
       for (const row of uploaded) {
         const href = publicMediaUrl(row.url);
         if (href) extra[row.id] = href;
       }
-      setPreviews((prev) => ({ ...prev, ...extra }));
-      if (target === 'cover') {
-        const first = uploaded[0];
-        if (first) onCover(first.id, extra[first.id]);
-      } else {
-        const ids = uploaded.map((row) => row.id).filter((id) => !imageIds.includes(id));
-        onGallery([...imageIds, ...ids], extra);
+      if (uploaded.length) {
+        setPreviews((prev) => ({ ...prev, ...extra }));
+        if (target === 'cover') {
+          const first = uploaded[0];
+          onCover(first.id, extra[first.id]);
+        } else {
+          const ids = uploaded.map((row) => row.id).filter((id) => !imageIds.includes(id));
+          onGallery([...imageIds, ...ids], extra);
+        }
       }
-    } catch (err) {
-      setError(err instanceof ProblemError ? err.title : 'Yüklenemedi');
+      if (stopped) {
+        const { cause, rest } = stopped;
+        notes.push(mediaProblemMessage(cause, 'Yüklenemedi'));
+        if (target === 'gallery') {
+          setRemaining((waiting) => [...waiting, ...rest]);
+          setResumeWait(uploadRetryAfterSeconds(cause) ?? 0);
+        }
+      }
+      setProblems(notes);
     } finally {
       setUploading(false);
     }
@@ -136,9 +181,10 @@ export function EventMediaFields({
             ref={coverRef}
             type="file"
             accept="image/*"
+            aria-label="Kapak görseli seç"
             className="sr-only"
             onChange={(e) => {
-              void uploadFiles(e.target.files, 'cover');
+              void uploadFiles(Array.from(e.target.files ?? []), 'cover');
               e.target.value = '';
             }}
           />
@@ -194,9 +240,10 @@ export function EventMediaFields({
             type="file"
             accept="image/*"
             multiple
+            aria-label="Galeri görselleri seç"
             className="sr-only"
             onChange={(e) => {
-              void uploadFiles(e.target.files, 'gallery');
+              void uploadFiles(Array.from(e.target.files ?? []), 'gallery');
               e.target.value = '';
             }}
           />
@@ -223,7 +270,22 @@ export function EventMediaFields({
           </button>
         </div>
       </div>
-      {error ? <p className="text-sm text-red-300">{error}</p> : null}
+      {problems.map((problem, index) => (
+        <p key={index} className="text-sm text-red-300">
+          {problem}
+        </p>
+      ))}
+      {remaining.length ? (
+        <button
+          type="button"
+          className={ghostClass}
+          disabled={uploading || resumeWait > 0}
+          onClick={() => void uploadFiles(remaining, 'gallery', true)}
+        >
+          <Upload className="h-3.5 w-3.5" />
+          Kalan {remaining.length} görseli yükle
+        </button>
+      ) : null}
       <PickerDrawer
         open={picker !== null}
         onClose={() => setPicker(null)}
