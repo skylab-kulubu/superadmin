@@ -6,28 +6,18 @@ import { ActionButton } from '@/components/chrome/ActionButton';
 import { FieldLabel } from '@/components/chrome/FieldLabel';
 import { PickerDrawer } from '@/components/chrome/PickerDrawer';
 import { saveClass } from '@/components/chrome/SaveButton';
-import { ProblemError } from '@/lib/api/core';
 import { eventsApi } from '@/lib/api/events';
-import { mediaApi, type Media } from '@/lib/api/media';
 import {
   publicMediaUrl,
   teamEventPhotos,
   type EventMediaHint,
   type TeamPhoto,
 } from '@/lib/event-media';
-import { mediaProblemMessage, uploadRetryAfterSeconds } from '@/lib/media-problems';
+import { uploadMediaBatch } from '@/lib/media-upload-batch';
 import { pickerMatch } from '@/lib/picker';
 
 const ghostClass =
   'inline-flex h-8 items-center gap-1.5 rounded-md border border-white/10 px-3 text-2xs font-medium text-neutral-200 hover:border-white/20 hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60';
-
-/** Refusals about the file itself: retrying it cannot help, the next file may still fit. */
-function refusedForItself(cause: unknown): boolean {
-  return (
-    cause instanceof ProblemError &&
-    (cause.code === 'media_too_large' || cause.code === 'media_type_not_allowed')
-  );
-}
 
 type EventMediaFieldsProps = {
   ownerTeam: string;
@@ -53,9 +43,16 @@ export function EventMediaFields({
   const [uploading, setUploading] = useState(false);
   const [problems, setProblems] = useState<string[]>([]);
   const [remaining, setRemaining] = useState<File[]>([]);
-  const [resumeWait, setResumeWait] = useState(0);
+  // When the organizer may continue the waiting files; null once they may.
+  const [resumeAt, setResumeAt] = useState<number | null>(null);
   const [picker, setPicker] = useState<'cover' | 'gallery' | null>(null);
   const [query, setQuery] = useState('');
+  // The props of the latest render: an upload hands its Media to the form as
+  // it is when the upload ends, so edits made meanwhile survive.
+  const latest = useRef({ imageIds, onCover, onGallery });
+  useEffect(() => {
+    latest.current = { imageIds, onCover, onGallery };
+  });
 
   useEffect(() => {
     const team = ownerTeam.trim();
@@ -78,39 +75,25 @@ export function EventMediaFields({
   }, [ownerTeam]);
 
   useEffect(() => {
-    if (!resumeWait) return;
-    const timer = window.setTimeout(() => setResumeWait(0), resumeWait * 1000);
+    if (resumeAt === null) return;
+    const timer = window.setTimeout(() => setResumeAt(null), resumeAt - Date.now());
     return () => window.clearTimeout(timer);
-  }, [resumeWait]);
+  }, [resumeAt]);
 
-  // Uploads one file at a time. A file core refuses for itself (too large,
-  // wrong type) is skipped and named. Any other refusal stops the batch
-  // without losing what already uploaded: those are handed to the Event (and
-  // attached on save), and the gallery files not yet sent join the ones
-  // waiting for the organizer to continue, after the wait core gives when the
-  // upload limit stopped them.
+  // What already uploaded is always handed to the Event (and attached on
+  // save). Gallery files a refusal stopped join the ones waiting for the
+  // organizer to continue, after the wait core gives when the upload limit
+  // stopped them.
   async function uploadFiles(files: File[], target: 'cover' | 'gallery', resuming = false) {
     if (!files.length) return;
     setUploading(true);
     setProblems([]);
     if (resuming) setRemaining([]);
-    const purpose = target === 'cover' ? 'event_cover' : 'event_gallery';
-    const uploaded: Media[] = [];
-    const notes: string[] = [];
-    let stopped: { cause: unknown; rest: File[] } | null = null;
     try {
-      for (const [index, file] of files.entries()) {
-        try {
-          uploaded.push(await mediaApi.upload(file, purpose));
-        } catch (cause) {
-          if (refusedForItself(cause)) {
-            notes.push(`${file.name}: ${mediaProblemMessage(cause)}`);
-            continue;
-          }
-          stopped = { cause, rest: files.slice(index) };
-          break;
-        }
-      }
+      const { uploaded, refused, stopped } = await uploadMediaBatch(
+        files,
+        target === 'cover' ? 'event_cover' : 'event_gallery',
+      );
       const extra: Record<string, string> = {};
       for (const row of uploaded) {
         const href = publicMediaUrl(row.url);
@@ -118,20 +101,26 @@ export function EventMediaFields({
       }
       if (uploaded.length) {
         setPreviews((prev) => ({ ...prev, ...extra }));
+        const form = latest.current;
         if (target === 'cover') {
           const first = uploaded[0];
-          onCover(first.id, extra[first.id]);
+          form.onCover(first.id, extra[first.id]);
         } else {
-          const ids = uploaded.map((row) => row.id).filter((id) => !imageIds.includes(id));
-          onGallery([...imageIds, ...ids], extra);
+          const ids = uploaded.map((row) => row.id).filter((id) => !form.imageIds.includes(id));
+          form.onGallery([...form.imageIds, ...ids], extra);
         }
       }
+      const notes = refused.map(({ file, message }) => `${file.name}: ${message}`);
       if (stopped) {
-        const { cause, rest } = stopped;
-        notes.push(mediaProblemMessage(cause, 'Yüklenemedi'));
+        notes.push(stopped.message);
         if (target === 'gallery') {
-          setRemaining((waiting) => [...waiting, ...rest]);
-          setResumeWait(uploadRetryAfterSeconds(cause) ?? 0);
+          setRemaining((waiting) => [...waiting, ...stopped.rest]);
+          const seconds = stopped.retryAfterSeconds;
+          if (seconds !== undefined) {
+            // Only core's upload limit sets a wait; another stop keeps the running one.
+            const until = Date.now() + seconds * 1000;
+            setResumeAt((current) => Math.max(current ?? 0, until));
+          }
         }
       }
       setProblems(notes);
@@ -279,7 +268,7 @@ export function EventMediaFields({
         <button
           type="button"
           className={ghostClass}
-          disabled={uploading || resumeWait > 0}
+          disabled={uploading || resumeAt !== null}
           onClick={() => void uploadFiles(remaining, 'gallery', true)}
         >
           <Upload className="h-3.5 w-3.5" />

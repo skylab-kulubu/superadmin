@@ -16,22 +16,32 @@ import { eventsApi } from '@/lib/api/events';
 import { mediaOwnerTeams, publicMediaUrl } from '@/lib/event-media';
 import {
   isPrivateMediaPurpose,
+  mediaLifecycleView,
   mediaPurposeLabel,
-  mediaStatusLabel,
   orderedMediaPurposes,
 } from '@/lib/media-purposes';
-import { mediaProblemMessage } from '@/lib/media-problems';
-import type { StatusChipKind } from '@/lib/status-chip';
+import { coreProblemMessage } from '@/lib/core-problems';
 import { emptyListCopy, matchesQuery, paginateRows } from '@/lib/list-query';
 import { listStatus } from '@/lib/list-status';
 import { isPrivileged } from '@/lib/auth/groups';
 import { useAuth } from '@/context/AuthContext';
 
-const STATUS_CHIP_KINDS: Record<string, StatusChipKind> = {
-  attached: 'active',
-  pending: 'pending',
-  detached: 'passive',
-};
+/**
+ * The Owner teams of the Events that use each Media, archived Events
+ * included (the Team media library counts them), or null when the Events
+ * cannot be read.
+ */
+async function ownerTeamsByMediaId(): Promise<Record<string, string[]> | null> {
+  try {
+    const [current, archived] = await Promise.all([
+      eventsApi.list(),
+      eventsApi.list(undefined, 'inactive'),
+    ]);
+    return mediaOwnerTeams([...current, ...archived]);
+  } catch {
+    return null;
+  }
+}
 
 function isImage(row: Media) {
   return row.kind?.toLowerCase().includes('image') || row.type?.toLowerCase().startsWith('image/');
@@ -42,7 +52,8 @@ export default function MediaPage() {
   const privileged = isPrivileged(user?.groups ?? []);
   const fileRef = useRef<HTMLInputElement>(null);
   const [items, setItems] = useState<Media[]>([]);
-  const [teams, setTeams] = useState<Record<string, string[]>>({});
+  const [teamsByMediaId, setTeamsByMediaId] = useState<Record<string, string[]>>({});
+  const [teamsFailed, setTeamsFailed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -54,9 +65,10 @@ export default function MediaPage() {
 
   async function load() {
     try {
-      const [rows, events] = await Promise.all([mediaApi.list(), eventsApi.list().catch(() => [])]);
+      const [rows, teams] = await Promise.all([mediaApi.list(), ownerTeamsByMediaId()]);
       setItems(rows.filter((row) => !isPrivateMediaPurpose(row.purpose)));
-      setTeams(mediaOwnerTeams(events));
+      setTeamsByMediaId(teams ?? {});
+      setTeamsFailed(!teams);
       setError(null);
     } catch (err) {
       setError(err instanceof ProblemError ? err.title : 'Medya yüklenemedi');
@@ -74,17 +86,17 @@ export default function MediaPage() {
       if (kind === 'image' && !isImage(row)) return false;
       if (kind === 'file' && isImage(row)) return false;
       if (purpose && row.purpose !== purpose) return false;
-      if (team && !(teams[row.id] ?? []).includes(team)) return false;
+      if (team && !(teamsByMediaId[row.id] ?? []).includes(team)) return false;
       return matchesQuery(query, row.name, row.kind, row.type);
     });
-  }, [items, query, kind, purpose, team, teams]);
+  }, [items, query, kind, purpose, team, teamsByMediaId]);
   const purposes = useMemo(() => orderedMediaPurposes(items.map((row) => row.purpose)), [items]);
   const ownerTeams = useMemo(
     () =>
-      [...new Set(items.flatMap((row) => teams[row.id] ?? []))].sort((a, b) =>
+      [...new Set(items.flatMap((row) => teamsByMediaId[row.id] ?? []))].sort((a, b) =>
         a.localeCompare(b, 'tr'),
       ),
-    [items, teams],
+    [items, teamsByMediaId],
   );
   const paged = paginateRows(filtered, page);
 
@@ -115,7 +127,7 @@ export default function MediaPage() {
                   await mediaApi.upload(file);
                   await load();
                 } catch (err) {
-                  setError(mediaProblemMessage(err, 'Yüklenemedi'));
+                  setError(coreProblemMessage(err, 'Yüklenemedi'));
                 } finally {
                   setPending(false);
                 }
@@ -132,6 +144,11 @@ export default function MediaPage() {
         }
       />
       {error ? <p className="text-sm text-red-300">{error}</p> : null}
+      {teamsFailed ? (
+        <p className="text-sm text-amber-200">
+          Sahip ekipler okunamadı; ekip bilgisi ve ekip filtresi eksik.
+        </p>
+      ) : null}
       <ListToolbar query={query} onQuery={setQuery} placeholder="Dosya adı" searchLabel="Medya ara">
         <FilterPills
           ariaLabel="Medya türü"
@@ -180,14 +197,15 @@ export default function MediaPage() {
       >
         {paged.slice.map((row) => {
           const href = publicMediaUrl(row.url) || row.url;
-          const status = mediaStatusLabel(row.status);
+          const { status, expiry } = mediaLifecycleView(row);
           return (
             <ListItem
               key={row.id}
               title={row.name}
               subtitle={[
                 mediaPurposeLabel(row.purpose) || row.kind,
-                (teams[row.id] ?? []).join(', '),
+                (teamsByMediaId[row.id] ?? []).join(', '),
+                expiry,
                 href,
               ]
                 .filter(Boolean)
@@ -203,12 +221,7 @@ export default function MediaPage() {
               }
               trailing={
                 <div className="flex items-center gap-1">
-                  {status ? (
-                    <StatusChip
-                      kind={STATUS_CHIP_KINDS[row.status ?? ''] ?? 'neutral'}
-                      label={status}
-                    />
-                  ) : null}
+                  {status ? <StatusChip kind={status.chip} label={status.label} /> : null}
                   <StatusChip
                     kind="neutral"
                     label={isImage(row) ? 'Görsel' : row.kind || 'Dosya'}

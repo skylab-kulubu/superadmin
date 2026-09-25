@@ -43,7 +43,7 @@ function rateLimited(retryAfterSeconds: number) {
   return new ProblemError(429, 'Too Many Requests', {
     code: 'media_rate_limited',
     detail: "The person's upload limit is reached; retry after the given seconds.",
-    members: {
+    fields: {
       limit: 'uploads',
       maxUploads: 100,
       uploadWindowSeconds: 600,
@@ -67,6 +67,32 @@ function Gallery({ initial = [] as string[], onChange = (_ids: string[]) => {} }
         onChange(ids);
       }}
     />
+  );
+}
+
+/** Like EventEditor: each change patches the whole form from the value it rendered with. */
+function EventForm({
+  onChange,
+}: {
+  onChange: (form: { name: string; imageIds: string[] }) => void;
+}) {
+  const [form, setForm] = useState({ name: 'Gecekodu', imageIds: ['g0'] });
+  const patch = (partial: Partial<typeof form>) => {
+    const next = { ...form, ...partial };
+    setForm(next);
+    onChange(next);
+  };
+  return (
+    <>
+      <input aria-label="Ad" value={form.name} onChange={(e) => patch({ name: e.target.value })} />
+      <EventMediaFields
+        ownerTeam=""
+        coverImageId=""
+        imageIds={form.imageIds}
+        onCover={() => {}}
+        onGallery={(imageIds) => patch({ imageIds })}
+      />
+    </>
   );
 }
 
@@ -106,7 +132,7 @@ describe('EventMediaFields', () => {
       .mockRejectedValueOnce(
         new ProblemError(415, 'Unsupported Media Type', {
           code: 'media_type_not_allowed',
-          members: {
+          fields: {
             purpose: 'event_gallery',
             allowedTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
           },
@@ -131,6 +157,47 @@ describe('EventMediaFields', () => {
     expect(screen.queryByRole('button', { name: /Kalan/ })).not.toBeInTheDocument();
   });
 
+  it('skips a file core refuses with a bare 413 and uploads the rest', async () => {
+    upload
+      .mockResolvedValueOnce(uploaded('g1'))
+      .mockRejectedValueOnce(new ProblemError(413, 'Request Entity Too Large'))
+      .mockResolvedValueOnce(uploaded('g3'));
+    const gallery = jest.fn();
+    render(<Gallery onChange={gallery} />);
+
+    await userEvent.upload(screen.getByLabelText('Galeri görselleri seç'), [
+      photo('a.png'),
+      photo('dev.png'),
+      photo('c.png'),
+    ]);
+
+    await waitFor(() => expect(gallery).toHaveBeenLastCalledWith(['g1', 'g3']));
+    expect(
+      screen.getByText('dev.png: Dosya çok büyük: sunucu tek seferde en fazla 20 MB kabul ediyor.'),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Kalan/ })).not.toBeInTheDocument();
+  });
+
+  it('never sends a file above what core takes in one request', async () => {
+    upload.mockResolvedValueOnce(uploaded('g1'));
+    const gallery = jest.fn();
+    render(<Gallery onChange={gallery} />);
+    const huge = photo('video.png');
+    Object.defineProperty(huge, 'size', { value: 21 * 1024 * 1024 });
+
+    await userEvent.upload(screen.getByLabelText('Galeri görselleri seç'), [huge, photo('a.png')]);
+
+    await waitFor(() => expect(gallery).toHaveBeenLastCalledWith(['g1']));
+    expect(upload).toHaveBeenCalledTimes(1);
+    expect((upload.mock.calls[0][0] as File).name).toBe('a.png');
+    expect(
+      screen.getByText(
+        'video.png: Dosya çok büyük: sunucu tek seferde en fazla 20 MB kabul ediyor.',
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Kalan/ })).not.toBeInTheDocument();
+  });
+
   it('keeps the uploaded photos when the connection fails mid-gallery and offers the rest', async () => {
     upload
       .mockResolvedValueOnce(uploaded('g1'))
@@ -147,6 +214,22 @@ describe('EventMediaFields', () => {
     await waitFor(() => expect(gallery).toHaveBeenLastCalledWith(['g1']));
     expect(await screen.findByRole('button', { name: 'Kalan 2 görseli yükle' })).toBeEnabled();
     expect(screen.getByText('Yüklenemedi')).toBeInTheDocument();
+  });
+
+  it('keeps the edits made while a gallery upload runs', async () => {
+    let finish: (media: ReturnType<typeof uploaded>) => void = () => {};
+    upload.mockReturnValueOnce(new Promise((resolve) => (finish = resolve)));
+    const changed = jest.fn();
+    render(<EventForm onChange={changed} />);
+
+    await userEvent.upload(screen.getByLabelText('Galeri görselleri seç'), [photo('a.png')]);
+    await userEvent.type(screen.getByLabelText('Ad'), ' 2026');
+    await userEvent.click(screen.getByRole('button', { name: 'Kaldır' }));
+    await act(async () => finish(uploaded('g1')));
+
+    await waitFor(() =>
+      expect(changed).toHaveBeenLastCalledWith({ name: 'Gecekodu 2026', imageIds: ['g1'] }),
+    );
   });
 
   describe('when the upload limit stops a bulk gallery upload', () => {
@@ -217,6 +300,31 @@ describe('EventMediaFields', () => {
           'Yükleme sınırına ulaştın: 10 dakikada en fazla 100 dosya. 30 saniye sonra tekrar dene.',
         ),
       ).toBeInTheDocument();
+    });
+
+    it('keeps the wait running when a later batch stops for another reason', async () => {
+      jest.useFakeTimers();
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+      upload
+        .mockRejectedValueOnce(rateLimited(240))
+        .mockRejectedValueOnce(new TypeError('Failed to fetch'));
+      render(<Gallery />);
+
+      await user.upload(screen.getByLabelText('Galeri görselleri seç'), [
+        photo('a.png'),
+        photo('b.png'),
+      ]);
+      expect(await screen.findByRole('button', { name: 'Kalan 2 görseli yükle' })).toBeDisabled();
+
+      await user.upload(screen.getByLabelText('Galeri görselleri seç'), [photo('c.png')]);
+      const resume = await screen.findByRole('button', { name: 'Kalan 3 görseli yükle' });
+      expect(screen.getByText('Yüklenemedi')).toBeInTheDocument();
+      expect(resume).toBeDisabled();
+
+      act(() => {
+        jest.advanceTimersByTime(240_000);
+      });
+      await waitFor(() => expect(resume).toBeEnabled());
     });
   });
 });

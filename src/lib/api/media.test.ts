@@ -31,7 +31,7 @@ describe('mediaApi.upload', () => {
     expect((form.get('file') as File).name).toBe('kapak.png');
   });
 
-  it('refuses with core problem code and members', async () => {
+  it('refuses with core problem code and fields', async () => {
     answer(() =>
       Response.json(
         {
@@ -53,7 +53,7 @@ describe('mediaApi.upload', () => {
       status: 413,
       code: 'media_too_large',
       detail: 'The file is larger than this purpose allows.',
-      members: { purpose: 'event_gallery', maxBytes: 10485760 },
+      fields: { purpose: 'event_gallery', maxBytes: 10485760 },
     });
   });
 });

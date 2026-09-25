@@ -165,7 +165,7 @@ describe('CertificateTemplateEditor', () => {
         code: 'media_not_linkable',
         detail:
           'The Media does not exist, is archived or purged, or expired before anything used it.',
-        members: { mediaId: 'bg-1', role: 'certificate_asset' },
+        fields: { mediaId: 'bg-1', role: 'certificate_asset' },
       }),
     );
     render(<CertificateTemplateEditor templateId="system-default" />);

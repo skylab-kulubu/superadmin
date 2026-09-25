@@ -1,5 +1,5 @@
 import { ProblemError } from '@/lib/api/core';
-import { mediaPurposeLabel } from '@/lib/media-purposes';
+import { mediaPurposeLabel, mediaRoleName } from '@/lib/media-purposes';
 
 const MIB = 1024 * 1024;
 const GIB = 1024 * MIB;
@@ -13,15 +13,12 @@ function formatBytes(bytes: number): string {
   return `${oneDecimal(bytes / MIB)} MB`;
 }
 
+/** Short names for the types the purposes superadmin uploads accept. */
 const TYPE_NAMES: Record<string, string> = {
   'image/jpeg': 'JPEG',
   'image/png': 'PNG',
   'image/webp': 'WebP',
   'image/gif': 'GIF',
-  'application/pdf': 'PDF',
-  'video/mp4': 'MP4',
-  'application/zip': 'ZIP',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'DOCX',
 };
 
 function typeNames(value: unknown): string {
@@ -30,7 +27,7 @@ function typeNames(value: unknown): string {
 }
 
 /** A wait in Turkish, rounded up: `45 saniye`, `4 dakika`, `1 saat 30 dakika`. */
-export function formatWait(seconds: number): string {
+function formatWait(seconds: number): string {
   const total = Math.max(1, Math.ceil(seconds));
   if (total < 60) return `${total} saniye`;
   const minutes = Math.ceil(total / 60);
@@ -48,36 +45,49 @@ function within(seconds: number): string {
   return [...words, LOCATIVE[last] ?? last].join(' ');
 }
 
+/**
+ * The most core takes in one request (its single-step upload ceiling); above
+ * it the HTTP server refuses the body with a bare 413, or drops the
+ * connection, before any purpose is read.
+ */
+export const SINGLE_STEP_MAX_BYTES = 20 * MIB;
+
+/**
+ * Whether core refused an upload for the file itself (too large, wrong type),
+ * so the next file of a batch may still fit. Any 413 counts, with or without
+ * a code.
+ */
+export function isPerFileRefusal(error: unknown): boolean {
+  if (!(error instanceof ProblemError)) return false;
+  return error.status === 413 || error.code === 'media_type_not_allowed';
+}
+
 /** How long core asked to wait before the next upload, from a `media_rate_limited` refusal. */
 export function uploadRetryAfterSeconds(error: unknown): number | undefined {
   if (!(error instanceof ProblemError) || error.code !== 'media_rate_limited') return undefined;
-  const seconds = Number(error.members.retryAfterSeconds);
+  const seconds = Number(error.fields.retryAfterSeconds);
   return Number.isFinite(seconds) && seconds >= 0 ? seconds : undefined;
 }
-
-/** The roles core links a Media under, as the object of a sentence. */
-const ROLE_NAMES: Record<string, string> = {
-  event_cover: 'etkinlik kapağı',
-  event_gallery: 'etkinlik galerisi görseli',
-  profile_picture: 'profil fotoğrafı',
-  certificate_asset: 'sertifika görseli',
-};
 
 function text(value: unknown): string {
   return typeof value === 'string' ? value : '';
 }
 
 function purposeOf(error: ProblemError): string {
-  return mediaPurposeLabel(text(error.members.purpose)) || 'bu alan';
+  return mediaPurposeLabel(text(error.fields.purpose)) || 'bu alan';
 }
 
-/** A Turkish sentence for a refusal core gave a Media upload or link. */
-export function mediaProblemMessage(error: unknown, fallback = 'Yüklenemedi'): string {
+/**
+ * A Turkish sentence for a problem core answered with: the media refusals
+ * (upload purpose, upload limit, links on save) by their code, anything else
+ * by its detail, then its title.
+ */
+export function coreProblemMessage(error: unknown, fallback = 'Yüklenemedi'): string {
   if (!(error instanceof ProblemError)) return fallback;
-  const members = error.members;
+  const fields = error.fields;
   switch (error.code) {
     case 'purpose_unknown':
-      return `Sunucu bu yükleme amacını tanımıyor (${text(members.purpose)}). Sayfayı yenileyip tekrar dene; sürerse yöneticiye haber ver.`;
+      return `Sunucu bu yükleme amacını tanımıyor (${text(fields.purpose)}). Sayfayı yenileyip tekrar dene; sürerse yöneticiye haber ver.`;
     case 'purpose_forbidden':
       return `${purposeOf(error)} yüklemeye yetkin yok.`;
     case 'private_media_disabled':
@@ -85,19 +95,19 @@ export function mediaProblemMessage(error: unknown, fallback = 'Yüklenemedi'): 
     case 'purpose_requires_direct_upload':
       return `${purposeOf(error)} büyük dosya yüklemesiyle gönderilir; buradan yüklenemez.`;
     case 'media_too_large': {
-      const maxBytes = Number(members.maxBytes);
+      const maxBytes = Number(fields.maxBytes);
       return `Dosya çok büyük: ${purposeOf(error)} için en fazla ${formatBytes(maxBytes)} yüklenebilir.`;
     }
     case 'media_type_not_allowed': {
-      const allowed = typeNames(members.allowedTypes);
+      const allowed = typeNames(fields.allowedTypes);
       const sentence = `Bu dosya türü ${purposeOf(error)} için kabul edilmiyor.`;
       return allowed ? `${sentence} Kabul edilenler: ${allowed}.` : sentence;
     }
     case 'media_rate_limited': {
       const limit =
-        members.limit === 'volume'
-          ? `günde en fazla ${formatBytes(Number(members.maxDailyBytes))}`
-          : `${within(Number(members.uploadWindowSeconds))} en fazla ${Number(members.maxUploads)} dosya`;
+        fields.limit === 'volume'
+          ? `günde en fazla ${formatBytes(Number(fields.maxDailyBytes))}`
+          : `${within(Number(fields.uploadWindowSeconds))} en fazla ${Number(fields.maxUploads)} dosya`;
       const seconds = uploadRetryAfterSeconds(error);
       const wait =
         seconds === undefined
@@ -106,7 +116,7 @@ export function mediaProblemMessage(error: unknown, fallback = 'Yüklenemedi'): 
       return `Yükleme sınırına ulaştın: ${limit}. ${wait}`;
     }
     case 'media_purpose_mismatch': {
-      const role = ROLE_NAMES[text(members.role)];
+      const role = mediaRoleName(text(fields.role));
       const where = role ? `${role} olarak` : 'burada';
       return `Bu dosya ${purposeOf(error)} için yüklenmiş; ${where} kullanılamaz. Dosyayı bu alan için yeniden yükle.`;
     }
@@ -115,6 +125,9 @@ export function mediaProblemMessage(error: unknown, fallback = 'Yüklenemedi'): 
     case 'media_team_mismatch':
       return 'Bu fotoğraf başka bir ekibin etkinliğinde kullanılıyor. Yalnız kendi ekibinin fotoğraflarını kullanabilirsin.';
     default:
+      if (error.status === 413) {
+        return `Dosya çok büyük: sunucu tek seferde en fazla ${formatBytes(SINGLE_STEP_MAX_BYTES)} kabul ediyor.`;
+      }
       return error.detail || error.title || fallback;
   }
 }

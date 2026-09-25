@@ -4,6 +4,7 @@ import React from 'react';
 import MediaPage from '@/app/(authorized)/media/page';
 import { eventsApi } from '@/lib/api/events';
 import { mediaApi, type Media } from '@/lib/api/media';
+import type { MediaPurpose } from '@/lib/media-purposes';
 
 jest.mock('@/context/AuthContext', () => ({
   useAuth: () => ({ user: { groups: ['/UYELER/YK'], roles: [] } }),
@@ -17,7 +18,7 @@ jest.mock('@/lib/api/events', () => ({
   eventsApi: { list: jest.fn() },
 }));
 
-function media(id: string, purpose: string, extra: Partial<Media> = {}): Media {
+function media(id: string, purpose: MediaPurpose, extra: Partial<Media> = {}): Media {
   return {
     id,
     name: `${id}.png`,
@@ -69,7 +70,22 @@ describe('Medya', () => {
       await screen.findByText(/^Etkinlik kapağı · GECEKODU · https:\/\/cdn\./),
     ).toBeInTheDocument();
     expect(screen.getByText('Bağlı')).toBeInTheDocument();
-    expect(screen.getByText(/^Amaçsız \(eski\) · https:\/\/cdn\./)).toBeInTheDocument();
+    expect(screen.getByText(/^Eski kayıt \(legacy\) · https:\/\/cdn\./)).toBeInTheDocument();
+  });
+
+  it('shows when a pending Media expires, and no wait for legacy Media that never expire', async () => {
+    (mediaApi.list as jest.Mock).mockResolvedValue([
+      media('yeni', 'event_gallery', { status: 'pending', expiresAt: '2026-09-27T11:00:00Z' }),
+      media('eski', 'legacy', { status: 'pending' }),
+    ]);
+
+    render(<MediaPage />);
+
+    expect(
+      await screen.findByText(/^Etkinlik galerisi · Bağlanmazsa silinir: 27 Eyl 2026 14:00 · /),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText('Beklemede')).toHaveLength(1);
+    expect(screen.getByText(/^Eski kayıt \(legacy\) · https:/)).toBeInTheDocument();
   });
 
   it('filters by purpose', async () => {
@@ -88,7 +104,7 @@ describe('Medya', () => {
       within(purpose)
         .getAllByRole('option')
         .map((option) => option.textContent),
-    ).toEqual(['Tüm amaçlar', 'Etkinlik kapağı', 'Etkinlik galerisi', 'Amaçsız (eski)']);
+    ).toEqual(['Tüm amaçlar', 'Etkinlik kapağı', 'Etkinlik galerisi', 'Eski kayıt (legacy)']);
     await user.selectOptions(purpose, 'Etkinlik galerisi');
 
     expect(screen.getByText('galeri.png')).toBeInTheDocument();
@@ -129,5 +145,30 @@ describe('Medya', () => {
     expect(screen.getByText('gk-galeri.png')).toBeInTheDocument();
     expect(screen.queryByText('agc-kapak.png')).not.toBeInTheDocument();
     expect(screen.queryByText('bos.png')).not.toBeInTheDocument();
+  });
+
+  it('counts archived Events when working out the Owner team', async () => {
+    (mediaApi.list as jest.Mock).mockResolvedValue([media('eski-kapak', 'event_cover')]);
+    (eventsApi.list as jest.Mock).mockImplementation(async (_team?: string, lifecycle?: string) =>
+      lifecycle === 'inactive'
+        ? [{ id: 'e9', name: 'AGC 2025', ownerTeam: 'AGC', coverImageId: 'eski-kapak', images: [] }]
+        : [],
+    );
+
+    render(<MediaPage />);
+
+    expect(await screen.findByText(/^Etkinlik kapağı · AGC · /)).toBeInTheDocument();
+  });
+
+  it('says so when the Owner teams cannot be read, and still lists the Media', async () => {
+    (mediaApi.list as jest.Mock).mockResolvedValue([media('kapak', 'event_cover')]);
+    (eventsApi.list as jest.Mock).mockRejectedValue(new TypeError('Failed to fetch'));
+
+    render(<MediaPage />);
+
+    expect(await screen.findByText('kapak.png')).toBeInTheDocument();
+    expect(
+      screen.getByText('Sahip ekipler okunamadı; ekip bilgisi ve ekip filtresi eksik.'),
+    ).toBeInTheDocument();
   });
 });
