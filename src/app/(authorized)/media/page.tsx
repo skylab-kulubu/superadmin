@@ -8,14 +8,30 @@ import { ListItem } from '@/components/chrome/ListItem';
 import { ListPanel } from '@/components/chrome/ListPanel';
 import { Pagination } from '@/components/chrome/Pagination';
 import { StatusChip } from '@/components/chrome/StatusChip';
+import { Select } from '@/components/chrome/Select';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ProblemError } from '@/lib/api/core';
 import { mediaApi, type Media } from '@/lib/api/media';
-import { publicMediaUrl } from '@/lib/event-media';
+import { eventsApi } from '@/lib/api/events';
+import { mediaOwnerTeams, publicMediaUrl } from '@/lib/event-media';
+import {
+  isPrivateMediaPurpose,
+  mediaPurposeLabel,
+  mediaStatusLabel,
+  orderedMediaPurposes,
+} from '@/lib/media-purposes';
+import { mediaProblemMessage } from '@/lib/media-problems';
+import type { StatusChipKind } from '@/lib/status-chip';
 import { emptyListCopy, matchesQuery, paginateRows } from '@/lib/list-query';
 import { listStatus } from '@/lib/list-status';
 import { isPrivileged } from '@/lib/auth/groups';
 import { useAuth } from '@/context/AuthContext';
+
+const STATUS_CHIP_KINDS: Record<string, StatusChipKind> = {
+  attached: 'active',
+  pending: 'pending',
+  detached: 'passive',
+};
 
 function isImage(row: Media) {
   return row.kind?.toLowerCase().includes('image') || row.type?.toLowerCase().startsWith('image/');
@@ -26,16 +42,21 @@ export default function MediaPage() {
   const privileged = isPrivileged(user?.groups ?? []);
   const fileRef = useRef<HTMLInputElement>(null);
   const [items, setItems] = useState<Media[]>([]);
+  const [teams, setTeams] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [query, setQuery] = useState('');
   const [kind, setKind] = useState<'all' | 'image' | 'file'>('all');
+  const [purpose, setPurpose] = useState('');
+  const [team, setTeam] = useState('');
   const [page, setPage] = useState(1);
 
   async function load() {
     try {
-      setItems(await mediaApi.list());
+      const [rows, events] = await Promise.all([mediaApi.list(), eventsApi.list().catch(() => [])]);
+      setItems(rows.filter((row) => !isPrivateMediaPurpose(row.purpose)));
+      setTeams(mediaOwnerTeams(events));
       setError(null);
     } catch (err) {
       setError(err instanceof ProblemError ? err.title : 'Medya yüklenemedi');
@@ -52,14 +73,24 @@ export default function MediaPage() {
     return items.filter((row) => {
       if (kind === 'image' && !isImage(row)) return false;
       if (kind === 'file' && isImage(row)) return false;
+      if (purpose && row.purpose !== purpose) return false;
+      if (team && !(teams[row.id] ?? []).includes(team)) return false;
       return matchesQuery(query, row.name, row.kind, row.type);
     });
-  }, [items, query, kind]);
+  }, [items, query, kind, purpose, team, teams]);
+  const purposes = useMemo(() => orderedMediaPurposes(items.map((row) => row.purpose)), [items]);
+  const ownerTeams = useMemo(
+    () =>
+      [...new Set(items.flatMap((row) => teams[row.id] ?? []))].sort((a, b) =>
+        a.localeCompare(b, 'tr'),
+      ),
+    [items, teams],
+  );
   const paged = paginateRows(filtered, page);
 
   useEffect(() => {
     setPage(1);
-  }, [query, kind]);
+  }, [query, kind, purpose, team]);
 
   return (
     <div className="space-y-6">
@@ -78,10 +109,13 @@ export default function MediaPage() {
                 if (!file) return;
                 setPending(true);
                 try {
+                  // Without a purpose (legacy): a file uploaded here is copied by its
+                  // address into another product, which cannot attach it yet, and a
+                  // purposed Media would be purged 24 hours after upload unless attached.
                   await mediaApi.upload(file);
                   await load();
                 } catch (err) {
-                  setError(err instanceof ProblemError ? err.title : 'Yüklenemedi');
+                  setError(mediaProblemMessage(err, 'Yüklenemedi'));
                 } finally {
                   setPending(false);
                 }
@@ -109,6 +143,26 @@ export default function MediaPage() {
             { value: 'file', label: 'Dosya' },
           ]}
         />
+        <div className="w-44">
+          <Select aria-label="Amaç" value={purpose} onChange={(e) => setPurpose(e.target.value)}>
+            <option value="">Tüm amaçlar</option>
+            {purposes.map((value) => (
+              <option key={value} value={value}>
+                {mediaPurposeLabel(value)}
+              </option>
+            ))}
+          </Select>
+        </div>
+        <div className="w-40">
+          <Select aria-label="Sahip ekip" value={team} onChange={(e) => setTeam(e.target.value)}>
+            <option value="">Tüm ekipler</option>
+            {ownerTeams.map((value) => (
+              <option key={value} value={value}>
+                {value}
+              </option>
+            ))}
+          </Select>
+        </div>
       </ListToolbar>
       <ListPanel
         status={listStatus({
@@ -119,18 +173,25 @@ export default function MediaPage() {
             none: 'Henüz dosya yok.',
             noneMatch: 'Eşleşen dosya yok.',
             query,
-            filtered: kind !== 'all',
+            filtered: kind !== 'all' || Boolean(purpose) || Boolean(team),
           }),
         })}
         emptyDescription="Yükle veya filtreyi temizle."
       >
         {paged.slice.map((row) => {
           const href = publicMediaUrl(row.url) || row.url;
+          const status = mediaStatusLabel(row.status);
           return (
             <ListItem
               key={row.id}
               title={row.name}
-              subtitle={`${row.kind} · ${href}`}
+              subtitle={[
+                mediaPurposeLabel(row.purpose) || row.kind,
+                (teams[row.id] ?? []).join(', '),
+                href,
+              ]
+                .filter(Boolean)
+                .join(' · ')}
               leading={
                 isImage(row) && href ? (
                   <img
@@ -142,6 +203,12 @@ export default function MediaPage() {
               }
               trailing={
                 <div className="flex items-center gap-1">
+                  {status ? (
+                    <StatusChip
+                      kind={STATUS_CHIP_KINDS[row.status ?? ''] ?? 'neutral'}
+                      label={status}
+                    />
+                  ) : null}
                   <StatusChip
                     kind="neutral"
                     label={isImage(row) ? 'Görsel' : row.kind || 'Dosya'}

@@ -8,6 +8,12 @@ export type Media = {
   size: number;
   uploadedBy: string;
   kind: string;
+  /** The Media purpose it was uploaded for (ADR-0052); `legacy` without one. */
+  purpose?: string;
+  /** Whether a record uses it: `pending`, `attached` or `detached` (core media redesign ticket 02). */
+  status?: string;
+  /** When a pending or detached Media is purged unless something links it. */
+  expiresAt?: string;
   createdAt: string;
   updatedAt: string;
 };
