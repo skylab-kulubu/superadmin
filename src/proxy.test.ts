@@ -2,6 +2,7 @@
 
 import { NextRequest } from 'next/server';
 import { proxy } from '@/proxy';
+import { saveEnv } from '@/test/server/env';
 
 function visit(path: string, cookie: string) {
   return proxy(new NextRequest(`https://admin.yildizskylab.com${path}`, { headers: { cookie } }));
@@ -13,15 +14,10 @@ function sentToLogin(response: Response): boolean {
 }
 
 describe('proxy', () => {
-  const secureSetting = process.env.AUTH_COOKIE_SECURE;
+  afterEach(saveEnv('AUTH_COOKIE_SECURE'));
 
   beforeEach(() => {
     process.env.AUTH_COOKIE_SECURE = 'true';
-  });
-
-  afterAll(() => {
-    if (secureSetting === undefined) delete process.env.AUTH_COOKIE_SECURE;
-    else process.env.AUTH_COOKIE_SECURE = secureSetting;
   });
 
   it('lets an admin with a __Host- session cookie through', () => {

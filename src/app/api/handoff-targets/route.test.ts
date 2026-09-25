@@ -2,6 +2,7 @@
 
 import { cookies } from 'next/headers';
 import { GET } from '@/app/api/handoff-targets/route';
+import { saveEnv } from '@/test/server/env';
 
 jest.mock('next/headers', () => ({
   cookies: jest.fn(),
@@ -103,10 +104,11 @@ describe('GET /api/handoff-targets', () => {
     });
   });
 
-  it('answers 401 without calling Keycloak when only a legacy unprefixed session cookie is present', async () => {
-    const secureSetting = process.env.AUTH_COOKIE_SECURE;
-    process.env.AUTH_COOKIE_SECURE = 'true';
-    try {
+  describe('with Secure (__Host-) session cookies', () => {
+    afterEach(saveEnv('AUTH_COOKIE_SECURE'));
+
+    it('answers 401 without calling Keycloak when only a legacy unprefixed session cookie is present', async () => {
+      process.env.AUTH_COOKIE_SECURE = 'true';
       signedIn({ auth_token: accessToken(), refresh_token: 'refresh-1' });
       const seen = fakeKeycloak(() => Response.json([]));
 
@@ -114,10 +116,7 @@ describe('GET /api/handoff-targets', () => {
 
       expect(seen).toHaveLength(0);
       expect(response.status).toBe(401);
-    } finally {
-      if (secureSetting === undefined) delete process.env.AUTH_COOKIE_SECURE;
-      else process.env.AUTH_COOKIE_SECURE = secureSetting;
-    }
+    });
   });
 
   it('refreshes an expired access token and keeps the new session in httpOnly cookies', async () => {

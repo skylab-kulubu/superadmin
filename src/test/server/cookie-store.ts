@@ -1,4 +1,4 @@
-import { RequestCookies, ResponseCookies } from 'next/dist/server/web/spec-extension/cookies';
+import { NextRequest, NextResponse } from 'next/server';
 
 /** What a browser learns about one cookie from a response's Set-Cookie line. */
 export type SentCookie = {
@@ -45,42 +45,68 @@ function parseSetCookie(line: string): [string, SentCookie] {
   return [pair.slice(0, splitAt), cookie];
 }
 
+/** Every cookie a response sets (or expires), by name, as the browser reads the Set-Cookie lines. */
+export function sentCookies(response: { headers: Headers }): Map<string, SentCookie> {
+  return new Map(response.headers.getSetCookie().map(parseSetCookie));
+}
+
 /**
- * Stands in for `cookies()` from next/headers inside a route handler. Reads come from the
- * request's Cookie header; writes go through Next's own ResponseCookies, so a test sees the exact
- * Set-Cookie lines the browser would receive.
+ * Stands in for `cookies()` from next/headers inside a route handler. Reads come from a request's
+ * Cookie header; writes go to a response's cookies, so a test sees the exact Set-Cookie lines the
+ * browser would receive.
  */
 export function fakeCookieStore(requestCookies: Record<string, string> = {}) {
-  const requestHeaders = new Headers();
-  const cookieHeader = Object.entries(requestCookies)
+  const cookie = Object.entries(requestCookies)
     .map(([name, value]) => `${name}=${value}`)
     .join('; ');
-  if (cookieHeader) requestHeaders.set('cookie', cookieHeader);
-  const received = new RequestCookies(requestHeaders);
-  const responseHeaders = new Headers();
-  const response = new ResponseCookies(responseHeaders);
+  const request = new NextRequest('https://admin.yildizskylab.com/', { headers: { cookie } });
+  const response = NextResponse.next();
 
   const store = {
-    get: (name: string) => received.get(name),
-    getAll: () => received.getAll(),
-    has: (name: string) => received.has(name),
-    set: (...args: Parameters<ResponseCookies['set']>) => {
-      response.set(...args);
+    get: (name: string) => request.cookies.get(name),
+    getAll: () => request.cookies.getAll(),
+    has: (name: string) => request.cookies.has(name),
+    set: (...args: Parameters<NextResponse['cookies']['set']>) => {
+      response.cookies.set(...args);
       return store;
     },
-    delete: (...args: Parameters<ResponseCookies['delete']>) => {
-      response.delete(...args);
+    delete: (...args: Parameters<NextResponse['cookies']['delete']>) => {
+      response.cookies.delete(...args);
       return store;
     },
   };
-
-  const sent = () => new Map(responseHeaders.getSetCookie().map(parseSetCookie));
 
   return {
     store,
     /** The cookie this response sets (or expires) under `name`, as the browser reads it. */
-    sent: (name: string) => sent().get(name),
-    /** Every cookie name this response sets or expires. */
-    sentNames: () => [...sent().keys()],
+    sent: (name: string) => sentCookies(response).get(name),
+    /** Every cookie name this response sets or expires, sorted. */
+    sentNames: () => [...sentCookies(response).keys()].sort(),
   };
 }
+
+/** A live session cookie as the browser should receive it. */
+export function sessionCookie(value: string, maxAge: number, secure = true): SentCookie {
+  return { value, maxAge, path: '/', secure, httpOnly: true, sameSite: 'lax' };
+}
+
+/** A Set-Cookie that makes the browser drop the cookie of that name and path. */
+export function expiredCookie({ secure = true, path = '/' } = {}): SentCookie {
+  return { value: '', maxAge: 0, path, secure, httpOnly: true, sameSite: 'lax' };
+}
+
+/** 7 days: the access token cookies. */
+export const ACCESS_TOKEN_MAX_AGE = 604800;
+/** 30 days: the refresh token cookie. */
+export const REFRESH_TOKEN_MAX_AGE = 2592000;
+
+/** With Secure cookies: the three `__Host-` session cookies plus every legacy unprefixed name. */
+export const EVERY_SECURE_SESSION_COOKIE = [
+  '__Host-access_token',
+  '__Host-auth_token',
+  '__Host-refresh_token',
+  'access_token',
+  'auth_token',
+  'refresh_token',
+  'token',
+];

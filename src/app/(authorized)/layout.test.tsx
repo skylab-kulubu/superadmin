@@ -3,52 +3,33 @@
 import { cookies } from 'next/headers';
 import AuthorizedLayout from '@/app/(authorized)/layout';
 import { fakeCookieStore } from '@/test/server/cookie-store';
+import { saveEnv } from '@/test/server/env';
+import { accessToken } from '@/test/server/jwt';
+import { redirectTarget } from '@/test/server/redirect';
 
 jest.mock('next/headers', () => ({
   cookies: jest.fn(),
 }));
 
-// Like Next's own redirect(), this stops rendering by throwing.
-jest.mock('next/navigation', () => ({
-  redirect: (url: string) => {
-    throw Object.assign(new Error('redirect'), { url });
-  },
-}));
+jest.mock('next/navigation', () => jest.requireActual('@/test/server/redirect').navigation);
 
-function accessToken(): string {
-  const header = Buffer.from(JSON.stringify({ alg: 'none' })).toString('base64url');
-  const body = Buffer.from(
-    JSON.stringify({ sub: 'admin-1', exp: Math.floor(Date.now() / 1000) + 300 }),
-  ).toString('base64url');
-  return `${header}.${body}.sig`;
-}
-
-async function redirectTarget(requestCookies: Record<string, string>): Promise<string | null> {
+function visit(requestCookies: Record<string, string>) {
   (cookies as jest.Mock).mockResolvedValue(fakeCookieStore(requestCookies).store);
-  try {
-    await AuthorizedLayout({ children: null });
-  } catch (error) {
-    return (error as { url: string }).url;
-  }
-  return null;
+  return redirectTarget(() => AuthorizedLayout({ children: null }));
 }
 
 describe('AuthorizedLayout', () => {
-  const env = { ...process.env };
+  afterEach(saveEnv('AUTH_COOKIE_SECURE'));
 
   beforeEach(() => {
     process.env.AUTH_COOKIE_SECURE = 'true';
   });
 
-  afterEach(() => {
-    process.env = { ...env };
-  });
-
   it('sends an admin whose session is only in a legacy unprefixed cookie to /login', async () => {
-    expect(await redirectTarget({ auth_token: accessToken() })).toBe('/login');
+    expect(await visit({ auth_token: accessToken() })).toBe('/login');
   });
 
   it('renders for an admin with a __Host- session cookie', async () => {
-    expect(await redirectTarget({ '__Host-auth_token': accessToken() })).toBeNull();
+    expect(await visit({ '__Host-auth_token': accessToken() })).toBeNull();
   });
 });

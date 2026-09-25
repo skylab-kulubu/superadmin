@@ -1,14 +1,10 @@
 /** @jest-environment node */
 
 import { sessionCookieNames } from '@/lib/auth/session-cookies';
+import { saveEnv } from '@/test/server/env';
 
 describe('session cookie names', () => {
-  const secureSetting = process.env.AUTH_COOKIE_SECURE;
-
-  afterEach(() => {
-    if (secureSetting === undefined) delete process.env.AUTH_COOKIE_SECURE;
-    else process.env.AUTH_COOKIE_SECURE = secureSetting;
-  });
+  afterEach(saveEnv('AUTH_COOKIE_SECURE'));
 
   it('carry the __Host- prefix when session cookies are Secure, so no sibling subdomain can plant or shadow them', () => {
     process.env.AUTH_COOKIE_SECURE = 'true';

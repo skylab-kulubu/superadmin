@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 import type { UserDto } from '@/types/api';
 import { CORE_API_URL } from '@/lib/api/core';
 import { isJwtExpired } from '@/lib/auth/jwt-expiry';
-import { refreshAccessToken } from '@/lib/auth/oauth2';
+import { refreshAccessToken, RefreshTokenRejectedError } from '@/lib/auth/oauth2';
 import { sessionUserFromAccessToken } from '@/lib/auth/session-user';
 import {
   clearSessionCookies,
@@ -51,7 +51,8 @@ export async function GET() {
         const refreshed = await refreshAccessToken(refreshToken);
         token = refreshed.access_token;
         writeSessionCookies(cookieStore, refreshed.access_token, refreshed.refresh_token);
-      } catch {
+      } catch (error) {
+        if (error instanceof RefreshTokenRejectedError) clearSessionCookies(cookieStore);
         return NextResponse.json({ authenticated: false }, { status: 401 });
       }
     }

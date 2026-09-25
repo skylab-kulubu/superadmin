@@ -3,23 +3,22 @@
 import { cookies } from 'next/headers';
 import { NextRequest } from 'next/server';
 import { POST } from '@/app/api/auth/logout/route';
-import { fakeCookieStore } from '@/test/server/cookie-store';
+import {
+  EVERY_SECURE_SESSION_COOKIE,
+  expiredCookie,
+  fakeCookieStore,
+} from '@/test/server/cookie-store';
+import { saveEnv } from '@/test/server/env';
 
 jest.mock('next/headers', () => ({
   cookies: jest.fn(),
 }));
 
-const expired = { value: '', maxAge: 0, path: '/', httpOnly: true, sameSite: 'lax' };
-
 describe('OAuth logout route', () => {
-  const env = { ...process.env };
+  afterEach(saveEnv('AUTH_COOKIE_SECURE'));
 
   beforeEach(() => {
     jest.clearAllMocks();
-  });
-
-  afterEach(() => {
-    process.env = { ...env };
   });
 
   it('expires the __Host- session cookies and the legacy unprefixed ones', async () => {
@@ -35,17 +34,9 @@ describe('OAuth logout route', () => {
     const response = await POST(new NextRequest('https://admin.yildizskylab.com/api/auth/logout'));
 
     expect(response.status).toBe(200);
-    expect(jar.sentNames().sort()).toEqual([
-      '__Host-access_token',
-      '__Host-auth_token',
-      '__Host-refresh_token',
-      'access_token',
-      'auth_token',
-      'refresh_token',
-      'token',
-    ]);
+    expect(jar.sentNames()).toEqual(EVERY_SECURE_SESSION_COOKIE);
     for (const name of jar.sentNames()) {
-      expect(jar.sent(name)).toEqual({ ...expired, secure: true });
+      expect(jar.sent(name)).toEqual(expiredCookie());
     }
   });
 
@@ -57,14 +48,9 @@ describe('OAuth logout route', () => {
     const response = await POST(new NextRequest('http://localhost:3000/api/auth/logout'));
 
     expect(response.status).toBe(200);
-    expect(jar.sentNames().sort()).toEqual([
-      'access_token',
-      'auth_token',
-      'refresh_token',
-      'token',
-    ]);
+    expect(jar.sentNames()).toEqual(['access_token', 'auth_token', 'refresh_token', 'token']);
     for (const name of jar.sentNames()) {
-      expect(jar.sent(name)).toEqual({ ...expired, secure: false });
+      expect(jar.sent(name)).toEqual(expiredCookie({ secure: false }));
     }
   });
 });

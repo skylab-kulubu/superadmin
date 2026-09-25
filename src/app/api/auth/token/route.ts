@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { isJwtExpired } from '@/lib/auth/jwt-expiry';
-import { refreshAccessToken } from '@/lib/auth/oauth2';
+import { refreshAccessToken, RefreshTokenRejectedError } from '@/lib/auth/oauth2';
 import {
+  clearSessionCookies,
   readSessionAccessToken,
   readSessionRefreshToken,
   writeSessionCookies,
@@ -23,11 +24,15 @@ export async function GET() {
       return NextResponse.json({ token: null }, { status: 401 });
     }
 
-    const { access_token, refresh_token } = await refreshAccessToken(refreshToken);
-    writeSessionCookies(cookieStore, access_token, refresh_token);
-
-    return NextResponse.json({ token: access_token });
-  } catch (error) {
+    try {
+      const { access_token, refresh_token } = await refreshAccessToken(refreshToken);
+      writeSessionCookies(cookieStore, access_token, refresh_token);
+      return NextResponse.json({ token: access_token });
+    } catch (error) {
+      if (error instanceof RefreshTokenRejectedError) clearSessionCookies(cookieStore);
+      return NextResponse.json({ token: null }, { status: 401 });
+    }
+  } catch {
     return NextResponse.json({ token: null }, { status: 401 });
   }
 }

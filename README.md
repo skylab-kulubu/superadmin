@@ -98,7 +98,8 @@ APP_URL=http://localhost:3000
 
 - Login sayfası `/login` oauth yetkilendirme URL’sine otomatik yönlendirir.
 - OAuth callback: `GET /api/auth/callback` kodu token’a çevirir ve oturum cookie’lerini yazar, ardından `/dashboard`’a yönlendirir.
-- Oturum cookie’leri (`src/lib/auth/session-cookies.ts`): `AUTH_COOKIE_SECURE` açıkken (production imajında varsayılan) adlar `__Host-auth_token`, `__Host-access_token`, `__Host-refresh_token`; tarayıcı bunları yalnız bu host’tan, Secure, `Path=/` ve `Domain`’siz kabul eder, böylece yildizskylab.com altındaki başka bir alt alan adı bu çerezleri ekleyemez ya da gölgeleyemez. Yerel http’de (`next dev`) adlar öneksizdir. Secure açıkken öneksiz eski adlar okunmaz.
+- Oturum ve OAuth giriş çerezleri (`src/lib/auth/session-cookies.ts`, `src/lib/auth/oauth-transaction.ts`): Secure açıkken adlar `__Host-` öneklidir (`__Host-auth_token`, `__Host-access_token`, `__Host-refresh_token`, `__Host-oauth_state`, `__Host-oauth_code_verifier`); tarayıcı bunları yalnız bu host’tan, Secure, `Path=/` ve `Domain`’siz kabul eder, böylece yildizskylab.com altındaki başka bir alt alan adı bu çerezleri ekleyemez ya da gölgeleyemez. Secure açıkken öneksiz eski adlar okunmaz.
+- Secure kuralı (`authCookieSecure()`, `src/lib/auth/cookie-secure.ts`): `AUTH_COOKIE_SECURE` boş değilse yalnız tam olarak `true` değeri açar; `1`, `TRUE`, `yes` gibi her başka değer Secure’u ve öneki kapatır. Tanımsız ya da boşsa `NODE_ENV === 'production'` belirler: Docker imajı (production ve sandbox) Secure, `next dev` öneksizdir.
 - Oturum durumu: `GET /api/auth/me` backend’e token ile gider, kullanıcıyı döner (erişim yoksa cookie temizleme).
 - Logout: `POST /api/auth/logout` oturum cookie’lerini ve eski öneksiz adları temizler.
 

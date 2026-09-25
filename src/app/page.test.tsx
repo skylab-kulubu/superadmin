@@ -3,46 +3,32 @@
 import { cookies } from 'next/headers';
 import RootPage from '@/app/page';
 import { fakeCookieStore } from '@/test/server/cookie-store';
+import { saveEnv } from '@/test/server/env';
+import { redirectTarget } from '@/test/server/redirect';
 
 jest.mock('next/headers', () => ({
   cookies: jest.fn(),
 }));
 
-// Like Next's own redirect(), this stops rendering by throwing.
-jest.mock('next/navigation', () => ({
-  redirect: (url: string) => {
-    throw Object.assign(new Error('redirect'), { url });
-  },
-}));
+jest.mock('next/navigation', () => jest.requireActual('@/test/server/redirect').navigation);
 
-async function redirectTarget(requestCookies: Record<string, string>): Promise<string> {
+function visit(requestCookies: Record<string, string>) {
   (cookies as jest.Mock).mockResolvedValue(fakeCookieStore(requestCookies).store);
-  try {
-    await RootPage();
-  } catch (error) {
-    return (error as { url: string }).url;
-  }
-  throw new Error('RootPage did not redirect');
+  return redirectTarget(() => RootPage());
 }
 
 describe('RootPage', () => {
-  const env = { ...process.env };
+  afterEach(saveEnv('AUTH_COOKIE_SECURE'));
 
   beforeEach(() => {
     process.env.AUTH_COOKIE_SECURE = 'true';
   });
 
-  afterEach(() => {
-    process.env = { ...env };
-  });
-
   it('sends an admin whose session is only in legacy unprefixed cookies to /login', async () => {
-    expect(await redirectTarget({ auth_token: 'old-access', refresh_token: 'old-refresh' })).toBe(
-      '/login',
-    );
+    expect(await visit({ auth_token: 'old-access', refresh_token: 'old-refresh' })).toBe('/login');
   });
 
   it('sends an admin with a __Host- refresh cookie on to the dashboard', async () => {
-    expect(await redirectTarget({ '__Host-refresh_token': 'refresh-1' })).toBe('/dashboard');
+    expect(await visit({ '__Host-refresh_token': 'refresh-1' })).toBe('/dashboard');
   });
 });
